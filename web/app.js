@@ -46,17 +46,26 @@ app = new Vue({
     },
     methods: {
         addEvent: function() {
-            STORED_EVENTS[this.addEventUI.event] = {
+            var event = this.addEventUI.event;
+            STORED_EVENTS[event] = {
                 auth: this.addEventUI.auth,
                 secret: this.addEventUI.secret,
             };
-            this.selectedEvent = this.addEventUI.event;
-            this.events.push(this.addEventUI.event);
+            this.selectedEvent = event;
+            if (this.events.indexOf(event) == -1) {
+                this.events.push(event);
+            }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
             this.addEventUI = makeAddEventUI();
         },
         cancelAddEvent: function() {
             this.selectedEvent = '';
+        },
+        editSelectedEvent: function() {
+            this.addEventUI.event = this.selectedEvent;
+            this.addEventUI.auth = STORED_EVENTS[this.selectedEvent].auth;
+            this.addEventUI.secret = STORED_EVENTS[this.selectedEvent].secret;
+            this.selectedEvent = '_add';
         },
         deleteSelectedEvent: function() {
             var oldEvent = this.selectedEvent;

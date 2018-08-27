@@ -29,6 +29,7 @@
                 <option value="_add">Add an event...</option>
               </select>
               <button class="btn btn-success ml-auto" @click="selectedEvent='_add'">Add an event</button>
+              <button class="btn btn-info ml-auto" :disabled="!eventSelected" @click="editSelectedEvent">Edit this event</button>
               <button class="btn btn-danger ml-auto" :disabled="!eventSelected" @click="deleteSelectedEvent">Delete this event</button>
             </label>
           </div>
