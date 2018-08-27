@@ -7,18 +7,18 @@
     <link rel="stylesheet" type="text/css" href="app.css">
   </head>
   <body>
-    <div class="container">
+    <div class="container hidden" id="main">
       <h2>TBA uploader</h2>
 
       <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item">
           <a class="nav-link active" id="event-setup-tab" data-toggle="tab" href="#event-setup" role="tab" aria-controls="event-setup" aria-selected="true">Event setup</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" v-if="eventSelected">
           <a class="nav-link" id="awards-tab" data-toggle="tab" href="#awards" role="tab" aria-controls="awards" aria-selected="false">Awards</a>
         </li>
       </ul>
-      <div class="tab-content hidden" id="main">
+      <div class="tab-content">
         <div class="tab-pane fade show active" id="event-setup" role="tabpanel" aria-labelledby="event-setup-tab">
           <div class="form-inline" v-if="!inAddEvent">
             <label>
@@ -54,7 +54,7 @@
             </div>
             <div>
               <button class="btn btn-danger" @click="cancelAddEvent">Cancel</button>
-              <button class="btn btn-success" @click="addEvent">Add</button>
+              <button class="btn btn-success" @click="addEvent" :disabled="!canAddEvent">Add</button>
             </div>
           </div>
         </div>

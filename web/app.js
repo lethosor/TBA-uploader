@@ -23,10 +23,13 @@ app = new Vue({
     },
     computed: {
         eventSelected: function() {
-            return this.selectedEvent && !this.inAddEvent;
+            return !!this.selectedEvent && !this.inAddEvent;
         },
         inAddEvent: function() {
             return this.selectedEvent == '_add';
+        },
+        canAddEvent: function() {
+            return this.addEventUI.event && this.addEventUI.auth && this.addEventUI.secret;
         },
         authInputType: function() {
             return this.addEventUI.showAuth ? 'text' : 'password';
