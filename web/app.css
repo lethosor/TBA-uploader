@@ -1,0 +1,15 @@
+body {
+    margin-top: 1em;
+}
+
+.hidden {
+    display: none;
+}
+
+.form-inline, .tab-content {
+    margin-top: 0.5rem;
+}
+
+.form-inline .form-control, .form-inline .btn {
+    margin: 0 0.5rem;
+}

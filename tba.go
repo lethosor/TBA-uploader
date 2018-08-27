@@ -27,4 +27,3 @@ func sendTBARequest(url string, body []byte, params *eventParams) (*http.Respons
     client := http.Client{}
     return client.Do(request)
 }
-
