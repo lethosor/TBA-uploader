@@ -89,7 +89,13 @@ app = new Vue({
             }
         },
     },
+    watch: {
+        selectedEvent: function(event) {
+            localStorage.setItem('selectedEvent', event);
+        },
+    },
     mounted: function() {
         $(this.$el).removeClass('hidden');
+        this.selectedEvent = localStorage.getItem('selectedEvent') || '';
     },
 });
