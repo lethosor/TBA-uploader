@@ -4,6 +4,15 @@ try {
 catch (e) {
     STORED_EVENTS = {};
 }
+try {
+    STORED_AWARDS = JSON.parse(localStorage.getItem('awards'));
+}
+catch (e) {
+    STORED_AWARDS = [];
+}
+if (!Array.isArray(STORED_AWARDS) || STORED_AWARDS.length == 0) {
+    STORED_AWARDS = [makeAward()];
+}
 
 function makeAddEventUI() {
     return {
@@ -28,7 +37,7 @@ app = new Vue({
         events: Object.keys(STORED_EVENTS),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
-        awards: [makeAward()],
+        awards: STORED_AWARDS,
     },
     computed: {
         eventSelected: function() {
@@ -96,6 +105,9 @@ app = new Vue({
             if (index >= 0) {
                 this.awards.splice(index, 1);
             }
+        },
+        saveAwards: function() {
+            localStorage.setItem('awards', JSON.stringify(this.awards));
         },
     },
     watch: {

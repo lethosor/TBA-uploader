@@ -8,7 +8,7 @@
   </head>
   <body>
     <div class="container hidden" id="main">
-      <h2>TBA uploader</h2>
+      <h2>TBA uploader<span v-if="eventSelected"> - {{selectedEvent}}</span></h2>
 
       <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item">
@@ -73,13 +73,13 @@
             <tbody>
               <tr v-for="award in awards" :key="award.id">
                 <td>
-                  <input class="form-control" title="Award Name" placeholder="Award Name" v-model="award.name">
+                  <input class="form-control" title="Award Name" placeholder="Award Name" v-model="award.name" @blur="saveAwards">
                 </td>
                 <td>
-                  <input class="form-control" type="number" title="Team" placeholder="Team" v-model="award.team">
+                  <input class="form-control" type="number" title="Team" placeholder="Team" v-model="award.team" @blur="saveAwards">
                 </td>
                 <td>
-                  <input class="form-control" title="Person" placeholder="Person" v-model="award.person">
+                  <input class="form-control" title="Person" placeholder="Person" v-model="award.person" @blur="saveAwards">
                 </td>
                 <td>
                   <button class="btn btn-info" @click="duplicateAward(award)">Duplicate</button>
@@ -90,6 +90,8 @@
             </tbody>
           </table>
           <button class="btn btn-success" @click="addAward">Add award</button>
+          <hr>
+          <button class="btn btn-success">Upload all awards</button>
         </div>
       </div>
 
