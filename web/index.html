@@ -58,8 +58,38 @@
             </div>
           </div>
         </div>
-        <div class="tab-pane fade" id="awards" role="tabpanel" aria-labelledby="awards-tab">...</div>
-        <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">...</div>
+
+        <div class="tab-pane fade" id="awards" role="tabpanel" aria-labelledby="awards-tab">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Award Name</th>
+                <th>Team (recommended)</th>
+                <th>Person (optional)</th>
+                <th>Options</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="award in awards" :key="award.id">
+                <td>
+                  <input class="form-control" title="Award Name" placeholder="Award Name" v-model="award.name">
+                </td>
+                <td>
+                  <input class="form-control" type="number" title="Team" placeholder="Team" v-model="award.team">
+                </td>
+                <td>
+                  <input class="form-control" title="Person" placeholder="Person" v-model="award.person">
+                </td>
+                <td>
+                  <button class="btn btn-info" @click="duplicateAward(award)">Duplicate</button>
+                  <button class="btn btn-danger" @click="clearAward(award)">Clear</button>
+                  <button class="btn btn-danger" @click="deleteAward(award)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <button class="btn btn-success" @click="addAward">Add award</button>
+        </div>
       </div>
 
     </div>

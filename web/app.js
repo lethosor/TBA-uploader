@@ -14,12 +14,21 @@ function makeAddEventUI() {
     };
 }
 
+function makeAward() {
+    return {
+        name: '',
+        team: '',
+        person: '',
+    };
+}
+
 app = new Vue({
     el: '#main',
     data: {
         events: Object.keys(STORED_EVENTS),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
+        awards: [makeAward()],
     },
     computed: {
         eventSelected: function() {
@@ -60,6 +69,24 @@ app = new Vue({
                 return event != oldEvent;
             }.bind(this));
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
+        },
+
+        addAward: function() {
+            this.awards.push(makeAward());
+        },
+        duplicateAward: function(award) {
+            var newAward = makeAward();
+            newAward.name = award.name;
+            this.awards.splice(this.awards.indexOf(award) + 1, 0, newAward);
+        },
+        clearAward: function(award) {
+            award.name = award.team = award.person = '';
+        },
+        deleteAward: function(award) {
+            var index = this.awards.indexOf(award);
+            if (index >= 0) {
+                this.awards.splice(index, 1);
+            }
         },
     },
     mounted: function() {
