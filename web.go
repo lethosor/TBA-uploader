@@ -23,7 +23,7 @@ func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
     params, ok := getRequestEventParams(r)
     if !ok {
         w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing params"))
+        w.Write([]byte("missing event/auth API parameters"))
         return
     }
     body, err := ioutil.ReadAll(r.Body)
@@ -36,7 +36,7 @@ func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
     res, err := sendTBARequest(path, body, params)
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("request failed: %s", err)))
+        w.Write([]byte(fmt.Sprintf("TBA request failed: %s", err)))
         return
     }
 

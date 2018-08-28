@@ -91,7 +91,8 @@
           </table>
           <button class="btn btn-success" @click="addAward">Add award</button>
           <hr>
-          <button class="btn btn-success">Upload all awards</button>
+          <button class="btn btn-success" @click="uploadAwards" :disabled="uploadingAwards">Upload all awards</button>
+          <span>{{awardStatus}}</span>
         </div>
       </div>
 

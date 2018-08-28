@@ -14,6 +14,20 @@ if (!Array.isArray(STORED_AWARDS) || STORED_AWARDS.length == 0) {
     STORED_AWARDS = [makeAward()];
 }
 
+function sendApiRequest(url, event, body) {
+    return $.ajax({
+        type: 'POST',
+        url: url,
+        contentType: 'application/json',
+        data: JSON.stringify(body),
+        headers: {
+            'X-Event': event,
+            'X-Auth': STORED_EVENTS[event].auth,
+            'X-Secret': STORED_EVENTS[event].secret,
+        },
+    });
+}
+
 function makeAddEventUI() {
     return {
         event: '',
@@ -38,6 +52,8 @@ app = new Vue({
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
         awards: STORED_AWARDS,
+        awardStatus: '',
+        uploadingAwards: false,
     },
     computed: {
         eventSelected: function() {
@@ -108,6 +124,27 @@ app = new Vue({
         },
         saveAwards: function() {
             localStorage.setItem('awards', JSON.stringify(this.awards));
+        },
+        uploadAwards: function() {
+            var json = this.awards.map(function(award) {
+                return {
+                    name_str: award.name,
+                    team_key: award.team ? 'frc' + award.team : null,
+                    awardee: award.person || null,
+                };
+            });
+            this.uploadingAwards = true;
+            this.awardStatus = 'Uploading...';
+            var request = sendApiRequest('/api/awards/upload', this.selectedEvent, json);
+            request.always(function() {
+                this.uploadingAwards = false;
+            }.bind(this));
+            request.then(function() {
+                this.awardStatus = '';
+            }.bind(this));
+            request.fail(function(res) {
+                this.awardStatus = 'Error: ' + res.responseText;
+            }.bind(this));
         },
     },
     watch: {
