@@ -2,6 +2,8 @@
 set -e
 export CGO_ENABLED=0
 
+cd $(dirname "$0")
+
 if git describe --tags --exact-match >/dev/null 2>&1; then
     version="$(git describe --tags --abbrev=0)"
 else
@@ -16,6 +18,9 @@ echo "Version: $version"
 rel_dir="bin/release/$version"
 mkdir -p "$rel_dir"
 echo "Build folder: $rel_dir"
+
+echo "Generating assets..."
+go-bindata-assetfs web/...
 
 build_release() {
     build_dir="$rel_dir/$1-$2"

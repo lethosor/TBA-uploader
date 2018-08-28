@@ -7,4 +7,5 @@ run_cmd() {
 }
 
 cd $(dirname "$0")
+run_cmd go-bindata-assetfs web/...
 run_cmd go build -o bin/TBA-uploader

@@ -55,9 +55,14 @@ func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("awards/update", w, r)
 }
 
-func RunWebServer(port int) {
+func RunWebServer(port int, dev bool) {
     r := mux.NewRouter()
-    fs := http.Dir("./web/")
+    var fs http.FileSystem
+    if dev {
+        fs = http.Dir("./web/")
+    } else {
+        fs = assetFS()
+    }
     r.HandleFunc("/api/awards/upload", apiUploadAwards)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
