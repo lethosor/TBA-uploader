@@ -19,7 +19,7 @@ func getRequestEventParams(r *http.Request) (*eventParams, bool) {
     return nil, false
 }
 
-func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
+func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
     params, ok := getRequestEventParams(r)
     if !ok {
         w.WriteHeader(http.StatusBadRequest)
@@ -33,7 +33,7 @@ func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    res, err := sendTBARequest("awards/update", body, params)
+    res, err := sendTBARequest(path, body, params)
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte(fmt.Sprintf("request failed: %s", err)))
@@ -48,6 +48,10 @@ func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
     }
 
     w.Write([]byte("ok"));
+}
+
+func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("awards/update", w, r)
 }
 
 func RunWebServer(port int) {
