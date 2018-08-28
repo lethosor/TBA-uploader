@@ -8,6 +8,7 @@
   </head>
   <body>
     <div class="container hidden" id="main">
+      <div class="float-right">{{version}}</div>
       <h2>TBA uploader<span v-if="eventSelected"> - {{selectedEvent}}</span></h2>
 
       <ul class="nav nav-tabs" role="tablist">
@@ -101,6 +102,7 @@
     <script type="text/javascript" src="jquery.min.js"></script>
     <script type="text/javascript" src="bootstrap.min.js"></script>
     <script type="text/javascript" src="vue.js"></script>
+    <script type="text/javascript" src="/js/version.js"></script>
     <script type="text/javascript" src="app.js"></script>
   </body>
 </html>

@@ -51,6 +51,10 @@ func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("ok"));
 }
 
+func jsVersion(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte(fmt.Sprintf(";VERSION=\"%s\";", Version)))
+}
+
 func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("awards/update", w, r)
 }
@@ -63,6 +67,7 @@ func RunWebServer(port int, dev bool) {
     } else {
         fs = assetFS()
     }
+    r.HandleFunc("/js/version.js", jsVersion)
     r.HandleFunc("/api/awards/upload", apiUploadAwards)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)

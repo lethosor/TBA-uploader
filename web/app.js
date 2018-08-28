@@ -48,6 +48,7 @@ function makeAward() {
 app = new Vue({
     el: '#main',
     data: {
+        version: window.VERSION || 'missing version',
         events: Object.keys(STORED_EVENTS),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),

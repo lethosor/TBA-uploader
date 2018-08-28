@@ -5,7 +5,7 @@ import (
     "log"
 )
 
-var Version = "unknown"
+var Version = "dev"
 
 func main() {
     log.Printf("Version: %s\n", Version)
