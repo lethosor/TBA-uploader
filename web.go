@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "io/ioutil"
+    "log"
     "net/http"
 
     "github.com/gorilla/mux"
@@ -60,6 +61,6 @@ func RunWebServer(port int) {
     r.HandleFunc("/api/awards/upload", apiUploadAwards)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
-    fmt.Printf("Serving on %s\n", addr);
+    log.Printf("Serving on %s\n", addr);
     http.ListenAndServe(addr, r);
 }
