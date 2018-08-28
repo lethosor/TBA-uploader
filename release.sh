@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e
 export CGO_ENABLED=0
 
@@ -7,14 +7,17 @@ if git describe --tags --exact-match >/dev/null 2>&1; then
 else
     version="$(git describe --tags || true)"
 fi
-test -n "$version" || (echo "Unknown version - missing git tags?" && exit 1)
+if test -z "$version"; then
+    echo "Unknown version - missing git tags?"
+    exit 1
+fi
 echo "Version: $version"
 
 rel_dir="bin/release/$version"
 mkdir -p "$rel_dir"
 echo "Build folder: $rel_dir"
 
-function build_release() {
+build_release() {
     build_dir="$rel_dir/$1-$2"
     exe_name="TBA-uploader"
     if [ "$1" = "windows" ]; then
