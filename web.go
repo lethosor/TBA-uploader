@@ -59,6 +59,10 @@ func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("awards/update", w, r)
 }
 
+func apiUploadMatches(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("matches/update", w, r)
+}
+
 func RunWebServer(port int, dev bool) {
     r := mux.NewRouter()
     var fs http.FileSystem
@@ -69,6 +73,7 @@ func RunWebServer(port int, dev bool) {
     }
     r.HandleFunc("/js/version.js", jsVersion)
     r.HandleFunc("/api/awards/upload", apiUploadAwards)
+    r.HandleFunc("/api/matches/upload", apiUploadMatches)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
     log.Printf("Serving on %s\n", addr);
