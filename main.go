@@ -15,7 +15,7 @@ func main() {
     dev := flag.Bool("dev", false, "enable developer mode (serve files from disk)")
     flag.Parse()
     if !*no_fms {
-        checkFMSConnection(*fms_server)
+        go checkFMSConnection(*fms_server)
     }
     RunWebServer(*port, *dev);
 }

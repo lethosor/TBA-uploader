@@ -34,7 +34,7 @@ build_release() {
     zip_name="TBA-uploader-$version-$3.zip"
     echo "[$1/$2] Generating $zip_name"
     pushd "$build_dir" >/dev/null
-    zip -r "$zip_name" "$exe_name"
+    zip "$zip_name" "$exe_name"
     mv "$zip_name" ../
     popd >/dev/null
     echo "[$1/$2] Done"

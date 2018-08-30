@@ -12,8 +12,8 @@ func checkFMSConnection(fms_server string) {
     client := http.Client{Timeout: 5 * time.Second}
     _, err := client.Get(fms_server)
     if err != nil {
-        log.Println("Failed to connect to FMS!\n")
-        panic(err)
+        log.Println("Failed to connect to FMS!")
+    } else {
+        log.Println("Found FMS")
     }
-    log.Println("Found FMS")
 }
