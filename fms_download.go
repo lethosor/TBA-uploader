@@ -7,9 +7,10 @@ import (
     "net/http"
     "os"
     "path"
+    "strings"
     "time"
 
-    // "github.com/PuerkitoBio/goquery"
+    "github.com/PuerkitoBio/goquery"
 )
 
 var FMSServer string
@@ -56,16 +57,36 @@ func downloadFile(folder string, filename string, url string) (string, error) {
 
 }
 
-func downloadMatches(level int, folder string, new_only bool) {
+func downloadMatches(level int, folder string, new_only bool) error {
     url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSServer, level)
     folder = path.Join(folder, fmt.Sprintf("level%d", level))
-    downloadFile(folder, "matches.html", url)
+    filename, err := downloadFile(folder, "matches.html", url)
+    if err != nil {
+        return err
+    }
+    reader, err := os.Open(filename)
+    if err != nil {
+        return err
+    }
+    dom, err := goquery.NewDocumentFromReader(reader)
+    if err != nil {
+        return err
+    }
+    dom.Find("tr").Each(func(i int, row *goquery.Selection) {
+        match_url, _ := row.Find("a").First().Attr("href")
+        match_url = FMSServer + match_url
+        button := row.Find("button").First()
+        button_text := strings.Replace(button.Text(), " ", "", -1)
+        button_text = strings.Replace(button_text, "/", "-", -1)
+        downloadFile(path.Join(folder, "matches"), button_text + ".html", match_url)
+    })
+    return nil
 }
 
-func downloadNewMatches(level int, folder string) {
-    downloadMatches(level, folder, true)
+func downloadNewMatches(level int, folder string) error {
+    return downloadMatches(level, folder, true)
 }
 
-func downloadAllMatches(level int, folder string) {
-    downloadMatches(level, folder, false)
+func downloadAllMatches(level int, folder string) error {
+    return downloadMatches(level, folder, false)
 }
