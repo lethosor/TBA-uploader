@@ -1,6 +1,7 @@
 package main
 
 import (
+    "errors"
     "fmt"
     "io"
     "log"
@@ -28,65 +29,85 @@ func checkFMSConnection() {
     }
 }
 
-func downloadFile(folder string, filename string, url string) (string, error) {
+func downloadFile(folder string, filename string, url string, overwrite bool) (filepath string, ok bool, err error) {
+    // return conditions:
+    //      filepath: always
+    //      ok: if the file exists now
+    //      err: if the file was not downloaded
     folder = path.Join(FMSDataFolder, folder)
     os.MkdirAll(folder, os.ModePerm)
-    filepath := path.Join(folder, filename)
+    filepath = path.Join(folder, filename)
+    ok = false
+    if !overwrite {
+        if _, err := os.Stat(filepath); err == nil {
+            // exists, don't overwrite
+            return filepath, true, errors.New("already downloaded")
+        }
+    }
 
     // Create the file
     out, err := os.Create(filepath)
     if err != nil {
-        return filepath, err
+        return
     }
     defer out.Close()
 
     // Get the data
     resp, err := http.Get(url)
     if err != nil {
-        return filepath, err
+        return
     }
     defer resp.Body.Close()
 
     // Write the body to file
     _, err = io.Copy(out, resp.Body)
     if err != nil {
-        return filepath, err
+        return
     }
 
-    return filepath, nil
-
+    return filepath, true, nil
 }
 
-func downloadMatches(level int, folder string, new_only bool) error {
+func downloadMatches(level int, folder string, new_only bool) ([]string, error) {
     url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSServer, level)
     folder = path.Join(folder, fmt.Sprintf("level%d", level))
-    filename, err := downloadFile(folder, "matches.html", url)
-    if err != nil {
-        return err
+    filename, ok, err := downloadFile(folder, "matches.html", url, true)
+    if !ok {
+        return nil, err
     }
     reader, err := os.Open(filename)
     if err != nil {
-        return err
+        return nil, err
     }
     dom, err := goquery.NewDocumentFromReader(reader)
     if err != nil {
-        return err
+        return nil, err
     }
-    dom.Find("tr").Each(func(i int, row *goquery.Selection) {
-        match_url, _ := row.Find("a").First().Attr("href")
+    var files []string
+    dom.Find("tbody tr").Each(func(i int, row *goquery.Selection) {
+        match_url, ok := row.Find("a").First().Attr("href")
+        if !ok {
+            log.Printf("Couldn't find link in row %d\n", i)
+            return
+        }
         match_url = FMSServer + match_url
         button := row.Find("button").First()
         button_text := strings.Replace(button.Text(), " ", "", -1)
         button_text = strings.Replace(button_text, "/", "-", -1)
-        downloadFile(path.Join(folder, "matches"), button_text + ".html", match_url)
+        filename, ok, err := downloadFile(path.Join(folder, "matches"), button_text + ".html", match_url, !new_only)
+        if !ok {
+            log.Printf("Failed to download %s: %s\n", button_text, err)
+        } else if err == nil {
+            files = append(files, filename)
+        }
     })
-    return nil
+    return files, nil
 }
 
-func downloadNewMatches(level int, folder string) error {
+func downloadNewMatches(level int, folder string) ([]string, error) {
     return downloadMatches(level, folder, true)
 }
 
-func downloadAllMatches(level int, folder string) error {
+func downloadAllMatches(level int, folder string) ([]string, error) {
     return downloadMatches(level, folder, false)
 }
