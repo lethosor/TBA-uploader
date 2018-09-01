@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"os"
@@ -10,7 +11,7 @@ import (
 )
 
 func main() {
-	val := ParseHTMLtoJSON("raw0.html")
+	val, _ := ParseHTMLtoJSON("raw0.html")
 	fmt.Println(string(val))
 }
 
@@ -25,7 +26,7 @@ func split_and_strip(text string, separator string) ([]string) {
 	return result
 }
 
-func ParseHTMLtoJSON(filename string) ([]byte) {
+func ParseHTMLtoJSON(filename string) ([]byte, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -34,14 +35,14 @@ func ParseHTMLtoJSON(filename string) ([]byte) {
 	r, err := os.Open(filename)
 	if err != nil {
 		fmt.Println("Error opening file", filename)
-		os.Exit(1)
+		return nil, errors.New("Error")
 	}
 
 	// Read from file
 	dom, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
 		fmt.Println("Error reading from file", filename)
-		os.Exit(1)
+		return nil, errors.New("Error")
 	}
 
 	// Parse file into map
@@ -49,6 +50,7 @@ func ParseHTMLtoJSON(filename string) ([]byte) {
 	elements["blue"] = make(map[string]string)
 	elements["red"] = make(map[string]string)
 
+	parse_error := ""
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
 		columns := s.Children()
 		if columns.Length() == 3 {
@@ -134,7 +136,7 @@ func ParseHTMLtoJSON(filename string) ([]byte) {
 				var blue_played string
 				var red_played string
 				if val, err := strconv.Atoi(blue_total); err != nil {
-					os.Exit(1)
+					parse_error = "Error"
 				} else if val == 0 {
 					blue_played = "0"
 				} else {
@@ -145,7 +147,7 @@ func ParseHTMLtoJSON(filename string) ([]byte) {
 					}
 				}
 				if val, err := strconv.Atoi(red_total); err != nil {
-					os.Exit(1)
+					parse_error = "Error"
 				} else if val == 0 {
 					red_played = "0"
 				} else {
@@ -166,12 +168,12 @@ func ParseHTMLtoJSON(filename string) ([]byte) {
 				blue_played := "0"
 				red_played := "0"
 				if val, err := strconv.Atoi(blue_total); err != nil {
-					os.Exit(1)
+					parse_error = "Error"
 				} else if val == 3 && strings.HasSuffix(infos[0], "Played") {
 					blue_played = "3"
 				}
 				if val, err := strconv.Atoi(red_total); err != nil {
-					os.Exit(1)
+					parse_error = "Error"
 				} else if val == 3 && strings.HasSuffix(infos[0], "Played") {
 					red_played = "3"
 				}
@@ -184,13 +186,15 @@ func ParseHTMLtoJSON(filename string) ([]byte) {
 				elements["red"][identifier] = strings.TrimSpace(infos[2])
 			}
 		}
-
 	})
+	if parse_error != "" {
+		return nil, errors.New(parse_error)
+	}
 
 	res, err := json.Marshal(elements)
 	if err != nil {
 		fmt.Println("Failed to convert result to JSON:", err)
-		os.Exit(1)
+		return nil, errors.New("Error")
 	}
-	return res
+	return res, nil
 }
