@@ -2,18 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"os"
 	"strconv"
 	"strings"
-)
 
-func main() {
-	val, _ := ParseHTMLtoJSON("raw0.html")
-	fmt.Println(string(val))
-}
+	"github.com/PuerkitoBio/goquery"
+)
 
 func split_and_strip(text string, separator string) ([]string) {
 	// Split text into parts at separator character. Remove whitespace from parts.
@@ -34,15 +29,13 @@ func ParseHTMLtoJSON(filename string) ([]byte, error) {
 	// Open file
 	r, err := os.Open(filename)
 	if err != nil {
-		fmt.Println("Error opening file", filename)
-		return nil, errors.New("Error")
+		return nil, fmt.Errorf("Error opening file", filename)
 	}
 
 	// Read from file
 	dom, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
-		fmt.Println("Error reading from file", filename)
-		return nil, errors.New("Error")
+		return nil, fmt.Errorf("Error reading from file", filename)
 	}
 
 	// Parse file into map
@@ -188,13 +181,12 @@ func ParseHTMLtoJSON(filename string) ([]byte, error) {
 		}
 	})
 	if parse_error != "" {
-		return nil, errors.New(parse_error)
+		return nil, fmt.Errorf("Parse error: ", parse_error)
 	}
 
 	res, err := json.Marshal(elements)
 	if err != nil {
-		fmt.Println("Failed to convert result to JSON:", err)
-		return nil, errors.New("Error")
+		return nil, fmt.Errorf("Failed to convert result to JSON: ", err)
 	}
 	return res, nil
 }
