@@ -52,6 +52,12 @@ app = new Vue({
         events: Object.keys(STORED_EVENTS),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
+
+        matchLevel: 2,
+        inMatchRequest: false,
+        matchError: '',
+        pendingMatches: [],
+
         awards: STORED_AWARDS,
         awardStatus: '',
         uploadingAwards: false,
@@ -104,6 +110,20 @@ app = new Vue({
                 return event != oldEvent;
             }.bind(this));
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
+        },
+
+        fetchNewMatches: function() {
+            this.inMatchRequest = true;
+            this.matchError = '';
+            $.get('/api/matches/fetch', {
+                level: this.matchLevel,
+            }).always(function() {
+                this.inMatchRequest = false;
+            }.bind(this)).then(function(data) {
+                this.pendingMatches = JSON.parse(data);
+            }.bind(this)).fail(function(res) {
+                this.matchError = res.responseText;
+            }.bind(this));
         },
 
         addAward: function() {

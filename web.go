@@ -6,7 +6,9 @@ import (
     "io/ioutil"
     "log"
     "net/http"
+    "path/filepath"
     "strconv"
+    "strings"
 
     "github.com/gorilla/mux"
 )
@@ -18,6 +20,7 @@ type AllianceSummary struct {
 }
 
 type MatchSummary struct {
+    MatchId string `json:"match_id"`
     Red AllianceSummary `json:"red"`
     Blue AllianceSummary `json:"blue"`
 }
@@ -96,10 +99,19 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    info := make(map[string]MatchSummary)
+    info := make([]MatchSummary, 0)
     if files != nil {
         for i := 0; i < len(files); i++ {
-            info[files[i]] = MatchSummary{}
+            fname := filepath.Base(files[i])
+            info = append(info, MatchSummary{
+                MatchId: strings.TrimSuffix(fname, filepath.Ext(fname)),
+                Red: AllianceSummary{
+                    Teams: make([]int, 3),
+                },
+                Blue: AllianceSummary{
+                    Teams: make([]int, 3),
+                },
+            })
         }
     }
 

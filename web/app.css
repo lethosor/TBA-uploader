@@ -14,3 +14,27 @@ body {
 .form-inline .form-control, .form-inline .btn {
     margin: 0 0.5rem;
 }
+
+.warning {
+    color: #f60;
+}
+
+table.score td {
+    border: 1px solid #ccc;
+}
+
+td.red {
+    background-color: #fdd;
+}
+
+td.red.score {
+    background-color: #fbb;
+}
+
+td.blue {
+    background-color: #ddf;
+}
+
+td.blue.score {
+    background-color: #bbf;
+}
