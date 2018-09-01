@@ -21,9 +21,13 @@ func split_and_strip(text string, separator string) ([]string) {
 }
 
 type fmsScoreInfo struct {
-	auto int
-	teleop int
-	fouls int
+	auto int64
+	teleop int64
+	fouls int64
+	total int64
+
+	autoRunPoints int64
+	autoSwitchSec int64
 }
 
 func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
@@ -65,10 +69,10 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 		"red": make(map[string]interface{}),
 	}
 
-	// var scoreInfo struct {
-	// 	blue fmsScoreInfo
-	// 	red fmsScoreInfo
-	// }
+	var scoreInfo struct {
+		blue fmsScoreInfo
+		red fmsScoreInfo
+	}
 
 	parse_error := ""
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
@@ -93,6 +97,8 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				breakdown["red"]["totalPoints"] = red_score
 				alliances["blue"]["score"] = blue_score
 				alliances["red"]["score"] = red_score
+				scoreInfo.blue.total = blue_score
+				scoreInfo.red.total = red_score
 			} else if identifier == "Teams" {
 				blue_teams := split_and_strip(infos[0], "•")
 				red_teams := split_and_strip(infos[2], "•")
@@ -125,6 +131,26 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				breakdown["red"]["autoRobot1"] = red_auto[0]
 				breakdown["red"]["autoRobot2"] = red_auto[1]
 				breakdown["red"]["autoRobot3"] = red_auto[2]
+			} else if identifier == "Auto-Run Points" {
+				blue_autorun_points, err := strconv.ParseInt(infos[0], 10, 0)
+				red_autorun_points, err := strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "auto-run points failed"
+				}
+				scoreInfo.blue.autoRunPoints = blue_autorun_points
+				breakdown["blue"]["autoRunPoints"] = blue_autorun_points
+				scoreInfo.red.autoRunPoints = red_autorun_points
+				breakdown["red"]["autoRunPoints"] = red_autorun_points
+			} else if identifier == "Autonomous" {
+				blue_auto_points, err := strconv.ParseInt(infos[0], 10, 0)
+				red_auto_points, err := strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "autonomous points failed"
+				}
+				scoreInfo.blue.auto = blue_auto_points
+				breakdown["blue"]["autoPoints"] = blue_auto_points
+				scoreInfo.red.auto = red_auto_points
+				breakdown["red"]["autoPoints"] = red_auto_points
 			} else if identifier == "Switch / Scale Ownership Seconds" {
 				period := "auto"
 				if _, in := breakdown["blue"]["autoScaleOwnershipSec"]; in {
@@ -136,6 +162,10 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				breakdown["blue"][period + "ScaleOwnershipSec"], err = strconv.ParseInt(blue_ownership[1], 10, 0)
 				breakdown["red"][period + "SwitchOwnershipSec"], err = strconv.ParseInt(red_ownership[0], 10, 0)
 				breakdown["red"][period + "ScaleOwnershipSec"], err = strconv.ParseInt(red_ownership[1], 10, 0)
+				if period == "auto" {
+					scoreInfo.blue.autoSwitchSec, err = strconv.ParseInt(blue_ownership[0], 10, 0)
+					scoreInfo.red.autoSwitchSec, err = strconv.ParseInt(red_ownership[0], 10, 0)
+				}
 				if err != nil {
 					parse_error = period + " ownership seconds failed"
 				}
@@ -159,6 +189,12 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				if err != nil {
 					parse_error = "teleop force seconds failed"
 				}
+			} else if identifier == "Vault Points" {
+				breakdown["blue"]["vaultPoints"], err = strconv.ParseInt(infos[0], 10, 0)
+				breakdown["red"]["vaultPoints"], err = strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "vault points failed"
+				}
 			} else if identifier == "Endgame" {
 				blue_endgame := split_and_strip(infos[0], "•")
 				red_endgame := split_and_strip(infos[2], "•")
@@ -168,6 +204,22 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				breakdown["red"]["endgameRobot1"] = red_endgame[0]
 				breakdown["red"]["endgameRobot2"] = red_endgame[1]
 				breakdown["red"]["endgameRobot3"] = red_endgame[2]
+			} else if identifier == "Endgame Points" {
+				breakdown["blue"]["endgamePoints"], err = strconv.ParseInt(infos[0], 10, 0)
+				breakdown["red"]["endgamePoints"], err = strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "endgame points failed"
+				}
+			} else if identifier == "Teleop" {
+				blue_teleop_points, err := strconv.ParseInt(infos[0], 10, 0)
+				red_teleop_points, err := strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "teleop points failed"
+				}
+				breakdown["blue"]["teleopPoints"] = blue_teleop_points
+				breakdown["red"]["teleopPoints"] = red_teleop_points
+				scoreInfo.blue.teleop = blue_teleop_points
+				scoreInfo.red.teleop = red_teleop_points
 			} else if identifier == "Fouls/Techs Committed" {
 				blue_foul := split_and_strip(infos[0], "•")
 				red_foul := split_and_strip(infos[2], "•")
@@ -178,6 +230,16 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				if err != nil {
 					parse_error = "foul/tech count failed"
 				}
+			} else if identifier == "Foul Points" {
+				blue_foul_points, err := strconv.ParseInt(infos[0], 10, 0)
+				red_foul_points, err := strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "foul points failed"
+				}
+				breakdown["blue"]["foulPoints"] = blue_foul_points
+				breakdown["red"]["foulPoints"] = red_foul_points
+				scoreInfo.blue.fouls = blue_foul_points
+				scoreInfo.red.fouls = red_foul_points
 			} else if identifier == "Force Powerup" || identifier == "Boost Powerup" {
 				powerup := string(identifier[0:5])
 				// first character
