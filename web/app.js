@@ -112,11 +112,12 @@ app = new Vue({
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
         },
 
-        fetchNewMatches: function() {
+        fetchMatches: function(all) {
             this.inMatchRequest = true;
             this.matchError = '';
             $.get('/api/matches/fetch', {
                 level: this.matchLevel,
+                all: all ? '1' : '',
             }).always(function() {
                 this.inMatchRequest = false;
             }.bind(this)).then(function(data) {
