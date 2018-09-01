@@ -45,28 +45,29 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 
 	all_json := make(map[string]interface{})
 
-	// alliances := map[string]map[string]interface{} {
-	// 	"blue": map[string]interface{} {
-	// 		"teams": make([]string, 3),
-	// 		"surrogates": make([]string, 0),
-	// 		"dqs": make([]string, 0),
-	// 		"score": -1,
-	// 	},
-	// 	"red": map[string]interface{} {
-	// 		"teams": make([]string, 3),
-	// 		"surrogates": make([]string, 0),
-	// 		"dqs": make([]string, 0),
-	// 		"score": -1,
-	// 	},
-	// }
+	alliances := map[string]map[string]interface{} {
+		"blue": map[string]interface{} {
+			"teams": make([]string, 3),
+			"surrogates": make([]string, 0),
+			"dqs": make([]string, 0),
+			"score": -1,
+		},
+		"red": map[string]interface{} {
+			"teams": make([]string, 3),
+			"surrogates": make([]string, 0),
+			"dqs": make([]string, 0),
+			"score": -1,
+		},
+	}
 
 	breakdown := map[string]map[string]interface{} {
 		"blue": make(map[string]interface{}),
 		"red": make(map[string]interface{}),
 	}
-	// scoreInfo := map[string]matchScoreInfo {
-	// 	"blue": matchScoreInfo{},
-	// 	"red": matchScoreInfo{},
+
+	// var scoreInfo struct {
+	// 	blue fmsScoreInfo
+	// 	red fmsScoreInfo
 	// }
 
 	parse_error := ""
@@ -82,15 +83,29 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 			// Handle each data row
 			if identifier == "" {
 				// Skip
+			} else if identifier == "Final Score" {
+				blue_score, err := strconv.ParseInt(infos[0], 10, 0)
+				red_score, err := strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "final score failed"
+				}
+				breakdown["blue"]["totalPoints"] = blue_score
+				breakdown["red"]["totalPoints"] = red_score
+				alliances["blue"]["score"] = blue_score
+				alliances["red"]["score"] = red_score
 			} else if identifier == "Teams" {
 				blue_teams := split_and_strip(infos[0], "•")
 				red_teams := split_and_strip(infos[2], "•")
-				breakdown["blue"]["team1"] = blue_teams[0]
-				breakdown["blue"]["team2"] = blue_teams[1]
-				breakdown["blue"]["team3"] = blue_teams[2]
-				breakdown["red"]["team1"] = red_teams[0]
-				breakdown["red"]["team2"] = red_teams[1]
-				breakdown["red"]["team3"] = red_teams[2]
+				alliances["blue"]["teams"] = []string{
+					"frc" + blue_teams[0],
+					"frc" + blue_teams[1],
+					"frc" + blue_teams[2],
+				}
+				alliances["red"]["teams"] = []string{
+					"frc" + red_teams[0],
+					"frc" + red_teams[1],
+					"frc" + red_teams[2],
+				}
 			} else if identifier == "Ownership Points" {
 				key := "autoOwnershipPoints"
 				if _, in := breakdown["blue"][key]; in {
@@ -231,6 +246,7 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)
 	}
 
+	all_json["alliances"] = alliances
 	all_json["score_breakdown"] = breakdown
 
 	return all_json, nil
