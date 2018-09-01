@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -21,7 +20,7 @@ func split_and_strip(text string, separator string) ([]string) {
 	return result
 }
 
-func ParseHTMLtoJSON(filename string) ([]byte, error) {
+func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -29,14 +28,16 @@ func ParseHTMLtoJSON(filename string) ([]byte, error) {
 	// Open file
 	r, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening file", filename)
+		return nil, fmt.Errorf("Error opening file: %s", filename)
 	}
 
 	// Read from file
 	dom, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading from file", filename)
+		return nil, fmt.Errorf("Error reading from file: %s", filename)
 	}
+
+	all_json := make(map[string]interface{})
 
 	// Parse file into map
 	elements := make(map[string]map[string]string)
@@ -181,12 +182,10 @@ func ParseHTMLtoJSON(filename string) ([]byte, error) {
 		}
 	})
 	if parse_error != "" {
-		return nil, fmt.Errorf("Parse error: ", parse_error)
+		return nil, fmt.Errorf("Parse error: %s", parse_error)
 	}
 
-	res, err := json.Marshal(elements)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to convert result to JSON: ", err)
-	}
-	return res, nil
+	all_json["score_breakdown"] = elements
+
+	return all_json, nil
 }

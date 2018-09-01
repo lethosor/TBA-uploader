@@ -1,6 +1,7 @@
 package main
 
 import (
+    "encoding/json"
     "fmt"
     "os"
     "testing"
@@ -30,4 +31,15 @@ func TestDownloadMatches(t *testing.T) {
     for i := 0; i < 5 && i < len(files); i++ {
         fmt.Printf("files[%d] = %s\n", i, files[i])
     }
+
+    if (len(files) == 0) {
+        t.Fatal("no matches downloaded")
+    }
+
+    match_json, err := ParseHTMLtoJSON(files[0])
+    if err != nil {
+        t.Error("ParseHTMLtoJSON: ", err)
+    }
+    out, _ := json.MarshalIndent(match_json, "", "  ")
+    println(string(out))
 }
