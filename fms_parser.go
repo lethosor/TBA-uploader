@@ -28,6 +28,31 @@ type fmsScoreInfo struct {
 
 	autoRunPoints int64
 	autoSwitchSec int64
+	endgamePoints int64
+	baseRP int64  // win-loss-tie RP only
+}
+
+func addManualFields(breakdown map[string]interface{}, info fmsScoreInfo) {
+	rp := info.baseRP
+	// adjust should be negative when total = 0
+	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
+	// no way to tell if switch was lost before T=0, so assume it wasn't
+	breakdown["autoSwitchAtZero"] = info.autoSwitchSec > 0
+	if info.autoSwitchSec > 0 && info.autoRunPoints == 15 {
+		breakdown["autoQuestRankingPoint"] = true
+		rp++
+	} else {
+		breakdown["autoQuestRankingPoint"] = false
+	}
+
+	if info.endgamePoints >= 90 {
+		breakdown["faceTheBossRankingPoint"] = true
+		rp++
+	} else {
+		breakdown["faceTheBossRankingPoint"] = false
+	}
+
+	breakdown["rp"] = rp
 }
 
 func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
@@ -99,6 +124,16 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				alliances["red"]["score"] = red_score
 				scoreInfo.blue.total = blue_score
 				scoreInfo.red.total = red_score
+				if (blue_score == red_score) {
+					scoreInfo.blue.baseRP = 1
+					scoreInfo.red.baseRP = 1
+				} else if (blue_score > red_score) {
+					scoreInfo.blue.baseRP = 2
+					scoreInfo.red.baseRP = 0
+				} else {
+					scoreInfo.blue.baseRP = 0
+					scoreInfo.red.baseRP = 2
+				}
 			} else if identifier == "Teams" {
 				blue_teams := split_and_strip(infos[0], "•")
 				red_teams := split_and_strip(infos[2], "•")
@@ -205,11 +240,15 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				breakdown["red"]["endgameRobot2"] = red_endgame[1]
 				breakdown["red"]["endgameRobot3"] = red_endgame[2]
 			} else if identifier == "Endgame Points" {
-				breakdown["blue"]["endgamePoints"], err = strconv.ParseInt(infos[0], 10, 0)
-				breakdown["red"]["endgamePoints"], err = strconv.ParseInt(infos[2], 10, 0)
+				blue_endgame_points, err := strconv.ParseInt(infos[0], 10, 0)
+				red_endgame_points, err := strconv.ParseInt(infos[2], 10, 0)
 				if err != nil {
 					parse_error = "endgame points failed"
 				}
+				breakdown["blue"]["endgamePoints"] = blue_endgame_points
+				breakdown["red"]["endgamePoints"] = red_endgame_points
+				scoreInfo.blue.endgamePoints = blue_endgame_points
+				scoreInfo.red.endgamePoints = red_endgame_points
 			} else if identifier == "Teleop" {
 				blue_teleop_points, err := strconv.ParseInt(infos[0], 10, 0)
 				red_teleop_points, err := strconv.ParseInt(infos[2], 10, 0)
@@ -308,6 +347,9 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 	gamedata := dom.Find(".panel-body.text-center").Text()
 	breakdown["blue"]["tba_gameData"] = gamedata
 	breakdown["red"]["tba_gameData"] = gamedata
+
+	addManualFields(breakdown["blue"], scoreInfo.blue)
+	addManualFields(breakdown["red"], scoreInfo.red)
 
 	if parse_error != "" {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)
