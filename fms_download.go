@@ -34,7 +34,6 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
     //      filepath: always
     //      ok: if the file exists now
     //      err: if the file was not downloaded
-    folder = path.Join(FMSDataFolder, folder)
     os.MkdirAll(folder, os.ModePerm)
     filepath = path.Join(folder, filename)
     ok = false
@@ -70,7 +69,7 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
 
 func downloadMatches(level int, folder string, new_only bool) ([]string, error) {
     url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSServer, level)
-    folder = path.Join(folder, fmt.Sprintf("level%d", level))
+    folder = path.Join(FMSDataFolder, folder, fmt.Sprintf("level%d", level))
     filename, ok, err := downloadFile(folder, "matches.html", url, true)
     if !ok {
         return nil, err

@@ -6,6 +6,8 @@ import (
     "io/ioutil"
     "log"
     "net/http"
+    "os"
+    "path"
     "path/filepath"
     "strconv"
     "strings"
@@ -23,6 +25,7 @@ type MatchSummary struct {
     MatchId string `json:"match_id"`
     Red AllianceSummary `json:"red"`
     Blue AllianceSummary `json:"blue"`
+    Json string `json:"json"`
 }
 
 func getRequestEventParams(r *http.Request) (*eventParams, bool) {
@@ -103,14 +106,22 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     if files != nil {
         for i := 0; i < len(files); i++ {
             fname := filepath.Base(files[i])
+            folder := filepath.Dir(files[i])
+            fname_trimmed := strings.TrimSuffix(fname, filepath.Ext(fname))
+            fname_json := fname_trimmed + ".json"
+
+            match_json := []byte("{}")
+            ioutil.WriteFile(path.Join(folder, fname_json), match_json, os.ModePerm)
+
             info = append(info, MatchSummary{
-                MatchId: strings.TrimSuffix(fname, filepath.Ext(fname)),
+                MatchId: fname_trimmed,
                 Red: AllianceSummary{
                     Teams: make([]int, 3),
                 },
                 Blue: AllianceSummary{
                     Teams: make([]int, 3),
                 },
+                Json: string(match_json),
             })
         }
     }
