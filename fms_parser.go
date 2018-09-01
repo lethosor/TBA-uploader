@@ -50,7 +50,7 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 		if columns.Length() == 3 {
 			var infos [3]string
 			columns.Each(func(ii int, column *goquery.Selection){
-				infos[ii] = column.Text()
+				infos[ii] = strings.TrimSpace(column.Text())
 			})
 			identifier := infos[1]
 
@@ -162,13 +162,13 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 				blue_played := "0"
 				red_played := "0"
 				if val, err := strconv.Atoi(blue_total); err != nil {
-					parse_error = "Error"
-				} else if val == 3 && strings.HasSuffix(infos[0], "Played") {
+					parse_error = "Failed to parse blue levitate total"
+				} else if val == 3 && strings.HasSuffix(infos[0], ", Played") {
 					blue_played = "3"
 				}
 				if val, err := strconv.Atoi(red_total); err != nil {
-					parse_error = "Error"
-				} else if val == 3 && strings.HasSuffix(infos[0], "Played") {
+					parse_error = "Failed to parse red levitate total"
+				} else if val == 3 && strings.HasSuffix(infos[2], ", Played") {
 					red_played = "3"
 				}
 				elements["blue"]["vaultLevitateTotal"] = blue_total
