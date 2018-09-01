@@ -304,6 +304,11 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 			}
 		}
 	})
+
+	gamedata := dom.Find(".panel-body.text-center").Text()
+	breakdown["blue"]["tba_gameData"] = gamedata
+	breakdown["red"]["tba_gameData"] = gamedata
+
 	if parse_error != "" {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)
 	}
