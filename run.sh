@@ -8,4 +8,4 @@ run_cmd() {
 
 cd $(dirname "$0")
 ./build.sh
-run_cmd ./bin/TBA-uploader "$@"
+run_cmd ./bin/TBA-uploader "$@" -data-folder ./fms_data
