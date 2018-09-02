@@ -77,11 +77,11 @@
           <div><span class="warning">Warning:</span> do not click the above buttons when a match is running</div>
           <div class="alert alert-danger" v-if="matchError">{{matchError}}</div>
           <div v-if="matchSummaries.length">
-            <h3>Matches to upload</h3>
+            <h3>Matches to upload ({{matchSummaries.length}})</h3>
             <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Upload all</button>
             <div class="row">
               <div v-for="match in matchSummaries" class="col-md-6 col-lg-4">
-                <table class="table score">
+                <table class="table table-sm score">
                   <tbody>
                     <tr>
                       <td>{{match.id}}</td>
