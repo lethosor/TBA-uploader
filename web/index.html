@@ -76,24 +76,25 @@
           </div>
           <div><span class="warning">Warning:</span> do not click the above buttons when a match is running</div>
           <div class="alert alert-danger" v-if="matchError">{{matchError}}</div>
-          <div v-if="pendingMatches.length">
+          <div v-if="matchSummaries.length">
             <h3>Matches to upload</h3>
             <div class="row">
-              <div v-for="match in pendingMatches" class="col-md-6 col-lg-4">
+              <div v-for="match in matchSummaries" class="col-md-6 col-lg-4">
                 <table class="table score">
                   <tbody>
                     <tr>
-                      <td rowspan="2">{{match.match_id}}</td>
-                      <td class="red">{{match.red.teams[0]}}</td>
-                      <td class="red">{{match.red.teams[1]}}</td>
-                      <td class="red">{{match.red.teams[2]}}</td>
-                      <td class="red score">{{match.red.score}} ({{match.red.rp}})</td>
+                      <td>{{match.id}}</td>
+                      <td class="red">{{match.teams.red[0]}}</td>
+                      <td class="red">{{match.teams.red[1]}}</td>
+                      <td class="red">{{match.teams.red[2]}}</td>
+                      <td class="red score">{{match.score.red}} ({{match.rp.red}})</td>
                     </tr>
                     <tr>
-                      <td class="blue">{{match.blue.teams[0]}}</td>
-                      <td class="blue">{{match.blue.teams[1]}}</td>
-                      <td class="blue">{{match.blue.teams[2]}}</td>
-                      <td class="blue score">{{match.blue.score}} ({{match.blue.rp}})</td>
+                      <td>{{match.code}}</td>
+                      <td class="blue">{{match.teams.blue[0]}}</td>
+                      <td class="blue">{{match.teams.blue[1]}}</td>
+                      <td class="blue">{{match.teams.blue[2]}}</td>
+                      <td class="blue score">{{match.score.blue}} ({{match.rp.blue}})</td>
                     </tr>
                   </tbody>
                 </table>

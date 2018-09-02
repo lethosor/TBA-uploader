@@ -57,6 +57,7 @@ app = new Vue({
         inMatchRequest: false,
         matchError: '',
         pendingMatches: [],
+        matchSummaries: [],
 
         awards: STORED_AWARDS,
         awardStatus: '',
@@ -122,9 +123,34 @@ app = new Vue({
                 this.inMatchRequest = false;
             }.bind(this)).then(function(data) {
                 this.pendingMatches = JSON.parse(data);
+                this.matchSummaries = this.generateMatchSummaries(this.pendingMatches);
             }.bind(this)).fail(function(res) {
                 this.matchError = res.responseText;
             }.bind(this));
+        },
+        generateMatchSummaries: function(matches) {
+            var rmFRC = function(team) {
+                return team.replace('frc', '');
+            };
+            return matches.map(function(match) {
+                var breakdown = JSON.parse(match.score_breakdown);
+                return {
+                    id: '?',
+                    code: 'qm?',
+                    teams: {
+                        blue: match.alliances.blue.teams.map(rmFRC),
+                        red: match.alliances.red.teams.map(rmFRC),
+                    },
+                    score: {
+                        blue: match.alliances.blue.score,
+                        red: match.alliances.red.score,
+                    },
+                    rp: {
+                        blue: breakdown.blue.rp,
+                        red: breakdown.red.rp,
+                    },
+                }
+            });
         },
 
         addAward: function() {

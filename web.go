@@ -15,19 +15,6 @@ import (
     "github.com/gorilla/mux"
 )
 
-type AllianceSummary struct {
-    Teams []int `json:"teams"`
-    Score int `json:"score"`
-    Rp int `json:"rp"`
-}
-
-type MatchSummary struct {
-    MatchId string `json:"match_id"`
-    Red AllianceSummary `json:"red"`
-    Blue AllianceSummary `json:"blue"`
-    Json string `json:"json"`
-}
-
 func getRequestEventParams(r *http.Request) (*eventParams, bool) {
     if len(r.Header.Get("X-Event")) > 0 && len(r.Header.Get("X-Auth")) > 0 && len(r.Header.Get("X-Secret")) > 0 {
         return &eventParams{
@@ -102,7 +89,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    info := make([]MatchSummary, 0)
+    info := make([]map[string]interface{}, 0)
     if files != nil {
         for i := 0; i < len(files); i++ {
             fname := filepath.Base(files[i])
@@ -110,19 +97,29 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             fname_trimmed := strings.TrimSuffix(fname, filepath.Ext(fname))
             fname_json := fname_trimmed + ".json"
 
-            match_json := []byte("{}")
+            match_info, err := ParseHTMLtoJSON(files[i])
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", fname, err)))
+                return
+            }
+            score_bytes, err := json.Marshal(match_info["score_breakdown"])
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                w.Write([]byte(fmt.Sprintf("%s: score_breakdown serialization failed: %s", fname, err)))
+                return
+            }
+            match_info["score_breakdown"] = string(score_bytes)
+
+            match_json, err := json.Marshal(match_info)
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                w.Write([]byte(fmt.Sprintf("%s: JSON serialization failed %s", fname, err)))
+                return
+            }
             ioutil.WriteFile(path.Join(folder, fname_json), match_json, os.ModePerm)
 
-            info = append(info, MatchSummary{
-                MatchId: fname_trimmed,
-                Red: AllianceSummary{
-                    Teams: make([]int, 3),
-                },
-                Blue: AllianceSummary{
-                    Teams: make([]int, 3),
-                },
-                Json: string(match_json),
-            })
+            info = append(info, match_info)
         }
     }
 
