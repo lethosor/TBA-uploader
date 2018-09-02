@@ -166,6 +166,9 @@ func RunWebServer(port int, dev bool) {
     r.HandleFunc("/api/matches/upload", apiUploadMatches)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
-    log.Printf("Serving on %s\n", addr);
-    http.ListenAndServe(addr, r);
+    log.Printf("Serving on %s\n", addr)
+    err := http.ListenAndServe(addr, r)
+    if err != nil {
+        log.Fatalf("Could not start server: %s\n", err)
+    }
 }
