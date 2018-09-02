@@ -160,6 +160,26 @@ app = new Vue({
                 }
             });
         },
+        cleanMatches: function(matches) {
+            return matches.map(function(match) {
+                var match = Object.assign({}, match);
+                delete match._fms_id;
+                return match;
+            });
+        },
+        uploadMatches: function() {
+            this.matchError = '';
+            this.inMatchRequest = true;
+            var matches = this.cleanMatches(this.pendingMatches);
+            sendApiRequest('/api/awards/upload', this.selectedEvent, matches).always(function() {
+                this.inMatchRequest = false;
+            }.bind(this)).then(function() {
+                this.pendingMatches = [];
+                this.matchSummaries = [];
+            }.bind(this)).fail(function(res) {
+                this.matchError = res.responseText;
+            }.bind(this));
+        },
 
         addAward: function() {
             this.awards.push(makeAward());
