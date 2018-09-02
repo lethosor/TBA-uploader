@@ -103,7 +103,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             fname_trimmed := strings.TrimSuffix(fname, filepath.Ext(fname))
             fname_json := fname_trimmed + ".json"
 
-            match_info, err := ParseHTMLtoJSON(files[i])
+            match_info, err := ParseHTMLtoJSON(files[i], level == 3)
             if err != nil {
                 w.WriteHeader(http.StatusInternalServerError)
                 w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", fname, err)))
@@ -116,7 +116,6 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 return
             }
             match_info["score_breakdown"] = string(score_bytes)
-            match_info["_fms_id"] = match_number
 
             if (level == 3) {
                 // playoffs
@@ -138,6 +137,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             }
             ioutil.WriteFile(path.Join(folder, fname_json), match_json, os.ModePerm)
 
+            match_info["_fms_id"] = match_number
             info = append(info, match_info)
         }
     }

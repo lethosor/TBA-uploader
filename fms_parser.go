@@ -32,30 +32,34 @@ type fmsScoreInfo struct {
 	baseRP int64  // win-loss-tie RP only
 }
 
-func addManualFields(breakdown map[string]interface{}, info fmsScoreInfo) {
+func addManualFields(breakdown map[string]interface{}, info fmsScoreInfo, playoff bool) {
 	rp := info.baseRP
 	// adjust should be negative when total = 0
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
 	// no way to tell if switch was lost before T=0, so assume it wasn't
 	breakdown["autoSwitchAtZero"] = info.autoSwitchSec > 0
-	if info.autoSwitchSec > 0 && info.autoRunPoints == 15 {
+	if !playoff && info.autoSwitchSec > 0 && info.autoRunPoints == 15 {
 		breakdown["autoQuestRankingPoint"] = true
 		rp++
 	} else {
 		breakdown["autoQuestRankingPoint"] = false
 	}
 
-	if info.endgamePoints >= 90 {
+	if !playoff && info.endgamePoints >= 90 {
 		breakdown["faceTheBossRankingPoint"] = true
 		rp++
 	} else {
 		breakdown["faceTheBossRankingPoint"] = false
 	}
 
-	breakdown["rp"] = rp
+	if playoff {
+		breakdown["rp"] = 0
+	} else {
+		breakdown["rp"] = rp
+	}
 }
 
-func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
+func ParseHTMLtoJSON(filename string, playoff bool) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -348,8 +352,8 @@ func ParseHTMLtoJSON(filename string) (map[string]interface{}, error) {
 	breakdown["blue"]["tba_gameData"] = gamedata
 	breakdown["red"]["tba_gameData"] = gamedata
 
-	addManualFields(breakdown["blue"], scoreInfo.blue)
-	addManualFields(breakdown["red"], scoreInfo.red)
+	addManualFields(breakdown["blue"], scoreInfo.blue, playoff)
+	addManualFields(breakdown["red"], scoreInfo.red, playoff)
 
 	if parse_error != "" {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)

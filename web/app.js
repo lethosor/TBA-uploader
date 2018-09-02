@@ -140,6 +140,13 @@ app = new Vue({
                     return match.comp_level + match.set_number + 'm' + match.match_number;
                 }
             };
+            var formatScoreSummary = function(match, breakdown, color) {
+                var s = '' + match.alliances[color].score;
+                if (match.comp_level == 'qm') {
+                    s += ' (' + breakdown[color].rp + ')';
+                }
+                return s;
+            };
             return matches.map(function(match) {
                 var breakdown = JSON.parse(match.score_breakdown);
                 return {
@@ -149,13 +156,9 @@ app = new Vue({
                         blue: match.alliances.blue.teams.map(rmFRC),
                         red: match.alliances.red.teams.map(rmFRC),
                     },
-                    score: {
-                        blue: match.alliances.blue.score,
-                        red: match.alliances.red.score,
-                    },
-                    rp: {
-                        blue: breakdown.blue.rp,
-                        red: breakdown.red.rp,
+                    score_summary: {
+                        blue: formatScoreSummary(match, breakdown, 'blue'),
+                        red: formatScoreSummary(match, breakdown, 'red'),
                     },
                 }
             });
