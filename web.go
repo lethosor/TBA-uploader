@@ -152,11 +152,11 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     w.Write(output)
 }
 
-func RunWebServer(port int, dev bool) {
+func RunWebServer(port int, web_folder string) {
     r := mux.NewRouter()
     var fs http.FileSystem
-    if dev {
-        fs = http.Dir("./web/")
+    if web_folder != "" {
+        fs = http.Dir(web_folder)
     } else {
         fs = assetFS()
     }
