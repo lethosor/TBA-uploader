@@ -93,6 +93,12 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     if files != nil {
         for i := 0; i < len(files); i++ {
             fname := filepath.Base(files[i])
+            match_number, err := strconv.Atoi(strings.Split(fname, "-")[0])
+            if err != nil {
+                w.WriteHeader(http.StatusInternalServerError)
+                w.Write([]byte(fmt.Sprintf("%s: failed to parse match ID", fname)))
+                return
+            }
             folder := filepath.Dir(files[i])
             fname_trimmed := strings.TrimSuffix(fname, filepath.Ext(fname))
             fname_json := fname_trimmed + ".json"
@@ -110,6 +116,19 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 return
             }
             match_info["score_breakdown"] = string(score_bytes)
+            match_info["_fms_id"] = match_number
+
+            if (level == 3) {
+                // playoffs
+                code := getTBAPlayoffCode(match_number)
+                match_info["comp_level"] = code.level
+                match_info["set_number"] = code.set
+                match_info["match_number"] = code.match
+            } else {
+                match_info["comp_level"] = "qm"
+                match_info["set_number"] = 1
+                match_info["match_number"] = match_number
+            }
 
             match_json, err := json.Marshal(match_info)
             if err != nil {

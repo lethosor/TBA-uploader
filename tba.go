@@ -13,30 +13,32 @@ type eventParams struct {
     secret string
 }
 
-var playoff_codes = map[int]string {
-    1: "qf1m1",
-    2: "qf2m1",
-    3: "qf3m1",
-    4: "qf4m1",
-    5: "qf1m2",
-    6: "qf2m2",
-    7: "qf3m2",
-    8: "qf4m2",
-    9: "qf1m3",
-    10: "qf2m3",
-    11: "qf3m3",
-    12: "qf4m3",
+type tbaPlayoffCode struct {
+    level string
+    set int
+    match int
+}
 
-    13: "sf1m1",
-    14: "sf2m1",
-    15: "sf1m2",
-    16: "sf2m2",
-    17: "sf1m3",
-    18: "sf2m3",
-
-    19: "f1m1",
-    20: "f1m2",
-    21: "f1m3",
+func getTBAPlayoffCode(match_id int) tbaPlayoffCode {
+    if (match_id <= 12) {
+        return tbaPlayoffCode{
+            level: "qf",
+            set: ((match_id - 1) % 4) + 1,
+            match: ((match_id - 1) / 4) + 1,
+        }
+    } else if (match_id <= 18) {
+        return tbaPlayoffCode{
+            level: "sf",
+            set: ((match_id - 1) % 2) + 1,
+            match: ((match_id - 1) / 2) - 5,
+        }
+    } else {
+        return tbaPlayoffCode{
+            level: "f",
+            set: 1,
+            match: match_id - 18,
+        }
+    }
 }
 
 func sendTBARequest(url string, body []byte, params *eventParams) (*http.Response, error) {

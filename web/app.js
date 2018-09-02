@@ -56,7 +56,7 @@ app = new Vue({
         matchLevel: 2,
         inMatchRequest: false,
         matchError: '',
-        pendingMatches: [],
+        // pendingMatches: [], // not set yet to avoid Vue binding to this
         matchSummaries: [],
 
         awards: STORED_AWARDS,
@@ -132,11 +132,19 @@ app = new Vue({
             var rmFRC = function(team) {
                 return team.replace('frc', '');
             };
+            var formatMatchCode = function(match) {
+                if (match.comp_level == 'qm') {
+                    return 'qm' + match.match_number;
+                }
+                else {
+                    return match.comp_level + match.set_number + 'm' + match.match_number;
+                }
+            };
             return matches.map(function(match) {
                 var breakdown = JSON.parse(match.score_breakdown);
                 return {
-                    id: '?',
-                    code: 'qm?',
+                    id: match._fms_id,
+                    code: formatMatchCode(match),
                     teams: {
                         blue: match.alliances.blue.teams.map(rmFRC),
                         red: match.alliances.red.teams.map(rmFRC),
