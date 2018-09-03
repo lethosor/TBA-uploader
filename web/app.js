@@ -148,7 +148,6 @@ app = new Vue({
                 return s;
             };
             return matches.map(function(match) {
-                var breakdown = JSON.parse(match.score_breakdown);
                 return {
                     id: match._fms_id,
                     code: formatMatchCode(match),
@@ -157,8 +156,8 @@ app = new Vue({
                         red: match.alliances.red.teams.map(rmFRC),
                     },
                     score_summary: {
-                        blue: formatScoreSummary(match, breakdown, 'blue'),
-                        red: formatScoreSummary(match, breakdown, 'red'),
+                        blue: formatScoreSummary(match, match.score_breakdown, 'blue'),
+                        red: formatScoreSummary(match, match.score_breakdown, 'red'),
                     },
                 }
             });
@@ -167,6 +166,8 @@ app = new Vue({
             return matches.map(function(match) {
                 var match = Object.assign({}, match);
                 delete match._fms_id;
+                delete match.score_breakdown.red.tba_gameData;
+                delete match.score_breakdown.blue.tba_gameData;
                 return match;
             });
         },
@@ -174,7 +175,7 @@ app = new Vue({
             this.matchError = '';
             this.inMatchRequest = true;
             var matches = this.cleanMatches(this.pendingMatches);
-            sendApiRequest('/api/awards/upload', this.selectedEvent, matches).always(function() {
+            sendApiRequest('/api/matches/upload', this.selectedEvent, matches).always(function() {
                 this.inMatchRequest = false;
             }.bind(this)).then(function() {
                 this.pendingMatches = [];

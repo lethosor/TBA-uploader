@@ -109,13 +109,6 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", fname, err)))
                 return
             }
-            score_bytes, err := json.Marshal(match_info["score_breakdown"])
-            if err != nil {
-                w.WriteHeader(http.StatusInternalServerError)
-                w.Write([]byte(fmt.Sprintf("%s: score_breakdown serialization failed: %s", fname, err)))
-                return
-            }
-            match_info["score_breakdown"] = string(score_bytes)
 
             if (level == 3) {
                 // playoffs
