@@ -25,7 +25,7 @@ func main() {
 
     FMSServer = *fms_server
 
-    FMSDataFolder, err := filepath.Abs(*data_folder)
+    FMSDataFolder, err = filepath.Abs(*data_folder)
     if err != nil {
         log.Printf("WARNING: path normalization of \"%s\" failed: %s\n", *data_folder, err)
     }
