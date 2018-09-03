@@ -117,6 +117,7 @@ app = new Vue({
             this.inMatchRequest = true;
             this.matchError = '';
             $.get('/api/matches/fetch', {
+                event: this.selectedEvent,
                 level: this.matchLevel,
                 all: all ? '1' : '',
             }).always(function() {

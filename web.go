@@ -79,9 +79,9 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     }
     var files []string
     if download_all {
-        files, err = downloadAllMatches(level, "")
+        files, err = downloadAllMatches(level, r.URL.Query().Get("event"))
     } else {
-        files, err = downloadNewMatches(level, "")
+        files, err = downloadNewMatches(level, r.URL.Query().Get("event"))
     }
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
@@ -92,6 +92,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     info := make([]map[string]interface{}, 0)
     if files != nil {
         for i := 0; i < len(files); i++ {
+            log.Printf("Downloaded %s\n", files[i])
             fname := filepath.Base(files[i])
             match_number, err := strconv.Atoi(strings.Split(fname, "-")[0])
             if err != nil {
