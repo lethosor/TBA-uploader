@@ -23,13 +23,13 @@ func main() {
     web_folder := flag.String("web-folder", "", "folder to serve files from (defaults to bundled files)")
     flag.Parse()
 
-    FMSServer = *fms_server
+    FMSConfig.Server = *fms_server
 
-    FMSDataFolder, err = filepath.Abs(*data_folder)
+    FMSConfig.DataFolder, err = filepath.Abs(*data_folder)
     if err != nil {
         log.Printf("WARNING: path normalization of \"%s\" failed: %s\n", *data_folder, err)
     }
-    log.Printf("FMS data folder: %s\n", FMSDataFolder)
+    log.Printf("FMS data folder: %s\n", FMSConfig.DataFolder)
 
     web_folder_abs := ""
     if *web_folder != "" {

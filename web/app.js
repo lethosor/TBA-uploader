@@ -49,6 +49,8 @@ app = new Vue({
     el: '#main',
     data: {
         version: window.VERSION || 'missing version',
+        fmsConfig: window.FMS_CONFIG || {},
+        fmsConfigError: '',
         events: Object.keys(STORED_EVENTS),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
@@ -78,6 +80,26 @@ app = new Vue({
         },
     },
     methods: {
+        saveFMSConfig: function() {
+            this.fmsConfigError = '';
+            $.ajax({
+                type: 'POST',
+                url: '/api/fms_config/set',
+                contentType: 'application/json',
+                data: JSON.stringify(this.fmsConfig),
+            }).always(function(data) {
+                data = JSON.parse(data);
+                if (!data.ok) {
+                    this.fmsConfigError = 'Failed to save options: ' + data.error;
+                }
+            }.bind(this));
+        },
+        resetFMSConfig: function() {
+            $.getJSON('/api/fms_config/get', function(data) {
+                this.fmsConfig = data;
+            }.bind(this));
+        },
+
         addEvent: function() {
             var event = this.addEventUI.event;
             STORED_EVENTS[event] = {

@@ -39,4 +39,4 @@ def match_score():
             return flask.send_from_directory(file_dir, 'level%i/raw%i.html' % (level, index.index(match_id)))
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5555, host='0.0.0.0')

@@ -14,14 +14,16 @@ import (
     "github.com/PuerkitoBio/goquery"
 )
 
-var FMSServer string
-var FMSDataFolder string
+var FMSConfig struct {
+    Server string `json:"server"`
+    DataFolder string `json:"data_folder"`
+}
 
 func checkFMSConnection() {
     // make sure the FMS server is running
-    log.Printf("Looking for FMS at %s...\n", FMSServer)
+    log.Printf("Looking for FMS at %s...\n", FMSConfig.Server)
     client := http.Client{Timeout: 5 * time.Second}
-    _, err := client.Get(FMSServer)
+    _, err := client.Get(FMSConfig.Server)
     if err != nil {
         log.Println("Failed to connect to FMS!")
     } else {
@@ -68,8 +70,8 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
 }
 
 func downloadMatches(level int, folder string, new_only bool) ([]string, error) {
-    url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSServer, level)
-    folder = path.Join(FMSDataFolder, folder, fmt.Sprintf("level%d", level))
+    url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSConfig.Server, level)
+    folder = path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level))
     filename, ok, err := downloadFile(folder, "matches.html", url, true)
     if !ok {
         return nil, err
@@ -89,7 +91,7 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
             log.Printf("Couldn't find link in row %d\n", i)
             return
         }
-        match_url = FMSServer + match_url
+        match_url = FMSConfig.Server + match_url
         button := row.Find("button").First()
         button_text := strings.Replace(button.Text(), " ", "", -1)
         button_text = strings.Replace(button_text, "/", "-", -1)

@@ -57,8 +57,51 @@ func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("ok"));
 }
 
+func marshalFMSConfig(w http.ResponseWriter) ([]byte, error) {
+    out, err := json.Marshal(FMSConfig)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        log.Printf("JSON.Marshal(FMSConfig): %s\n", err)
+        return nil, err
+    }
+    return out, nil
+}
+
 func jsVersion(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte(fmt.Sprintf(";VERSION=\"%s\";", Version)))
+    w.Write([]byte(fmt.Sprintf("window.VERSION=\"%s\";", Version)))
+}
+
+func jsFMSConfig(w http.ResponseWriter, r *http.Request) {
+    out, err := marshalFMSConfig(w)
+    if err == nil {
+        w.Write([]byte("window.FMS_CONFIG="))
+        w.Write(out)
+        w.Write([]byte(";"))
+    }
+}
+
+func apiGetFMSConfig(w http.ResponseWriter, r *http.Request) {
+    out, err := marshalFMSConfig(w)
+    if err == nil {
+        w.Write(out)
+    }
+}
+
+func apiSetFMSConfig(w http.ResponseWriter, r *http.Request) {
+    body, _ := ioutil.ReadAll(r.Body)
+    err := json.Unmarshal(body, &FMSConfig)
+    log.Printf("Changed FMS Config: Server = \"%s\", Data Folder = \"%s\"\n", FMSConfig.Server, FMSConfig.DataFolder)
+    resp := make(map[string]interface{})
+    resp["ok"] = (err == nil)
+    if err != nil {
+        resp["error"] = err.Error()
+    }
+    resp["config"] = FMSConfig
+    out, err := json.Marshal(resp)
+    w.Write(out)
+    if err != nil {
+        log.Printf("apiSetFMSConfig: Marshal failed: %s\n", err)
+    }
 }
 
 func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
@@ -155,6 +198,9 @@ func RunWebServer(port int, web_folder string) {
         fs = assetFS()
     }
     r.HandleFunc("/js/version.js", jsVersion)
+    r.HandleFunc("/js/fms_config.js", jsFMSConfig)
+    r.HandleFunc("/api/fms_config/get", apiGetFMSConfig)
+    r.HandleFunc("/api/fms_config/set", apiSetFMSConfig)
     r.HandleFunc("/api/awards/upload", apiUploadAwards)
     r.HandleFunc("/api/matches/fetch", apiFetchMatches)
     r.HandleFunc("/api/matches/upload", apiUploadMatches)

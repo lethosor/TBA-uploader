@@ -21,6 +21,9 @@
         <li class="nav-item" v-if="eventSelected">
           <a class="nav-link" id="awards-tab" data-toggle="tab" href="#awards" role="tab" aria-controls="awards" aria-selected="false">Awards</a>
         </li>
+        <li class="nav-item ml-auto">
+          <a class="nav-link" id="options-tab" data-toggle="tab" href="#options" role="tab" aria-controls="options" aria-selected="true">Options</a>
+        </li>
       </ul>
       <div class="tab-content">
         <div class="tab-pane fade show active" id="event-setup" role="tabpanel" aria-labelledby="event-setup-tab">
@@ -138,7 +141,26 @@
           <button class="btn btn-success" @click="uploadAwards" :disabled="uploadingAwards">Upload all awards</button>
           <span>{{awardStatus}}</span>
         </div>
-      </div>
+
+        <div class="tab-pane fade" id="options" role="tabpanel" aria-labelledby="options-tab">
+          <div class="row mb-2">
+            <label class="col-sm-12 col-md-8">
+              Server:
+              <input class="form-control" v-model="fmsConfig.server">
+            </label>
+            <label class="col-sm-12 col-md-8">
+              Data folder:
+              <input class="form-control" v-model="fmsConfig.data_folder">
+            </label>
+            <div class="col-sm-12">
+              <button class="btn btn-success" @click="saveFMSConfig">Save</button>
+              <button class="btn btn-danger" @click="resetFMSConfig">Reset</button>
+            </div>
+          </div>
+          <div class="alert alert-danger" v-if="fmsConfigError">{{fmsConfigError}}</div>
+        </div>
+
+      </div> <!-- tabs -->
 
     </div>
 
@@ -146,6 +168,7 @@
     <script type="text/javascript" src="bootstrap.min.js"></script>
     <script type="text/javascript" src="vue.js"></script>
     <script type="text/javascript" src="/js/version.js"></script>
+    <script type="text/javascript" src="/js/fms_config.js"></script>
     <script type="text/javascript" src="app.js"></script>
   </body>
 </html>
