@@ -174,7 +174,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             }
             ioutil.WriteFile(path.Join(folder, fname_json), match_json, os.ModePerm)
 
-            match_info["_fms_id"] = match_number
+            match_info["_fms_id"] = strings.Split(fname, ".")[0]
             info = append(info, match_info)
         }
     }
