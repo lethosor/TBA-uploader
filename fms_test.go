@@ -8,8 +8,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-    FMSServer = "http://localhost:5000"
-    FMSDataFolder = "fms_data_test"
+    FMSConfig.Server = "http://localhost:5555"
+    FMSConfig.DataFolder = "fms_data_test"
     os.Exit(m.Run())
 }
 
@@ -36,7 +36,7 @@ func TestDownloadMatches(t *testing.T) {
         t.Fatal("no matches downloaded")
     }
 
-    match_json, err := ParseHTMLtoJSON(files[0])
+    match_json, err := ParseHTMLtoJSON(files[0], false)
     if err != nil {
         t.Error("ParseHTMLtoJSON: ", err)
     }
