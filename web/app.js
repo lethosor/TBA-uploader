@@ -136,6 +136,9 @@ app = new Vue({
         },
 
         fetchMatches: function(all) {
+            if (all && !confirm('Are you sure? This may replace old match results and re-send notifications.')) {
+                return;
+            }
             this.inMatchRequest = true;
             this.matchError = '';
             $.get('/api/matches/fetch', {
