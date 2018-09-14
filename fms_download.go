@@ -69,6 +69,10 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
     return filepath, true, nil
 }
 
+func getMatchDownloadPath(level int, folder string) string {
+    return path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level), "matches")
+}
+
 func downloadMatches(level int, folder string, new_only bool) ([]string, error) {
     url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSConfig.Server, level)
     folder = path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level))

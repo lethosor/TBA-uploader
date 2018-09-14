@@ -120,6 +120,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte(fmt.Sprintf("invalid level: %d", level)))
         return
     }
+    var match_folder = getMatchDownloadPath(level, r.URL.Query().Get("event"))
     var files []string
     if download_all {
         files, err = downloadAllMatches(level, r.URL.Query().Get("event"))
@@ -132,7 +133,6 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    info := make([]map[string]interface{}, 0)
     if files != nil {
         for i := 0; i < len(files); i++ {
             log.Printf("Downloaded %s\n", files[i])
@@ -174,12 +174,44 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             }
             ioutil.WriteFile(path.Join(folder, fname_json), match_json, os.ModePerm)
 
-            match_info["_fms_id"] = strings.Split(fname, ".")[0]
-            info = append(info, match_info)
+            // remove any receipts for newly-downloaded files
+            fname_receipt := fname_trimmed + ".receipt"
+            os.Remove(path.Join(folder, fname_receipt))
         }
     }
 
-    output, err := json.Marshal(info)
+    match_json_list := make([]map[string]interface{}, 0)
+    match_files, err := ioutil.ReadDir(match_folder)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte(fmt.Sprintf("download folder %s scan failed: %s", match_folder, err)))
+    }
+
+    for _, json_file := range match_files {
+        if (!strings.HasSuffix(json_file.Name(), ".json")) {
+            continue
+        }
+        json_path := path.Join(match_folder, json_file.Name())
+        receipt_path := strings.TrimSuffix(json_path, filepath.Ext(json_path)) + ".receipt"
+        if _, err := os.Stat(receipt_path); err == nil {
+            // receipt exists, match was already uploaded to TBA
+            continue
+        }
+
+        match_info := make(map[string]interface{})
+        contents, err := ioutil.ReadFile(json_path)
+        err = json.Unmarshal(contents, &match_info)
+        if err != nil {
+            w.WriteHeader(http.StatusInternalServerError)
+            w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", json_path, err)))
+            return
+        }
+
+        match_info["_fms_id"] = strings.Split(json_file.Name(), ".")[0]
+        match_json_list = append(match_json_list, match_info)
+    }
+
+    output, err := json.Marshal(match_json_list)
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte(fmt.Sprintf("json encode failed: %s", err)))
@@ -187,6 +219,33 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     }
 
     w.Write(output)
+}
+
+func apiMarkMatchesUploaded(w http.ResponseWriter, r *http.Request) {
+    params, ok := getRequestEventParams(r)
+    if !ok {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("missing event/auth API parameters"))
+        return
+    }
+    level, err := strconv.Atoi(r.URL.Query().Get("level"))
+    if err != nil || (level < 1 || level > 3) {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte(fmt.Sprintf("invalid level: %d", level)))
+        return
+    }
+    var match_folder = getMatchDownloadPath(level, params.event)
+    match_ids := make([]string, 0)
+    body, err := ioutil.ReadAll(r.Body)
+    err = json.Unmarshal(body, &match_ids)
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte(fmt.Sprintf("failed to parse match ID list: %s", err)))
+        return
+    }
+    for _, match_id := range match_ids {
+        ioutil.WriteFile(path.Join(match_folder, match_id + ".receipt"), []byte(match_id), os.ModePerm)
+    }
 }
 
 func RunWebServer(port int, web_folder string) {
@@ -204,6 +263,7 @@ func RunWebServer(port int, web_folder string) {
     r.HandleFunc("/api/awards/upload", apiUploadAwards)
     r.HandleFunc("/api/matches/fetch", apiFetchMatches)
     r.HandleFunc("/api/matches/upload", apiUploadMatches)
+    r.HandleFunc("/api/matches/mark_uploaded", apiMarkMatchesUploaded)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
     log.Printf("Serving on %s\n", addr)

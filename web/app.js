@@ -198,11 +198,19 @@ app = new Vue({
             this.matchError = '';
             this.inMatchRequest = true;
             var matches = this.cleanMatches(this.pendingMatches);
+            var match_ids = this.pendingMatches.map(function(match) {
+                return match._fms_id;
+            });
             sendApiRequest('/api/matches/upload', this.selectedEvent, matches).always(function() {
                 this.inMatchRequest = false;
             }.bind(this)).then(function() {
                 this.pendingMatches = [];
                 this.matchSummaries = [];
+                sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
+                                this.selectedEvent, match_ids
+                ).fail(function(res) {
+                    this.matchError += '\nReceipt generation failed: ' + res.responseText;
+                }.bind(this));
             }.bind(this)).fail(function(res) {
                 this.matchError = res.responseText;
             }.bind(this));

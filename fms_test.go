@@ -14,6 +14,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestDownloadMatches(t *testing.T) {
+    fmt.Println(getMatchDownloadPath(2, "all"))
     files, err := downloadNewMatches(2, "all")
     if err != nil {
         t.Error("downloadNewMatches: ", err)
