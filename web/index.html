@@ -78,7 +78,7 @@
             <button class="btn btn-warning" @click="fetchMatches(true)" :disabled="inMatchRequest">Fetch all matches</button>
             <button class="btn btn-info ml-auto" @click="uploadRankings" :disabled="inUploadRankings">Upload rankings</button>
           </div>
-          <div><span class="warning">Warning:</span> do not click the above buttons when a match is running</div>
+          <div><span class="warning">Warning:</span> only click the above buttons <strong>soon after</strong> posting a score</div>
           <div class="alert alert-danger" v-if="matchError">{{matchError}}</div>
           <div class="alert alert-danger" v-if="rankingsError">Rankings: {{rankingsError}}</div>
           <div v-if="matchSummaries.length">
