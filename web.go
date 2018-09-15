@@ -248,6 +248,20 @@ func apiMarkMatchesUploaded(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func apiFetchRankings(w http.ResponseWriter, r *http.Request) {
+    out, err := downloadRankings()
+    if err != nil {
+        w.WriteHeader(http.StatusInternalServerError)
+        w.Write([]byte(fmt.Sprintf("ranking fetch failed: %s", err)))
+        return
+    }
+    w.Write(out)
+}
+
+func apiUploadRankings(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("rankings/update", w, r)
+}
+
 func RunWebServer(port int, web_folder string) {
     r := mux.NewRouter()
     var fs http.FileSystem
@@ -264,6 +278,8 @@ func RunWebServer(port int, web_folder string) {
     r.HandleFunc("/api/matches/fetch", apiFetchMatches)
     r.HandleFunc("/api/matches/upload", apiUploadMatches)
     r.HandleFunc("/api/matches/mark_uploaded", apiMarkMatchesUploaded)
+    r.HandleFunc("/api/rankings/fetch", apiFetchRankings)
+    r.HandleFunc("/api/rankings/upload", apiUploadRankings)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
     log.Printf("Serving on %s\n", addr)

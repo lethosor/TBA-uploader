@@ -61,6 +61,9 @@ app = new Vue({
         // pendingMatches: [], // not set yet to avoid Vue binding to this
         matchSummaries: [],
 
+        inUploadRankings: false,
+        rankingsError: '',
+
         awards: STORED_AWARDS,
         awardStatus: '',
         uploadingAwards: false,
@@ -219,6 +222,45 @@ app = new Vue({
                 }.bind(this));
             }.bind(this)).fail(function(res) {
                 this.matchError = res.responseText;
+            }.bind(this));
+        },
+
+        uploadRankings: function() {
+            this.rankingsError = '';
+            this.inUploadRankings = true;
+            $.getJSON('/api/rankings/fetch', function(data) {
+                var rankings = data.qualRanks.map(function(r) {
+                    return {
+                        team_key: 'frc' + r.team,
+                        rank: r.rank,
+                        played: r.played,
+                        dqs: r.dq,
+
+                        "Record (W-L-T)": r.wins + '-' + r.losses + '-' + r.ties,
+
+                        "Auto": r.sort3,
+                        "End Game": r.sort2,
+                        "Ownership": r.sort4,
+                        "Ranking Score": r.sort1,
+                        "Vault": r.sort5,
+                    };
+                });
+
+                sendApiRequest('/api/rankings/upload', this.selectedEvent, {
+                    breakdowns: [
+                        "Ranking Score",
+                        "End Game",
+                        "Auto",
+                        "Ownership",
+                        "Vault",
+                        "Record (W-L-T)",
+                    ],
+                    rankings: rankings,
+                });
+            }.bind(this)).fail(function(res) {
+                this.rankingsError = res.responseText;
+            }.bind(this)).always(function() {
+                this.inUploadRankings = false;
             }.bind(this));
         },
 

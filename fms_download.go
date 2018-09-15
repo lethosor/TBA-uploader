@@ -4,6 +4,7 @@ import (
     "errors"
     "fmt"
     "io"
+    "io/ioutil"
     "log"
     "net/http"
     "os"
@@ -118,4 +119,18 @@ func downloadNewMatches(level int, folder string) ([]string, error) {
 
 func downloadAllMatches(level int, folder string) ([]string, error) {
     return downloadMatches(level, folder, false)
+}
+
+func downloadRankings() ([]byte, error) {
+    request, err := http.NewRequest("GET", FMSConfig.Server + "/Pit/GetData", nil)
+    if err != nil {
+        return nil, err
+    }
+    request.Header.Add("Referer", FMSConfig.Server + "/Pit/Qual")
+    client := http.Client{Timeout: 5 * time.Second}
+    response, err := client.Do(request)
+    if err != nil {
+        return nil, err
+    }
+    return ioutil.ReadAll(response.Body)
 }
