@@ -149,6 +149,9 @@ app = new Vue({
                 this.inMatchRequest = false;
             }.bind(this)).then(function(data) {
                 this.pendingMatches = JSON.parse(data);
+                this.pendingMatches.sort(function(a, b) {
+                    return Number(a._fms_id.split('-')[0]) - Number(b._fms_id.split('-')[0]);
+                });
                 this.matchSummaries = this.generateMatchSummaries(this.pendingMatches);
             }.bind(this)).fail(function(res) {
                 this.matchError = res.responseText;
