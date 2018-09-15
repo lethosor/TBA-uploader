@@ -36,7 +36,10 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
     //      filepath: always
     //      ok: if the file exists now
     //      err: if the file was not downloaded
-    os.MkdirAll(folder, os.ModePerm)
+    err = os.MkdirAll(folder, os.ModePerm)
+    if err != nil {
+        log.Printf("Failed to create folder: %s: %s\n", folder, err)
+    }
     filepath = path.Join(folder, filename)
     ok = false
     if !overwrite {
