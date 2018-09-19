@@ -28,6 +28,7 @@ var playoff_codes = map[int]tbaPlayoffCode {
     19: tbaPlayoffCode{level: "f",  set: 1, match: 1},
     20: tbaPlayoffCode{level: "f",  set: 1, match: 2},
     21: tbaPlayoffCode{level: "f",  set: 1, match: 3},
+    22: tbaPlayoffCode{level: "f",  set: 1, match: 4},
 }
 
 func TestPlayoffCodes(t *testing.T) {
