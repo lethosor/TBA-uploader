@@ -245,6 +245,11 @@ app = new Vue({
                         "Vault": r.sort5,
                     };
                 });
+                if (!rankings || !rankings.length) {
+                    this.rankingsError = 'No rankings available from FMS';
+                    this.inUploadRankings = false;
+                    return;
+                }
 
                 sendApiRequest('/api/rankings/upload', this.selectedEvent, {
                     breakdowns: [
@@ -256,10 +261,13 @@ app = new Vue({
                         "Record (W-L-T)",
                     ],
                     rankings: rankings,
-                });
+                }).fail(function(res) {
+                    this.rankingsError = res.responseText;
+                }.bind(this)).always(function() {
+                    this.inUploadRankings = false;
+                }.bind(this));
             }.bind(this)).fail(function(res) {
-                this.rankingsError = res.responseText;
-            }.bind(this)).always(function() {
+                this.rankingsError = 'fetch failed: ' + res.responseText;
                 this.inUploadRankings = false;
             }.bind(this));
         },
