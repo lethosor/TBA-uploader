@@ -49,6 +49,7 @@ app = new Vue({
     el: '#main',
     data: {
         version: window.VERSION || 'missing version',
+        helpHTML: '',
         fmsConfig: window.FMS_CONFIG || {},
         fmsConfigError: '',
         events: Object.keys(STORED_EVENTS),
@@ -322,5 +323,10 @@ app = new Vue({
     mounted: function() {
         $(this.$el).removeClass('hidden');
         this.selectedEvent = localStorage.getItem('selectedEvent') || '';
+        $.get('/README.md', function(readme) {
+            // remove first line (header)
+            readme = readme.substr(readme.indexOf('\n'));
+            this.helpHTML = new showdown.Converter().makeHtml(readme);
+        }.bind(this));
     },
 });
