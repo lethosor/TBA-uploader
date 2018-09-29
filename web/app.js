@@ -199,8 +199,6 @@ app = new Vue({
             return matches.map(function(match) {
                 var match = Object.assign({}, match);
                 delete match._fms_id;
-                delete match.score_breakdown.red.tba_gameData;
-                delete match.score_breakdown.blue.tba_gameData;
                 return match;
             });
         },
