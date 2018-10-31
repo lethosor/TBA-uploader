@@ -85,7 +85,11 @@
           <div class="alert alert-danger" v-if="rankingsError">Rankings: {{rankingsError}}</div>
           <div v-if="matchSummaries.length">
             <h3>Matches to upload ({{matchSummaries.length}})</h3>
-            <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Upload all</button>
+            <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Post scores</button>
+            <button class="btn btn-warning mb-2" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</button>
+            <div class="alert alert-danger" v-if="fetchedScorelessMatches">
+              One or more matches below appear to have been fetched before scores were posted (all points are 0). Click "Re-fetch scores" to try again (wait for scores to be posted first). If the scores are correct, click "Post scores".
+            </div>
             <div class="row">
               <div v-for="match in matchSummaries" class="col-md-6 col-lg-4">
                 <table class="table table-sm score">

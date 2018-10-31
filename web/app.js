@@ -61,6 +61,7 @@ app = new Vue({
         matchError: '',
         // pendingMatches: [], // not set yet to avoid Vue binding to this
         matchSummaries: [],
+        fetchedScorelessMatches: false,
 
         inUploadRankings: false,
         rankingsError: '',
@@ -144,6 +145,7 @@ app = new Vue({
                 return;
             }
             this.inMatchRequest = true;
+            this.fetchedScorelessMatches = false;
             this.matchError = '';
             $.get('/api/matches/fetch', {
                 event: this.selectedEvent,
@@ -157,10 +159,12 @@ app = new Vue({
                     return Number(a._fms_id.split('-')[0]) - Number(b._fms_id.split('-')[0]);
                 });
                 this.matchSummaries = this.generateMatchSummaries(this.pendingMatches);
+                this.fetchedScorelessMatches = this.checkScorelessMatches(this.pendingMatches);
             }.bind(this)).fail(function(res) {
                 this.matchError = res.responseText;
             }.bind(this));
         },
+        refetchMatches: function() {console.log('Refetch')},
         generateMatchSummaries: function(matches) {
             var rmFRC = function(team) {
                 return team.replace('frc', '');
@@ -222,6 +226,23 @@ app = new Vue({
             }.bind(this)).fail(function(res) {
                 this.matchError = res.responseText;
             }.bind(this));
+        },
+        checkScorelessMatches: function(matches) {
+            var foundScoreless = false;
+            matches.forEach(function(match) {
+                var foundNonzero = false;
+                ['red', 'blue'].forEach(function(color) {
+                    Object.entries(match.score_breakdown[color]).forEach(function(k, v) {
+                        if ((typeof v == 'number' || typeof v == 'boolean') && v) {
+                            foundNonzero = true;
+                        }
+                    })
+                });
+                if (!foundNonzero) {
+                    foundScoreless = true;
+                }
+            });
+            return foundScoreless;
         },
 
         uploadRankings: function() {
