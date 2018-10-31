@@ -77,15 +77,23 @@
               <option value="3">Playoff</option>
             </select>
             <button class="btn btn-success" @click="fetchMatches(false)" :disabled="inMatchRequest">Fetch new match(es)</button>
-            <button class="btn btn-warning" @click="fetchMatches(true)" :disabled="inMatchRequest">Fetch all matches</button>
+            <button class="btn btn-danger" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</button>
             <button class="btn btn-info ml-auto" @click="uploadRankings" :disabled="inUploadRankings" v-if="matchLevel == 2">Upload rankings</button>
           </div>
           <div><span class="warning">Warning:</span> only click the above buttons <strong>soon after</strong> posting a score</div>
-          <div class="alert alert-danger" v-if="matchError">{{matchError}}</div>
           <div class="alert alert-danger" v-if="rankingsError">Rankings: {{rankingsError}}</div>
+          <div v-if="inMatchAdvanced">
+            <hr>
+            <h3>Advanced options <button class="btn btn-outline-danger btn-sm" @click.prevent="inMatchAdvanced = false">Close</button></h3>
+            <div>
+              <button class="btn btn-danger" @click="fetchMatches(true)" :disabled="inMatchRequest">Purge and re-fetch all matches</button>
+            </div>
+            <hr>
+          </div>
+          <div class="alert alert-danger" v-if="matchError">{{matchError}}</div>
           <div v-if="matchSummaries.length">
             <h3>Matches to upload ({{matchSummaries.length}})</h3>
-            <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Post scores</button>
+            <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</button>
             <button class="btn btn-warning mb-2" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</button>
             <div class="alert alert-danger" v-if="fetchedScorelessMatches">
               One or more matches below appear to have been fetched before scores were posted (all points are 0). Click "Re-fetch scores" to try again (wait for scores to be posted first). If the scores are correct, click "Post scores".

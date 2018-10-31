@@ -62,6 +62,7 @@ app = new Vue({
         // pendingMatches: [], // not set yet to avoid Vue binding to this
         matchSummaries: [],
         fetchedScorelessMatches: false,
+        inMatchAdvanced: false,
 
         inUploadRankings: false,
         rankingsError: '',
