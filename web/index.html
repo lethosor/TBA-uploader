@@ -91,6 +91,7 @@
                 <input class="form-control" v-model="advSelectedMatch" placeholder="M-P" size="5">
               </label>
               <button class="btn btn-warning" @click="purgeAdvSelectedMatch" :disabled="inMatchRequest">Purge</button>
+              <button class="btn btn-warning" @click="markAdvSelectedMatchUploaded" :disabled="inMatchRequest">Mark as uploaded</button>
               <span class="warning">{{advMatchError}}</span>
             </div>
             <div>

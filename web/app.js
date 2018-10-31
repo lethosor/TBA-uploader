@@ -29,7 +29,7 @@ function sendApiRequest(url, event, body) {
 }
 
 function confirmPurge() {
-    return confirm('Are you sure? This may replace old match results and re-send notifications.');
+    return confirm('Are you sure? This may replace old match results and re-send notifications when these match(es) are uploaded again.');
 }
 
 function makeAddEventUI() {
@@ -294,8 +294,29 @@ app = new Vue({
             .always(function() {
                 this.inMatchRequest = false;
             }.bind(this))
+            .then(function() {
+                this.fetchMatches(false);
+            }.bind(this))
             .fail(function(res) {
                 this.advMatchError = res.responseText;
+            }.bind(this));
+        },
+        markAdvSelectedMatchUploaded: function() {
+            if (!this._checkAdvSelectedMatch()) {
+                return;
+            }
+            this.inMatchRequest = true;
+            this.advMatchError = '';
+            sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
+                            this.selectedEvent, [this.advSelectedMatch])
+            .always(function() {
+                this.inMatchRequest = false;
+            }.bind(this))
+            .then(function() {
+                this.fetchMatches(false);
+            }.bind(this))
+            .fail(function(res) {
+                this.advMatchError = 'Receipt generation failed: ' + res.responseText;
             }.bind(this));
         },
 
