@@ -265,12 +265,6 @@ app = new Vue({
             });
             return foundScoreless;
         },
-        purgeAllMatches: function() {
-            if (!confirmPurge()) {
-                return;
-            }
-            console.log('purgeAllMatches');
-        },
         _checkAdvSelectedMatch: function() {
             parts = this.advSelectedMatch.split('-');
             if (parts.length == 1) {
