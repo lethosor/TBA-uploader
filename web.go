@@ -288,7 +288,10 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
     }
     for _, file := range match_files {
         if _, in_match_ids := match_ids[strings.Split(file.Name(), ".")[0]]; in_match_ids || all {
-            os.Remove(path.Join(match_folder, file.Name()))
+            ext := filepath.Ext(file.Name())
+            if ext == ".html" || ext == ".json" || ext == ".receipt" {
+                os.Remove(path.Join(match_folder, file.Name()))
+            }
         }
     }
 }

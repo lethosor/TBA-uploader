@@ -28,6 +28,10 @@ function sendApiRequest(url, event, body) {
     });
 }
 
+function confirmPurge() {
+    return confirm('Are you sure? This may replace old match results and re-send notifications.');
+}
+
 function makeAddEventUI() {
     return {
         event: '',
@@ -63,6 +67,8 @@ app = new Vue({
         matchSummaries: [],
         fetchedScorelessMatches: false,
         inMatchAdvanced: false,
+        advSelectedMatch: '',
+        advMatchError: '',
 
         inUploadRankings: false,
         rankingsError: '',
@@ -142,7 +148,7 @@ app = new Vue({
         },
 
         fetchMatches: function(all) {
-            if (all && !confirm('Are you sure? This may replace old match results and re-send notifications.')) {
+            if (all && !confirmPurge()) {
                 return;
             }
             this.inMatchRequest = true;
@@ -258,6 +264,39 @@ app = new Vue({
                 }
             });
             return foundScoreless;
+        },
+        purgeAllMatches: function() {
+            if (!confirmPurge()) {
+                return;
+            }
+            console.log('purgeAllMatches');
+        },
+        _checkAdvSelectedMatch: function() {
+            parts = this.advSelectedMatch.split('-');
+            if (parts.length == 1) {
+                parts.push('1');
+            }
+            this.advSelectedMatch = parts.join('-');
+            this.advMatchError = '';
+            if (!this.advSelectedMatch.match(/^\d+\-\d+$/)) {
+                this.advMatchError = 'Invalid match ID format';
+                return false;
+            }
+            return true;
+        },
+        purgeAdvSelectedMatch: function() {
+            if (!this._checkAdvSelectedMatch() || !confirmPurge()) {
+                return;
+            }
+            this.inMatchRequest = true;
+            this.advMatchError = '';
+            sendApiRequest('/api/matches/purge?level=' + this.matchLevel, this.selectedEvent, [this.advSelectedMatch])
+            .always(function() {
+                this.inMatchRequest = false;
+            }.bind(this))
+            .fail(function(res) {
+                this.advMatchError = res.responseText;
+            }.bind(this));
         },
 
         uploadRankings: function() {

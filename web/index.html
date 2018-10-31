@@ -85,7 +85,16 @@
           <div v-if="inMatchAdvanced">
             <hr>
             <h3>Advanced options <button class="btn btn-outline-danger btn-sm" @click.prevent="inMatchAdvanced = false">Close</button></h3>
+            <div class="form-inline mb-2">
+              <label>
+                Match ID (Match-Play):
+                <input class="form-control" v-model="advSelectedMatch" placeholder="M-P" size="5">
+              </label>
+              <button class="btn btn-warning" @click="purgeAdvSelectedMatch" :disabled="inMatchRequest">Purge</button>
+              <span class="warning">{{advMatchError}}</span>
+            </div>
             <div>
+              <button class="btn btn-danger" @click="purgeAllMatches" :disabled="inMatchRequest">Purge all matches</button>
               <button class="btn btn-danger" @click="fetchMatches(true)" :disabled="inMatchRequest">Purge and re-fetch all matches</button>
             </div>
             <hr>
