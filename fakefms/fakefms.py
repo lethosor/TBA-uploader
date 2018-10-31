@@ -1,42 +1,72 @@
+import argparse
 import re
 import os
 import sys
 
 import flask
 
-file_dir = os.path.abspath(sys.argv[1])
-if not os.path.isdir(file_dir):
-    raise RuntimeError('Folder not found: %r' % file_dir)
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument('folder', help='Root event folder to search in fms_data')
+parser.add_argument('-?', '--help', action='help')
+parser.add_argument('-h', '--host', help='Host to listen on', default='127.0.0.1')
+parser.add_argument('-p', '--port', help='Port to listen on', type=int, default=5555)
+args = parser.parse_args()
+
+if not os.path.isdir(args.folder):
+    raise RuntimeError('Folder not found: %r' % args.folder)
+
+def match_list_filename(level):
+    return 'level%i/match_list.html' % level
+
+def match_filename(level, match_name):
+    return 'level%i/matches/%s.html' % (level, match_name)
 
 def build_level_index(level):
-    index = []
-    lpath = os.path.join(file_dir, 'list%i.html' % level)
+    index = {}
+    lpath = os.path.join(args.folder, match_list_filename(level))
+    if not os.path.exists(lpath):
+        raise IOError('level %i not found in %r' % (level, lpath))
     with open(lpath) as f:
         list_html = f.read()
     link_matches = re.findall(r'<a.*?href=([\'"]).*?matchId=(.*?)\1', list_html)
-    for match in link_matches:
-        index.append(match[1])
+    button_matches = re.findall(r'<button.*?btn-success.*?<b>(.*?)</b>', list_html)
+    button_matches = map(lambda s: s.replace(' ', '').replace('/', '-'), button_matches)
+    if len(link_matches) != len(button_matches):
+        raise ValueError('')
+    for i in range(len((link_matches))):
+        match_uuid = link_matches[i][1]
+        button = button_matches[i]
+        print(match_uuid, button)
+        if match_uuid in index:
+            raise ValueError('Duplicate match %r' % match_uuid)
+        index[match_uuid] = button
     return index
 
-# [match level] -> [list of match IDs]
+# [match level] -> [{UUID: name}, ...]
 level_index = {}
 for i in range(1, 3 + 1):
-    if os.path.isfile(os.path.join(file_dir, 'list%i.html' % i)):
+    try:
         level_index[i] = build_level_index(i)
+    except IOError as e:
+        print(e)
 
 app = flask.Flask(__name__)
 
 @app.route('/FieldMonitor/MatchesPartialByLevel')
 def match_list():
     level = int(flask.request.args.get('levelParam'))
-    return flask.send_from_directory(file_dir, 'list%i.html' % level)
+    return flask.send_from_directory(args.folder, match_list_filename(level))
 
 @app.route('/FieldMonitor/Matches/Score')
 def match_score():
-    match_id = flask.request.args.get('matchId')
+    match_uuid = flask.request.args.get('matchId')
     for level, index in level_index.items():
-        if match_id in index:
-            return flask.send_from_directory(file_dir, 'level%i/raw%i.html' % (level, index.index(match_id)))
+        if match_uuid in index:
+            return flask.send_from_directory(args.folder, match_filename(level, index[match_uuid]))
+
+@app.route('/api/index/')
+def api_index():
+    return flask.jsonify(level_index)
 
 if __name__ == '__main__':
-    app.run(port=5555, host='0.0.0.0')
+    app.run(port=args.port, host=args.host)
