@@ -165,7 +165,21 @@ app = new Vue({
                 this.matchError = res.responseText;
             }.bind(this));
         },
-        refetchMatches: function() {console.log('Refetch')},
+        refetchMatches: function() {
+            var match_ids = this.pendingMatches.map(function(match) {
+                return match._fms_id;
+            });
+            this.inMatchRequest = true;
+            this.matchError = '';
+            sendApiRequest('/api/matches/purge?level=' + this.matchLevel, this.selectedEvent, match_ids)
+            .then(function() {
+                this.fetchMatches(false);
+            }.bind(this))
+            .fail(function(res) {
+                this.matchError = 'Purge: ' + res.responseText;
+                this.inMatchRequest = false;
+            }.bind(this));
+        },
         generateMatchSummaries: function(matches) {
             var rmFRC = function(team) {
                 return team.replace('frc', '');
