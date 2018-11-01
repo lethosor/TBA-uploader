@@ -209,7 +209,7 @@
                     <th>Blue</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="matchLevel == 2">
                   <tr v-for="i in 3">
                     <td class="red">
                       <h6>{{matchEditData.teams.red[i-1].team}}</h6>
@@ -251,6 +251,23 @@
                     <td class="blue">
                       <div class="form-check">
                         <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.invert_auto">Force auto RP {{matchEditData.text.blue.auto_rp}}</label>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+
+                <tbody v-if="matchLevel == 3">
+                  <tr>
+                    <td class="red">
+                      <h6>{{matchEditData.teams.red[0].team}} &bull; {{matchEditData.teams.red[1].team}} &bull; {{matchEditData.teams.red[2].team}}</h6>
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.dq">DQ (Red Card)</label>
+                      </div>
+                    </td>
+                    <td class="blue">
+                      <h6>{{matchEditData.teams.blue[0].team}} &bull; {{matchEditData.teams.blue[1].team}} &bull; {{matchEditData.teams.blue[2].team}}</h6>
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.dq">DQ (Red Card)</label>
                       </div>
                     </td>
                   </tr>

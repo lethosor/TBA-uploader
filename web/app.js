@@ -349,12 +349,12 @@ app = new Vue({
             sendApiRequest('/api/matches/extra?id=' + this.matchEditing.id + '&level=' + this.matchLevel, this.selectedEvent)
             .then(function(raw) {
                 this.inEditMatch = true;
+                var data = JSON.parse(raw);
                 this.matchEditData = {
                     teams: {},
                     flags: {},
                     text: {},
                 };
-                var data = JSON.parse(raw);
                 ['blue', 'red'].forEach(function(color) {
                     this.matchEditData.teams[color] = this.matchEditing.teams[color].map(function(team) {
                         return {
@@ -363,14 +363,21 @@ app = new Vue({
                             surrogate: data[color].surrogates.indexOf('frc' + team) != -1,
                         };
                     });
-                    this.matchEditData.flags[color] = {
-                        invert_auto: data[color].invert_auto,
-                    };
-                    this.matchEditData.text[color] = {
-                        auto_rp: score_breakdown[color].autoQuestRankingPoint ^ data[color].invert_auto ?
-                                 'missed (FMS returned scored)' :
-                                 'scored (FMS returned missed)',
-                    };
+                    if (this.matchLevel == 3) {
+                        this.matchEditData.flags[color] = {
+                            dq: data[color].dqs.length > 0,
+                        };
+                    }
+                    else {
+                        this.matchEditData.flags[color] = {
+                            invert_auto: data[color].invert_auto,
+                        };
+                        this.matchEditData.text[color] = {
+                            auto_rp: score_breakdown[color].autoQuestRankingPoint ^ data[color].invert_auto ?
+                                     'missed (FMS returned scored)' :
+                                     'scored (FMS returned missed)',
+                        };
+                    }
                 }.bind(this));
                 $('#match-edit-modal').modal('show');
             }.bind(this))
@@ -397,6 +404,17 @@ app = new Vue({
                 });
             }.bind(this);
             var genExtraData = function(color) {
+                if (this.matchLevel == 3) {
+                    return {
+                        dqs: this.matchEditData.flags[color].dq ?
+                             this.matchEditData.teams[color].map(function(t) {
+                                return 'frc' + t.team;
+                             }) :
+                             [],
+                        surrogates: [],
+                        invert_auto: false,
+                    };
+                }
                 return {
                     dqs: findTeamKeysByFlag(color, 'dq'),
                     surrogates: findTeamKeysByFlag(color, 'surrogate'),
