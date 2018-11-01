@@ -70,6 +70,11 @@ app = new Vue({
         advSelectedMatch: '',
         advMatchError: '',
 
+        inEditMatch: false,
+        matchEditing: null,
+        matchEditData: null,
+        matchEditError: '',
+
         inUploadRankings: false,
         rankingsError: '',
 
@@ -331,6 +336,79 @@ app = new Vue({
             .fail(function(res) {
                 this.advMatchError = 'Receipt generation failed: ' + res.responseText;
             }.bind(this));
+        },
+
+        showEditMatch: function(match) {
+            if (this.inMatchRequest)
+                return;
+            this.inMatchRequest = true;
+            this.matchEditing = match;
+            sendApiRequest('/api/matches/extra?id=' + this.matchEditing.id + '&level=' + this.matchLevel, this.selectedEvent)
+            .then(function(raw) {
+                this.inEditMatch = true;
+                this.matchEditData = {
+                    teams: {},
+                    flags: {},
+                };
+                var data = JSON.parse(raw);
+                ['blue', 'red'].forEach(function(color) {
+                    this.matchEditData.teams[color] = this.matchEditing.teams[color].map(function(team) {
+                        return {
+                            team: team,
+                            dq: data[color].dqs.indexOf('frc' + team) != -1,
+                            surrogate: data[color].surrogates.indexOf('frc' + team) != -1,
+                        };
+                    });
+                    this.matchEditData.flags[color] = {
+                        invert_auto: data[color].invert_auto,
+                    };
+                }.bind(this));
+                $('#match-edit-modal').modal('show');
+            }.bind(this))
+            .always(function() {
+                this.inMatchRequest = false;
+            }.bind(this));
+        },
+        hideEditMatch: function() {
+            this.inEditMatch = false;
+            this.matchEditing = null;
+            $('#match-edit-modal').modal('hide');
+        },
+        saveEditMatch: function() {
+            if (this.inMatchRequest)
+                return;
+            this.matchEditError = '';
+            this.inMatchRequest = true;
+
+            var findTeamKeysByFlag = function(color, flag) {
+                return this.matchEditData.teams[color].filter(function(t) {
+                    return t[flag];
+                }).map(function(t) {
+                    return 'frc' + t.team;
+                });
+            }.bind(this);
+            var genExtraData = function(color) {
+                return {
+                    dqs: findTeamKeysByFlag(color, 'dq'),
+                    surrogates: findTeamKeysByFlag(color, 'surrogate'),
+                    invert_auto: this.matchEditData.flags[color].invert_auto,
+                };
+            }.bind(this);
+            var data = {
+                blue: genExtraData('blue'),
+                red: genExtraData('red'),
+            };
+
+            sendApiRequest('/api/matches/extra/save?id=' + this.matchEditing.id + '&level=' + this.matchLevel,
+                           this.selectedEvent, data)
+            .always(function() {
+                this.inMatchRequest = false;
+            }.bind(this))
+            .then(this.hideEditMatch.bind(this))
+            .then(this.refetchMatches.bind(this))
+            .fail(function(res) {
+                this.matchEditError = res.responseText;
+            });
         },
 
         uploadRankings: function() {

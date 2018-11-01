@@ -19,8 +19,12 @@ body {
     color: #f60;
 }
 
-table.score td {
+table.score td, table.match-edit td {
     border: 1px solid #ccc;
+}
+
+table.score td {
+    cursor: pointer;
 }
 
 td.red {

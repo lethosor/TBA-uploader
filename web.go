@@ -296,6 +296,58 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
+    params, ok := getRequestEventParams(r)
+    level, err := getRequestLevel(w, r)
+    if !ok || err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("missing event/auth or level API parameters"))
+        return
+    }
+    id := r.URL.Query().Get("id");
+    if id == "" {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("missing id parameter"))
+        return
+    }
+    extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
+    extra_json, err := ioutil.ReadFile(extra_filename)
+    if err != nil {
+        tmp := map[string]extraMatchInfo{
+            "blue": makeExtraMatchInfo(),
+            "red": makeExtraMatchInfo(),
+        }
+        extra_json, _ = json.Marshal(tmp)
+    }
+    w.Write(extra_json)
+}
+
+func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
+    params, ok := getRequestEventParams(r)
+    level, err := getRequestLevel(w, r)
+    if !ok || err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("missing event/auth or level API parameters"))
+        return
+    }
+    id := r.URL.Query().Get("id");
+    if id == "" {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("missing id parameter"))
+        return
+    }
+
+    extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
+    var tmp map[string]extraMatchInfo
+    body, _ := ioutil.ReadAll(r.Body)
+    if json.Unmarshal(body, &tmp) != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte("invalid json"))
+        return
+    }
+    ioutil.WriteFile(extra_filename, body, os.ModePerm)
+}
+
 func apiFetchRankings(w http.ResponseWriter, r *http.Request) {
     out, err := downloadRankings()
     if err != nil {
@@ -327,6 +379,8 @@ func RunWebServer(port int, web_folder string) {
     r.HandleFunc("/api/matches/upload", apiUploadMatches)
     r.HandleFunc("/api/matches/mark_uploaded", apiMarkMatchesUploaded)
     r.HandleFunc("/api/matches/purge", apiPurgeMatches)
+    r.HandleFunc("/api/matches/extra", apiMatchLoadExtra)
+    r.HandleFunc("/api/matches/extra/save", apiMatchSaveExtra)
     r.HandleFunc("/api/rankings/fetch", apiFetchRankings)
     r.HandleFunc("/api/rankings/upload", apiUploadRankings)
     r.PathPrefix("/").Handler(http.FileServer(fs))

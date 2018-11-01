@@ -109,7 +109,7 @@
             </div>
             <div class="row">
               <div v-for="match in matchSummaries" class="col-md-6 col-lg-4">
-                <table class="table table-sm score">
+                <table class="table table-sm score" @click="showEditMatch(match)">
                   <tbody>
                     <tr>
                       <td>{{match.id}}</td>
@@ -190,6 +190,80 @@
         </div>
 
       </div> <!-- tabs -->
+
+      <div class="modal fade" id="match-edit-modal" tabindex="-1" role="dialog" aria-labelledby="match-edit-modal" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content" v-if="inEditMatch">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Edit match: {{matchEditing.code}} ({{matchEditing.id}})</h5>
+              <button type="button" class="close" @click="hideEditMatch" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-danger" v-if="matchEditError">{{matchEditError}}</div>
+              <table class="table match-edit">
+                <thead>
+                  <tr>
+                    <th>Red</th>
+                    <th>Blue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="i in 3">
+                    <td class="red">
+                      <h6>{{matchEditData.teams.red[i-1].team}}</h6>
+                      <div class="form-check">
+                        <label class="form-check-label">
+                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].dq">
+                          DQ (Red Card)
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <label class="form-check-label">
+                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].surrogate">
+                          Surrogate
+                        </label>
+                      </div>
+                    </td>
+                    <td class="blue">
+                      <h6>{{matchEditData.teams.blue[i-1].team}}</h6>
+                      <div class="form-check">
+                        <label class="form-check-label">
+                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].dq">
+                          DQ (Red Card)
+                        </label>
+                      </div>
+                      <div class="form-check">
+                        <label class="form-check-label">
+                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].surrogate">
+                          Surrogate
+                        </label>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="red">
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.invert_auto">Invert auto RP</label>
+                      </div>
+                    </td>
+                    <td class="blue">
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.invert_auto">Invert auto RP</label>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" @click="hideEditMatch">Cancel</button>
+              <button type="button" class="btn btn-primary" @click="saveEditMatch">Save changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div>
 
