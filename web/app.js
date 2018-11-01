@@ -343,12 +343,16 @@ app = new Vue({
                 return;
             this.inMatchRequest = true;
             this.matchEditing = match;
+            var score_breakdown = app.pendingMatches.filter(function(m) {
+                return m._fms_id == match.id;
+            })[0].score_breakdown;
             sendApiRequest('/api/matches/extra?id=' + this.matchEditing.id + '&level=' + this.matchLevel, this.selectedEvent)
             .then(function(raw) {
                 this.inEditMatch = true;
                 this.matchEditData = {
                     teams: {},
                     flags: {},
+                    text: {},
                 };
                 var data = JSON.parse(raw);
                 ['blue', 'red'].forEach(function(color) {
@@ -361,6 +365,11 @@ app = new Vue({
                     });
                     this.matchEditData.flags[color] = {
                         invert_auto: data[color].invert_auto,
+                    };
+                    this.matchEditData.text[color] = {
+                        auto_rp: score_breakdown[color].autoQuestRankingPoint ^ data[color].invert_auto ?
+                                 'missed (FMS returned scored)' :
+                                 'scored (FMS returned missed)',
                     };
                 }.bind(this));
                 $('#match-edit-modal').modal('show');
