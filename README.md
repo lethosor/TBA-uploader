@@ -40,7 +40,7 @@ are unable to obtain one, it should still be possible to use TBA-uploader to
 save match results (see "Backups" below) and upload these at a later time.
 Once you have a write key, you will need to set up the event in TBA-uploader.
 
-There are several tabs available:
+There are several tabs available once you have set up and selected an event:
 
 ### Event setup
 
@@ -58,17 +58,28 @@ starting semifinals, import a new schedule in the event wizard.
 This tab is only visible when an event is selected. Ensure that the correct
 competition level (qualification or playoff) is selected. Then, after scores are
 posted to the audience display for each match, click "fetch new matches". An
-overview of the match score should appear. Click "upload all" to upload this
+overview of the match score should appear. Click "upload scores" to upload this
 score to TBA. "Upload all" can be safely clicked at any time, when it is
 visible.
+
+*Before* clicking "upload all", if red cards were issued in a match, or there
+were surrogate teams, click on the match scores to enter them. You can also
+override the "auto quest" ranking point in this screen by toggling the "Invert
+Auto RP" checkbox if it was misdetected (see limitations below).
+
+If you see all 0s in a score, you probably fetched the scores before they were
+posted in FMS (see limitations below). You should see a warning in this case,
+but if not, click "Re-fetch scores" after scores have been posted in FMS. Do not
+upload scores before doing this. If you accidentally upload scores before making
+the necessary changes, see "advanced options" below.
 
 Click "upload rankings" at any time to upload qualification rankings. This
 button is only available when "qualification" is selected.
 
-If you forget to fetch a match, avoid clicking any "fetch matches" buttons
-before scores for the next match have been posted. After scores for the next
-match have been posted, any un-uploaded matches will be fetched when you click
-"fetch matches".
+If you forget to fetch a match before the next match starts, avoid clicking
+"fetch new match(es)" before scores for the next match have been posted. After
+scores for the next match have been posted, any un-uploaded matches will be
+fetched when you click "fetch matches".
 
 ### Awards
 
@@ -113,25 +124,48 @@ matches).
 ## Known issues and limitations
 * If you click the "fetch matches" button before scores have been committed,
   TBA-uploader may fetch a score of 0-0. Avoid doing this - always wait until
-  scores have been committed before clicking any "fetch" buttons.
-* There is currently no way to re-fetch a single match in the UI. The "fetch all
-  matches" button will re-fetch all played matches in the current competition
-  level, but it is unknown whether this will trigger push notifications for all
-  previous matches.
-
-    * You can force a single match to be re-fetched by deleting all of its
-      associated files in the fms_data folder. See "Backups" above for how to
-      find these files. This should be preferred to fetching all matches.
-    * Note that a _replay_ of a match will create a separate entry in FMS, which
-      TBA-uploader should detect and upload. This limitation applies only to
-      modifications to already-played matches (i.e. scores changed in match
-      review).
-
-* Surrogates and DQs (red cards) are not handled, because FMS does not expose
-  this information. An interface to handle these manually is planned eventually.
-  If this affects your event and you want to record surrogates and/or DQs
-  properly, send us the fms_data folder and a list of affected matches.
+  scores have been committed before clicking any "fetch" buttons. If this
+  happens, a warning should be displayed, and clicking "Re-fetch scores" after
+  posting scores in FMS should resolve the issue.
 * 2018: the "auto quest" ranking point cannot be reliably determined due to FMS
   limitations. Sometimes alliances will be credited with this ranking point when
   they didn't actually earn it. Note that this only applies to match scores -
-  rankings are unaffected.
+  rankings are unaffected. This can be toggled in the match edit dialog by
+  clicking on the match results before uploading scores.
+* Editing properties of a specific play of a match that has already been
+  uploaded to TBA is rather convoluted. See "advanced options" below. Note that
+  a *replay* of a match for any reason counts as a separate play in FMS and can
+  be treated normally like any other match (TBA-uploader will fetch and upload
+  it separately, overwriting the earlier play(s) if necessary).
+
+## Advanced options
+
+These options allow some manual management of previously-uploaded matches. They
+aren't easy to use, so use them only if you need to recover from a mistake with
+already-uploaded scores.
+
+Note that these all apply only to the current competition level
+(qualification/playoff). Make sure you have selected the right one!
+
+Individual matches can be adjusted by entering the raw match ID (in the form
+``match number-play number``, or just ``match number`` for the first play of a
+match) and clicking one of the yellow buttons. "Purge" will delete most files in
+fms_data related to the match, which will cause it to be fetched again and
+uploaded in the next batch of uploads. "Mark as uploaded" will partially undo
+"Purge" - it will prevent the match from being uploaded in the next batch of
+uploads.
+
+One common use case: if a match play was uploaded with errors (i.e. the auton
+RP, red cards, or surrogates were wrong, or the score was all 0s), this can be
+changed with the following procedure:
+
+1. Enter the match ID in the "Match ID" box
+2. Click "Purge", then "OK" in the resulting dialog
+3. Click on the match under "Matches to upload"
+4. Make the necessary modifications and save them
+5. Click "upload scores" again (making sure that all displayed matches are still
+   correct)
+
+The "Purge and re-fetch all matches" button purges all matches. This will likely
+trigger a *lot* of notifications for anyone with TBA notifications enabled, so
+avoid it.
