@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -32,17 +35,35 @@ type fmsScoreInfo struct {
 	baseRP int64  // win-loss-tie RP only
 }
 
-func addManualFields(breakdown map[string]interface{}, info fmsScoreInfo, playoff bool) {
+type extraMatchInfo struct {
+	Dqs []string `json:"dqs"`
+	Surrogates []string `json:"surrogates"`
+	InvertAuto bool `json:"invert_auto"`
+}
+
+func makeExtraMatchInfo() extraMatchInfo {
+	return extraMatchInfo{
+		Dqs: make([]string, 0),
+		Surrogates: make([]string, 0),
+		InvertAuto: false,
+	}
+}
+
+func addManualFields(breakdown map[string]interface{}, info fmsScoreInfo, playoff bool, invert_auto bool) {
 	rp := info.baseRP
 	// adjust should be negative when total = 0
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
 	// no way to tell if switch was lost before T=0, so assume it wasn't
 	breakdown["autoSwitchAtZero"] = info.autoSwitchSec > 0
-	if !playoff && info.autoSwitchSec > 0 && info.autoRunPoints == 15 {
-		breakdown["autoQuestRankingPoint"] = true
-		rp++
-	} else {
-		breakdown["autoQuestRankingPoint"] = false
+	if !playoff {
+		auto_rp := info.autoSwitchSec > 0 && info.autoRunPoints == 15
+		if invert_auto {
+			auto_rp = !auto_rp
+		}
+		breakdown["autoQuestRankingPoint"] = auto_rp
+		if auto_rp {
+			rp++
+		}
 	}
 
 	if !playoff && info.endgamePoints >= 90 {
@@ -78,17 +99,29 @@ func ParseHTMLtoJSON(filename string, playoff bool) (map[string]interface{}, err
 
 	all_json := make(map[string]interface{})
 
+	extra_info := make(map[string]extraMatchInfo)
+	extra_info["blue"] = makeExtraMatchInfo()
+	extra_info["red"] = makeExtraMatchInfo()
+	extra_filename := filename[0:len(filename) - len(path.Ext(filename))] + ".extrajson"
+	extra_raw, err := ioutil.ReadFile(extra_filename)
+	if err == nil {
+		err = json.Unmarshal(extra_raw, &extra_info)
+		if err != nil {
+			return nil, fmt.Errorf("Error reading JSON from %s: %s", extra_filename, err)
+		}
+	}
+
 	alliances := map[string]map[string]interface{} {
 		"blue": map[string]interface{} {
 			"teams": make([]string, 3),
-			"surrogates": make([]string, 0),
-			"dqs": make([]string, 0),
+			"surrogates": extra_info["blue"].Surrogates,
+			"dqs": extra_info["blue"].Dqs,
 			"score": -1,
 		},
 		"red": map[string]interface{} {
 			"teams": make([]string, 3),
-			"surrogates": make([]string, 0),
-			"dqs": make([]string, 0),
+			"surrogates": extra_info["red"].Surrogates,
+			"dqs": extra_info["red"].Dqs,
 			"score": -1,
 		},
 	}
@@ -352,8 +385,8 @@ func ParseHTMLtoJSON(filename string, playoff bool) (map[string]interface{}, err
 	breakdown["blue"]["tba_gameData"] = gamedata
 	breakdown["red"]["tba_gameData"] = gamedata
 
-	addManualFields(breakdown["blue"], scoreInfo.blue, playoff)
-	addManualFields(breakdown["red"], scoreInfo.red, playoff)
+	addManualFields(breakdown["blue"], scoreInfo.blue, playoff, extra_info["blue"].InvertAuto)
+	addManualFields(breakdown["red"], scoreInfo.red, playoff, extra_info["red"].InvertAuto)
 
 	if parse_error != "" {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)
