@@ -205,7 +205,25 @@ app = new Vue({
                 }
                 return s;
             };
+            var genClasses = function(match, team_key, color) {
+                var classes = [color];
+                if (match.alliances[color].dqs.indexOf(team_key) != -1) {
+                    classes.push('dq');
+                }
+                if (match.alliances[color].surrogates.indexOf(team_key) != -1) {
+                    classes.push('surrogate');
+                }
+                return classes;
+            };
+
             return matches.map(function(match) {
+                classes = {};
+                match.alliances.blue.teams.forEach(function(team_key) {
+                    classes[rmFRC(team_key)] = genClasses(match, team_key, 'blue');
+                });
+                match.alliances.red.teams.forEach(function(team_key) {
+                    classes[rmFRC(team_key)] = genClasses(match, team_key, 'red');
+                });
                 return {
                     id: match._fms_id,
                     code: formatMatchCode(match),
@@ -217,6 +235,7 @@ app = new Vue({
                         blue: formatScoreSummary(match, match.score_breakdown, 'blue'),
                         red: formatScoreSummary(match, match.score_breakdown, 'red'),
                     },
+                    classes: classes,
                 }
             });
         },

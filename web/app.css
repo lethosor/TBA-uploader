@@ -38,3 +38,11 @@ td.blue {
 td.blue.score {
     background-color: #bbf;
 }
+
+td.surrogate span {
+    border-bottom: 1px dotted;
+}
+
+td.dq {
+    text-decoration: line-through;
+}
