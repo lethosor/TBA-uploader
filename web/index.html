@@ -143,7 +143,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="award in awards" :key="award.id">
+              <tr v-for="award in awards[selectedEvent]" :key="award.id">
                 <td>
                   <input class="form-control" title="Award Name" placeholder="Award Name" v-model="award.name" @blur="saveAwards">
                 </td>

@@ -8,10 +8,13 @@ try {
     STORED_AWARDS = JSON.parse(localStorage.getItem('awards'));
 }
 catch (e) {
-    STORED_AWARDS = [];
+    STORED_AWARDS = {};
 }
-if (!Array.isArray(STORED_AWARDS) || STORED_AWARDS.length == 0) {
-    STORED_AWARDS = [makeAward()];
+if (Array.isArray(STORED_AWARDS)) {
+    // move old awards from array to object
+    var new_awards = {};
+    new_awards[localStorage.getItem('selectedEvent') || '?'] = STORED_AWARDS;
+    STORED_AWARDS = new_awards;
 }
 
 function sendApiRequest(url, event, body) {
@@ -126,6 +129,7 @@ app = new Vue({
             this.selectedEvent = event;
             if (this.events.indexOf(event) == -1) {
                 this.events.push(event);
+                this.awards[event] = this.awards[event] || [makeAward()];
             }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
             this.addEventUI = makeAddEventUI();
@@ -486,27 +490,27 @@ app = new Vue({
         },
 
         addAward: function() {
-            this.awards.push(makeAward());
+            this.awards[this.selectedEvent].push(makeAward());
         },
         duplicateAward: function(award) {
             var newAward = makeAward();
             newAward.name = award.name;
-            this.awards.splice(this.awards.indexOf(award) + 1, 0, newAward);
+            this.awards[this.selectedEvent].splice(this.awards[this.selectedEvent].indexOf(award) + 1, 0, newAward);
         },
         clearAward: function(award) {
             award.name = award.team = award.person = '';
         },
         deleteAward: function(award) {
-            var index = this.awards.indexOf(award);
+            var index = this.awards[this.selectedEvent].indexOf(award);
             if (index >= 0) {
-                this.awards.splice(index, 1);
+                this.awards[this.selectedEvent].splice(index, 1);
             }
         },
         saveAwards: function() {
             localStorage.setItem('awards', JSON.stringify(this.awards));
         },
         uploadAwards: function() {
-            var json = this.awards.map(function(award) {
+            var json = this.awards[this.selectedEvent].map(function(award) {
                 return {
                     name_str: award.name,
                     team_key: award.team ? 'frc' + award.team : null,
