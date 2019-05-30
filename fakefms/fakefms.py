@@ -12,6 +12,7 @@ parser.add_argument('-h', '--host', help='Host to listen on', default='127.0.0.1
 parser.add_argument('-p', '--port', help='Port to listen on', type=int, default=5555)
 args = parser.parse_args()
 
+args.folder = os.path.abspath(args.folder)
 if not os.path.isdir(args.folder):
     raise RuntimeError('Folder not found: %r' % args.folder)
 
