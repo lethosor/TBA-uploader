@@ -132,6 +132,7 @@ app = new Vue({
                 this.awards[event] = this.awards[event] || [makeAward()];
             }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
+            this.saveAwards();
             this.addEventUI = makeAddEventUI();
         },
         cancelAddEvent: function() {
@@ -534,11 +535,20 @@ app = new Vue({
     watch: {
         selectedEvent: function(event) {
             localStorage.setItem('selectedEvent', event);
+            if (!this.awards[event]) {
+                this.awards[event] = [makeAward()];
+                this.saveAwards();
+            }
         },
     },
     mounted: function() {
         $(this.$el).removeClass('hidden');
-        this.selectedEvent = localStorage.getItem('selectedEvent') || '';
+        var event = localStorage.getItem('selectedEvent') || '';
+        if (event) {
+            this.awards[event] = this.awards[event] || [makeAward()];
+            this.saveAwards();
+        }
+        this.selectedEvent = event;
         $.get('/README.md', function(readme) {
             // remove first line (header)
             readme = readme.substr(readme.indexOf('\n'));
