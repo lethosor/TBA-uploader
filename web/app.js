@@ -280,17 +280,11 @@ app = new Vue({
         checkScorelessMatches: function(matches) {
             var foundScoreless = false;
             matches.forEach(function(match) {
-                var foundNonzero = false;
-                ['red', 'blue'].forEach(function(color) {
-                    Object.entries(match.score_breakdown[color]).forEach(function(k, v) {
-                        if ((typeof v == 'number' || typeof v == 'boolean') && v) {
-                            foundNonzero = true;
-                        }
-                    })
+                Object.values(match.score_breakdown).forEach(function(breakdown) {
+                    if (breakdown.totalPoints === 0 && breakdown.adjustPoints === 0) {
+                        foundScoreless = true;
+                    }
                 });
-                if (!foundNonzero) {
-                    foundScoreless = true;
-                }
             });
             return foundScoreless;
         },
