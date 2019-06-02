@@ -48,6 +48,7 @@
             <label>
               Event code:
               <input class="form-control" type="text" v-model="addEventUI.event">
+              <span v-if="addEventUI.event.length >= 4 && !addEventIsValidYear" class="text-danger">Invalid year<span>
             </label>
             <label class="row col">
               Auth ID:

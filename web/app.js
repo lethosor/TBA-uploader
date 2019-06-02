@@ -52,6 +52,11 @@ function makeAward() {
     };
 }
 
+function isValidYear(year) {
+    year = parseInt(year);
+    return year >= 2018 && year <= 2019;
+}
+
 app = new Vue({
     el: '#main',
     data: {
@@ -93,7 +98,11 @@ app = new Vue({
             return this.selectedEvent == '_add';
         },
         canAddEvent: function() {
-            return this.addEventUI.event && this.addEventUI.auth && this.addEventUI.secret;
+            return this.addEventUI.event && this.addEventUI.auth && this.addEventUI.secret &&
+                isValidYear(this.addEventUI.event);
+        },
+        addEventIsValidYear: function() {
+            return isValidYear(this.addEventUI.event);
         },
         authInputType: function() {
             return this.addEventUI.showAuth ? 'text' : 'password';
