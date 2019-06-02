@@ -80,6 +80,9 @@ func getMatchDownloadPath(level int, folder string) string {
 func downloadMatches(level int, folder string, new_only bool) ([]string, error) {
     url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSConfig.Server, level)
     folder = path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level))
+    // ensure that the matches folder exists even if no matches are fetched
+    os.MkdirAll(path.Join(folder, "matches"), os.ModePerm);
+
     filename, ok, err := downloadFile(folder, "match_list.html", url, true)
     if !ok {
         return nil, err
