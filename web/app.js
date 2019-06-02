@@ -98,6 +98,13 @@ app = new Vue({
         authInputType: function() {
             return this.addEventUI.showAuth ? 'text' : 'password';
         },
+        eventYear: function() {
+            var year = parseInt(this.selectedEvent);
+            if (isNaN(year)) {
+                return new Date().getFullYear();
+            }
+            return year;
+        },
     },
     methods: {
         saveFMSConfig: function() {

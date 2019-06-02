@@ -242,7 +242,7 @@
                       </div>
                     </td>
                   </tr>
-                  <tr>
+                  <tr v-if="eventYear == 2018">
                     <td class="red">
                       <div class="form-check">
                         <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.invert_auto">Force auto RP {{matchEditData.text.red.auto_rp}}</label>
