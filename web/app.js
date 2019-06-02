@@ -64,7 +64,7 @@ app = new Vue({
         helpHTML: '',
         fmsConfig: window.FMS_CONFIG || {},
         fmsConfigError: '',
-        events: Object.keys(STORED_EVENTS),
+        events: Object.keys(STORED_EVENTS).sort(),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
 
@@ -145,6 +145,7 @@ app = new Vue({
             this.selectedEvent = event;
             if (this.events.indexOf(event) == -1) {
                 this.events.push(event);
+                this.events.sort();
                 this.awards[event] = this.awards[event] || [makeAward()];
             }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
