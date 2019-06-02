@@ -30,7 +30,7 @@ func getRequestLevel(w http.ResponseWriter, r *http.Request) (int, error) {
     level, err := strconv.Atoi(r.URL.Query().Get("level"))
     if err != nil {
         return -1, err
-    } else if level < 1 || level > 3 {
+    } else if level < 0 || level > 3 {
         return -1, fmt.Errorf("Invalid level: %i", level)
     } else {
         return level, nil

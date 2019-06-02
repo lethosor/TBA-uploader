@@ -74,6 +74,8 @@
         <div class="tab-pane fade" id="match-play" role="tabpanel" aria-labelledby="match-play-tab">
           <div class="form-inline">
             <select class="form-control" v-model="matchLevel">
+              <option value="0" v-if="showAllLevels">Test</option>
+              <option value="1" v-if="showAllLevels">Practice</option>
               <option value="2">Qualification</option>
               <option value="3">Playoff</option>
             </select>
@@ -169,6 +171,16 @@
         </div>
 
         <div class="tab-pane fade" id="options" role="tabpanel" aria-labelledby="options-tab">
+          <h2>UI options</h2>
+          <div class="row">
+            <div class="col-sm-12 col-md-6">
+              <label>
+                <input type="checkbox" v-model="showAllLevels">
+                Show hidden tournament levels (Practice/Test)
+              </label>
+            </div>
+          </div>
+          <h2>FMS options</h2>
           <div class="row mb-2">
             <label class="col-sm-12 col-md-8">
               Server:

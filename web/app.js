@@ -69,6 +69,7 @@ app = new Vue({
         addEventUI: makeAddEventUI(),
 
         matchLevel: 2,
+        showAllLevels: false,
         inMatchRequest: false,
         matchError: '',
         // pendingMatches: [], // not set yet to avoid Vue binding to this
