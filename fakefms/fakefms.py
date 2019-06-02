@@ -65,6 +65,12 @@ def match_score():
         if match_uuid in index:
             return flask.send_from_directory(args.folder, match_filename(level, index[match_uuid]))
 
+@app.route('/Pit/GetData')
+def rankings():
+    if not flask.request.headers.get('Referer', '').endswith('/Pit/Qual'):
+        return flask.jsonify(None)
+    return flask.send_from_directory(args.folder, 'rankings.json')
+
 @app.route('/api/index/')
 def api_index():
     return flask.jsonify(level_index)

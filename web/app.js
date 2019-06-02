@@ -459,7 +459,7 @@ app = new Vue({
             this.rankingsError = '';
             this.inUploadRankings = true;
             $.getJSON('/api/rankings/fetch', function(data) {
-                var rankings = data.qualRanks.map(function(r) {
+                var rankings = ((data && data.qualRanks) || []).map(function(r) {
                     return {
                         team_key: 'frc' + r.team,
                         rank: r.rank,
