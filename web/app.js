@@ -57,6 +57,55 @@ function isValidYear(year) {
     return year >= 2018 && year <= 2019;
 }
 
+convertToTBARankings = {
+    common: function(r) {
+        return {
+            team_key: 'frc' + r.team,
+            rank: r.rank,
+            played: r.played,
+            dqs: r.dq,
+            "Record (W-L-T)": r.wins + '-' + r.losses + '-' + r.ties,
+        };
+    },
+    2018: function(r) {
+        return Object.assign(convertToTBARankings.common(r), {
+            "Ranking Score": r.sort1,
+            "End Game": r.sort2,
+            "Auto": r.sort3,
+            "Ownership": r.sort4,
+            "Vault": r.sort5,
+        });
+    },
+    2019: function(r) {
+        return Object.assign(convertToTBARankings.common(r), {
+            "Ranking Score": r.sort1,
+            "Cargo": r.sort2,
+            "Hatch Panel": r.sort3,
+            "HAB Climb": r.sort4,
+            "Sandstorm Bonus": r.sort5,
+        });
+    },
+};
+
+TBARankingNames = {
+    2018: [
+        "Ranking Score",
+        "End Game",
+        "Auto",
+        "Ownership",
+        "Vault",
+        "Record (W-L-T)",
+    ],
+    2019: [
+        "Ranking Score",
+        "Cargo",
+        "Hatch Panel",
+        "HAB Climb",
+        "Sandstorm Bonus",
+        "Record (W-L-T)",
+    ],
+};
+
 app = new Vue({
     el: '#main',
     data: {
@@ -459,22 +508,7 @@ app = new Vue({
             this.rankingsError = '';
             this.inUploadRankings = true;
             $.getJSON('/api/rankings/fetch', function(data) {
-                var rankings = ((data && data.qualRanks) || []).map(function(r) {
-                    return {
-                        team_key: 'frc' + r.team,
-                        rank: r.rank,
-                        played: r.played,
-                        dqs: r.dq,
-
-                        "Record (W-L-T)": r.wins + '-' + r.losses + '-' + r.ties,
-
-                        "Auto": r.sort3,
-                        "End Game": r.sort2,
-                        "Ownership": r.sort4,
-                        "Ranking Score": r.sort1,
-                        "Vault": r.sort5,
-                    };
-                });
+                var rankings = ((data && data.qualRanks) || []).map(convertToTBARankings[this.eventYear]);
                 if (!rankings || !rankings.length) {
                     this.rankingsError = 'No rankings available from FMS';
                     this.inUploadRankings = false;
@@ -482,14 +516,7 @@ app = new Vue({
                 }
 
                 sendApiRequest('/api/rankings/upload', this.selectedEvent, {
-                    breakdowns: [
-                        "Ranking Score",
-                        "End Game",
-                        "Auto",
-                        "Ownership",
-                        "Vault",
-                        "Record (W-L-T)",
-                    ],
+                    breakdowns: TBARankingNames[this.eventYear],
                     rankings: rankings,
                 }).fail(function(res) {
                     this.rankingsError = res.responseText;
