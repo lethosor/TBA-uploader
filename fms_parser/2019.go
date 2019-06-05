@@ -1,4 +1,4 @@
-package main
+package fms_parser
 
 import (
 	"encoding/json"
@@ -12,18 +12,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func split_and_strip(text string, separator string) ([]string) {
-	// Split text into parts at separator character. Remove whitespace from parts.
-	// "a • b • c" -> ["a", "b", "c"]
-	parts := strings.Split(strings.TrimSpace(text), separator)
-	var result []string
-	for _, part := range parts {
-		result = append(result, strings.TrimSpace(part))
-	}
-	return result
-}
-
-type fmsScoreInfo struct {
+type fmsScoreInfo2019 struct {
 	auto int64
 	teleop int64
 	fouls int64
@@ -35,21 +24,21 @@ type fmsScoreInfo struct {
 	baseRP int64  // win-loss-tie RP only
 }
 
-type extraMatchInfo struct {
+type extraMatchInfo2019 struct {
 	Dqs []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
 	InvertAuto bool `json:"invert_auto"`
 }
 
-func makeExtraMatchInfo() extraMatchInfo {
-	return extraMatchInfo{
+func makeExtraMatchInfo2019() extraMatchInfo2019 {
+	return extraMatchInfo2019{
 		Dqs: make([]string, 0),
 		Surrogates: make([]string, 0),
 		InvertAuto: false,
 	}
 }
 
-func addManualFields(breakdown map[string]interface{}, info fmsScoreInfo, playoff bool, invert_auto bool) {
+func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, playoff bool, invert_auto bool) {
 	rp := info.baseRP
 	// adjust should be negative when total = 0
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
@@ -80,7 +69,7 @@ func addManualFields(breakdown map[string]interface{}, info fmsScoreInfo, playof
 	}
 }
 
-func ParseHTMLtoJSON(filename string, playoff bool) (map[string]interface{}, error) {
+func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -99,9 +88,9 @@ func ParseHTMLtoJSON(filename string, playoff bool) (map[string]interface{}, err
 
 	all_json := make(map[string]interface{})
 
-	extra_info := make(map[string]extraMatchInfo)
-	extra_info["blue"] = makeExtraMatchInfo()
-	extra_info["red"] = makeExtraMatchInfo()
+	extra_info := make(map[string]extraMatchInfo2019)
+	extra_info["blue"] = makeExtraMatchInfo2019()
+	extra_info["red"] = makeExtraMatchInfo2019()
 	extra_filename := filename[0:len(filename) - len(path.Ext(filename))] + ".extrajson"
 	extra_raw, err := ioutil.ReadFile(extra_filename)
 	if err == nil {
@@ -132,8 +121,8 @@ func ParseHTMLtoJSON(filename string, playoff bool) (map[string]interface{}, err
 	}
 
 	var scoreInfo struct {
-		blue fmsScoreInfo
-		red fmsScoreInfo
+		blue fmsScoreInfo2019
+		red fmsScoreInfo2019
 	}
 
 	parse_error := ""
@@ -385,8 +374,8 @@ func ParseHTMLtoJSON(filename string, playoff bool) (map[string]interface{}, err
 	breakdown["blue"]["tba_gameData"] = gamedata
 	breakdown["red"]["tba_gameData"] = gamedata
 
-	addManualFields(breakdown["blue"], scoreInfo.blue, playoff, extra_info["blue"].InvertAuto)
-	addManualFields(breakdown["red"], scoreInfo.red, playoff, extra_info["red"].InvertAuto)
+	addManualFields2019(breakdown["blue"], scoreInfo.blue, playoff, extra_info["blue"].InvertAuto)
+	addManualFields2019(breakdown["red"], scoreInfo.red, playoff, extra_info["red"].InvertAuto)
 
 	if parse_error != "" {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)

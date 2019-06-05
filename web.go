@@ -13,7 +13,11 @@ import (
     "strings"
 
     "github.com/gorilla/mux"
+
+    "./fms_parser"
 )
+
+type extraMatchInfo interface{}
 
 func getRequestEventParams(r *http.Request) (*eventParams, bool) {
     if len(r.Header.Get("X-Event")) > 0 && len(r.Header.Get("X-Auth")) > 0 && len(r.Header.Get("X-Secret")) > 0 {
@@ -35,6 +39,12 @@ func getRequestLevel(w http.ResponseWriter, r *http.Request) (int, error) {
     } else {
         return level, nil
     }
+}
+
+func getEventYear(event string) int {
+    var year int
+    fmt.Sscanf(event, "%d", &year)
+    return year
 }
 
 func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
@@ -131,6 +141,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
         w.Write([]byte(fmt.Sprintf("invalid level: %d", level)))
         return
     }
+    var event_year = getEventYear(r.URL.Query().Get("event"))
     var match_folder = getMatchDownloadPath(level, r.URL.Query().Get("event"))
     var files []string
     if download_all {
@@ -158,7 +169,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             fname_trimmed := strings.TrimSuffix(fname, filepath.Ext(fname))
             fname_json := fname_trimmed + ".json"
 
-            match_info, err := ParseHTMLtoJSON(files[i], level == 3)
+            match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], level == 3)
             if err != nil {
                 w.WriteHeader(http.StatusInternalServerError)
                 w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", fname, err)))
@@ -298,6 +309,7 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
 
 func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
     params, ok := getRequestEventParams(r)
+    event_year := getEventYear(params.event)
     level, err := getRequestLevel(w, r)
     if !ok || err != nil {
         w.WriteHeader(http.StatusBadRequest)
@@ -314,8 +326,8 @@ func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
     extra_json, err := ioutil.ReadFile(extra_filename)
     if err != nil {
         tmp := map[string]extraMatchInfo{
-            "blue": makeExtraMatchInfo(),
-            "red": makeExtraMatchInfo(),
+            "blue": fms_parser.MakeExtraMatchInfo(event_year),
+            "red": fms_parser.MakeExtraMatchInfo(event_year),
         }
         extra_json, _ = json.Marshal(tmp)
     }
