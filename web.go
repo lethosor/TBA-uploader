@@ -17,8 +17,6 @@ import (
     "./fms_parser"
 )
 
-type extraMatchInfo interface{}
-
 func getRequestEventParams(r *http.Request) (*eventParams, bool) {
     if len(r.Header.Get("X-Event")) > 0 && len(r.Header.Get("X-Auth")) > 0 && len(r.Header.Get("X-Secret")) > 0 {
         return &eventParams{
@@ -325,7 +323,7 @@ func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
     extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
     extra_json, err := ioutil.ReadFile(extra_filename)
     if err != nil {
-        tmp := map[string]extraMatchInfo{
+        tmp := map[string]fms_parser.ExtraMatchInfo{
             "blue": fms_parser.MakeExtraMatchInfo(event_year),
             "red": fms_parser.MakeExtraMatchInfo(event_year),
         }
@@ -350,7 +348,7 @@ func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
     }
 
     extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
-    var tmp map[string]extraMatchInfo
+    var tmp map[string]fms_parser.ExtraMatchInfo
     body, _ := ioutil.ReadAll(r.Body)
     if json.Unmarshal(body, &tmp) != nil {
         w.WriteHeader(http.StatusBadRequest)

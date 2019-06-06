@@ -26,7 +26,9 @@ func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interf
 	}
 }
 
-func MakeExtraMatchInfo(year int) interface{} {
+type ExtraMatchInfo interface {}
+
+func MakeExtraMatchInfo(year int) ExtraMatchInfo {
 	if (year == 2018) {
 		return makeExtraMatchInfo2018()
 	} else if (year == 2019) {
