@@ -64,6 +64,7 @@ def match_score():
     for level, index in level_index.items():
         if match_uuid in index:
             return flask.send_from_directory(args.folder, match_filename(level, index[match_uuid]))
+    return 'invalid match ID', 404
 
 @app.route('/Pit/GetData')
 def rankings():
