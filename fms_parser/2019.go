@@ -19,6 +19,14 @@ type fmsScoreInfo2019 struct {
 	total int64
 
 	baseRP int64  // win-loss-tie RP only
+
+	fields map[string]int64  // indexed by values of simpleFields2019
+}
+
+func makeFmsScoreInfo2019() fmsScoreInfo2019 {
+	return fmsScoreInfo2019{
+		fields: make(map[string]int64),
+	}
 }
 
 type extraMatchInfo2019 struct {
@@ -40,6 +48,14 @@ func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
 
 	breakdown["rp"] = rp
+}
+
+// map FMS names to API names of basic integer fields
+var simpleFields2019 = map[string]string {
+	"Cargo Points": "cargoPoints",
+	"HAB Climb Points": "habClimbPoints",
+	"Hatch Panel Points": "hatchPanelPoints",
+	"Sandstorm Bonus Points": "sandStormBonusPoints",
 }
 
 func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{}, error) {
@@ -93,9 +109,12 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		"red": make(map[string]interface{}),
 	}
 
-	var scoreInfo struct {
+	var scoreInfo = struct {
 		blue fmsScoreInfo2019
 		red fmsScoreInfo2019
+	}{
+		makeFmsScoreInfo2019(),
+		makeFmsScoreInfo2019(),
 	}
 
 	parse_error := ""
@@ -186,6 +205,16 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				breakdown["red"]["foulPoints"] = red_foul_points
 				scoreInfo.blue.fouls = blue_foul_points
 				scoreInfo.red.fouls = red_foul_points
+			} else if apiField, ok := simpleFields2019[identifier]; ok {
+				blue_points, err := strconv.ParseInt(infos[0], 10, 0)
+				red_points, err := strconv.ParseInt(infos[2], 10, 0)
+				if err != nil {
+					parse_error = "parse integer field \"" + apiField + "\" failed"
+				}
+				breakdown["blue"][apiField] = blue_points
+				breakdown["red"][apiField] = red_points
+				scoreInfo.blue.fields[apiField] = blue_points
+				scoreInfo.red.fields[apiField] = red_points
 			} else {
 				breakdown["blue"]["!" + identifier] = strings.TrimSpace(infos[0])
 				breakdown["red"]["!" + identifier] = strings.TrimSpace(infos[2])
