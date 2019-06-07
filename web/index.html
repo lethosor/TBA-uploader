@@ -267,6 +267,24 @@
                       </div>
                     </td>
                   </tr>
+                  <tr v-if="eventYear == 2019">
+                    <td class="red">
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_rocket">Give rocket RP</label>
+                      </div>
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_hab_climb">Give HAB climb RP</label>
+                      </div>
+                    </td>
+                    <td class="blue">
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_rocket">Give rocket RP</label>
+                      </div>
+                      <div class="form-check">
+                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_hab_climb">Give HAB climb RP</label>
+                      </div>
+                    </td>
+                  </tr>
                 </tbody>
 
                 <tbody v-if="matchLevel == 3">

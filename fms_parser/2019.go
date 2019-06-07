@@ -32,7 +32,8 @@ func makeFmsScoreInfo2019() fmsScoreInfo2019 {
 type extraMatchInfo2019 struct {
 	Dqs []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
-	InvertAuto bool `json:"invert_auto"`
+	AddRpRocket bool `json:"add_rp_rocket"`
+	AddRpHabClimb bool `json:"add_rp_hab_climb"`
 }
 
 func makeExtraMatchInfo2019() extraMatchInfo2019 {
