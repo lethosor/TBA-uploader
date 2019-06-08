@@ -45,18 +45,20 @@ func makeExtraMatchInfo2019() extraMatchInfo2019 {
 	}
 }
 
-func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, playoff bool) {
+func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, extra extraMatchInfo2019, playoff bool) {
 	rp := info.baseRP
 	// adjust should be negative when total = 0
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
 
-	breakdown["completeRocketRankingPoint"] = info.rocketRP
-	if (info.rocketRP) {
+	rocket_rp := info.rocketRP || extra.AddRpRocket
+	breakdown["completeRocketRankingPoint"] = rocket_rp
+	if (rocket_rp) {
 		rp++
 	}
 
-	breakdown["habDockingRankingPoint"] = info.habRP
-	if (info.habRP) {
+	hab_rp := info.habRP || extra.AddRpHabClimb
+	breakdown["habDockingRankingPoint"] = hab_rp
+	if (hab_rp) {
 		rp++
 	}
 
@@ -383,8 +385,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		}
 	})
 
-	addManualFields2019(breakdown["blue"], scoreInfo.blue, playoff)
-	addManualFields2019(breakdown["red"], scoreInfo.red, playoff)
+	addManualFields2019(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
+	addManualFields2019(breakdown["red"], scoreInfo.red, extra_info["red"], playoff)
 
 	if parse_error != "" {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)
