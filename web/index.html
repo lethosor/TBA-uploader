@@ -84,7 +84,12 @@
             <button class="btn btn-info ml-auto" @click="uploadRankings" :disabled="inUploadRankings" v-if="matchLevel == 2">Upload rankings</button>
           </div>
           <div><span class="warning">Warning:</span> only click the above buttons <strong>soon after</strong> posting a score</div>
-          <div class="alert alert-danger" v-if="rankingsError">Rankings: {{rankingsError}}</div>
+          <div class="alert alert-danger" v-if="rankingsError">
+            Rankings: {{rankingsError}}
+            <button @click="rankingsError=''" type="button" class="close" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
           <div v-if="inMatchAdvanced">
             <hr>
             <h3>Advanced options <button class="btn btn-outline-danger btn-sm" @click.prevent="inMatchAdvanced = false">Close</button></h3>
