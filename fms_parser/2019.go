@@ -153,6 +153,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 					scoreInfo.blue.baseRP = 0
 					scoreInfo.red.baseRP = 2
 				}
+			} else if identifier == "Ranking Points" {
+				// discard because it's always 0
 			} else if identifier == "Teams" {
 				blue_teams := split_and_strip(infos[0], "•")
 				red_teams := split_and_strip(infos[2], "•")
@@ -206,6 +208,48 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				breakdown["red"]["foulPoints"] = red_foul_points
 				scoreInfo.blue.fouls = blue_foul_points
 				scoreInfo.red.fouls = red_foul_points
+			} else if identifier == "Pre-Match Robot Levels" {
+				blue := split_and_strip(infos[0], "•")
+				red := split_and_strip(infos[2], "•")
+				breakdown["blue"]["preMatchLevelRobot1"] = blue[0]
+				breakdown["blue"]["preMatchLevelRobot2"] = blue[1]
+				breakdown["blue"]["preMatchLevelRobot3"] = blue[2]
+				breakdown["red"]["preMatchLevelRobot1"] = red[0]
+				breakdown["red"]["preMatchLevelRobot2"] = red[1]
+				breakdown["red"]["preMatchLevelRobot3"] = red[2]
+			} else if identifier == "HAB Line" {
+				blue := split_and_strip(infos[0], "•")
+				red := split_and_strip(infos[2], "•")
+				process := func(arr []string) {
+					for i := range arr {
+						if (strings.Contains(arr[i], "Sandstorm")) {
+							arr[i] = "CrossedHabLineInSandstorm"
+						} else if (strings.Contains(arr[i], "Teleop")) {
+							arr[i] = "CrossedHabLineInTeleop"
+						} else {
+							arr[i] = "None"
+						}
+					}
+				}
+				process(red)
+				process(blue)
+				breakdown["blue"]["habLineRobot1"] = blue[0]
+				breakdown["blue"]["habLineRobot2"] = blue[1]
+				breakdown["blue"]["habLineRobot3"] = blue[2]
+				breakdown["red"]["habLineRobot1"] = red[0]
+				breakdown["red"]["habLineRobot2"] = red[1]
+				breakdown["red"]["habLineRobot3"] = red[2]
+			} else if identifier == "HAB Line in Sandstorm" {
+				// skip because provided by "Hab Line"
+			} else if identifier == "HAB Endgame Climb" {
+				blue := split_and_strip(infos[0], "•")
+				red := split_and_strip(infos[2], "•")
+				breakdown["blue"]["endgameRobot1"] = blue[0]
+				breakdown["blue"]["endgameRobot2"] = blue[1]
+				breakdown["blue"]["endgameRobot3"] = blue[2]
+				breakdown["red"]["endgameRobot1"] = red[0]
+				breakdown["red"]["endgameRobot2"] = red[1]
+				breakdown["red"]["endgameRobot3"] = red[2]
 			} else if apiField, ok := simpleFields2019[identifier]; ok {
 				blue_points, err := strconv.ParseInt(infos[0], 10, 0)
 				red_points, err := strconv.ParseInt(infos[2], 10, 0)
