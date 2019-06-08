@@ -19,6 +19,7 @@ type fmsScoreInfo2019 struct {
 	total int64
 
 	baseRP int64  // win-loss-tie RP only
+	rocketRP bool
 
 	fields map[string]int64  // indexed by values of simpleFields2019
 }
@@ -47,6 +48,11 @@ func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019
 	rp := info.baseRP
 	// adjust should be negative when total = 0
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
+
+	breakdown["completeRocketRankingPoint"] = info.rocketRP
+	if (info.rocketRP) {
+		rp++
+	}
 
 	breakdown["rp"] = rp
 }
@@ -154,8 +160,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		return out
 	}
 
-	assignRocket := func(alliance_breakdown map[string]interface{}, parsedRocket []string, loc string) {
-		// modifies alliance_breakdown
+	assignRocket := func(alliance_breakdown map[string]interface{}, score_info *fmsScoreInfo2019, parsedRocket []string, loc string) {
+		// modifies alliance_breakdown, score_info
 		// loc: Near | Far
 		alliance_breakdown["topLeftRocket" + loc]  = parsedRocket[0]
 		alliance_breakdown["topRightRocket" + loc] = parsedRocket[1]
@@ -163,6 +169,17 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		alliance_breakdown["midRightRocket" + loc] = parsedRocket[3]
 		alliance_breakdown["lowLeftRocket" + loc]  = parsedRocket[4]
 		alliance_breakdown["lowRightRocket" + loc] = parsedRocket[5]
+
+		complete := true
+		for _, s := range parsedRocket {
+			if s != K2019_BAY_PANEL_AND_CARGO {
+				complete = false
+			}
+		}
+		alliance_breakdown["completedRocket" + loc] = complete
+		if complete {
+			score_info.rocketRP = true
+		}
 	}
 
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
@@ -327,8 +344,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 					return;
 				}
 
-				assignRocket(breakdown["blue"], blue, "Far")
-				assignRocket(breakdown["red"], red, "Far")
+				assignRocket(breakdown["blue"], &scoreInfo.blue, blue, "Far")
+				assignRocket(breakdown["red"], &scoreInfo.red, red, "Far")
 			} else if identifier == "Scoring Table SideRocket" {
 				blue := parseRocketOrCargoShipWrapper(infos[0])
 				red := parseRocketOrCargoShipWrapper(infos[2])
@@ -336,8 +353,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 					return;
 				}
 
-				assignRocket(breakdown["blue"], blue, "Near")
-				assignRocket(breakdown["red"], red, "Near")
+				assignRocket(breakdown["blue"], &scoreInfo.blue, blue, "Near")
+				assignRocket(breakdown["red"], &scoreInfo.red, red, "Near")
 			} else if apiField, ok := simpleFields2019[identifier]; ok {
 				blue_points, err := strconv.ParseInt(infos[0], 10, 0)
 				red_points, err := strconv.ParseInt(infos[2], 10, 0)
