@@ -20,6 +20,7 @@ type fmsScoreInfo2019 struct {
 
 	baseRP int64  // win-loss-tie RP only
 	rocketRP bool
+	habRP bool
 
 	fields map[string]int64  // indexed by values of simpleFields2019
 }
@@ -51,6 +52,11 @@ func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019
 
 	breakdown["completeRocketRankingPoint"] = info.rocketRP
 	if (info.rocketRP) {
+		rp++
+	}
+
+	breakdown["habDockingRankingPoint"] = info.habRP
+	if (info.habRP) {
 		rp++
 	}
 
@@ -365,6 +371,11 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				breakdown["red"][apiField] = red_points
 				scoreInfo.blue.fields[apiField] = blue_points
 				scoreInfo.red.fields[apiField] = red_points
+
+				if apiField == "habClimbPoints" {
+					scoreInfo.blue.habRP = (blue_points >= 15)
+					scoreInfo.red.habRP = (red_points >= 15)
+				}
 			} else {
 				breakdown["blue"]["!" + identifier] = strings.TrimSpace(infos[0])
 				breakdown["red"]["!" + identifier] = strings.TrimSpace(infos[2])
