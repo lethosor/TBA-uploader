@@ -59,6 +59,32 @@ var simpleFields2019 = map[string]string {
 	"Sandstorm Bonus Points": "sandStormBonusPoints",
 }
 
+const (
+	K2019_BAY_NONE = "None"
+	K2019_BAY_PANEL = "Panel"
+	K2019_BAY_PANEL_AND_CARGO = "PanelAndCargo"
+)
+
+func parseRocketOrCargoShip2019(raw string) ([]string, error) {
+	raw = strings.Replace(raw, "•", " ", -1)
+	out := strings.Fields(raw)
+	if len(out) != 6 && len(out) != 8 {
+		return nil, fmt.Errorf("Invalid cargo/rocket ship: expected 6 or 8 bays, got %d", len(out))
+	}
+	for i := range out {
+		if out[i] == "N" {
+			out[i] = K2019_BAY_NONE
+		} else if out[i] == "P" {
+			out[i] = K2019_BAY_PANEL
+		} else if out[i] == "B" {
+			out[i] = K2019_BAY_PANEL_AND_CARGO
+		} else {
+			return nil, fmt.Errorf("Invalid cargo/rocket ship item: %s", out[i])
+		}
+	}
+	return out, nil
+}
+
 func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
@@ -119,6 +145,26 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 	}
 
 	parse_error := ""
+
+	parseRocketOrCargoShipWrapper := func(raw string) []string {
+		out, err := parseRocketOrCargoShip2019(raw)
+		if err != nil {
+			parse_error += err.Error() + "\n"
+		}
+		return out
+	}
+
+	assignRocket := func(alliance_breakdown map[string]interface{}, parsedRocket []string, loc string) {
+		// modifies alliance_breakdown
+		// loc: Near | Far
+		alliance_breakdown["topLeftRocket" + loc]  = parsedRocket[0]
+		alliance_breakdown["topRightRocket" + loc] = parsedRocket[1]
+		alliance_breakdown["midLeftRocket" + loc]  = parsedRocket[2]
+		alliance_breakdown["midRightRocket" + loc] = parsedRocket[3]
+		alliance_breakdown["lowLeftRocket" + loc]  = parsedRocket[4]
+		alliance_breakdown["lowRightRocket" + loc] = parsedRocket[5]
+	}
+
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
 		columns := s.Children()
 		if columns.Length() == 3 {
@@ -250,6 +296,48 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				breakdown["red"]["endgameRobot1"] = red[0]
 				breakdown["red"]["endgameRobot2"] = red[1]
 				breakdown["red"]["endgameRobot3"] = red[2]
+			} else if identifier == "Cargoships" {
+				blue := parseRocketOrCargoShipWrapper(infos[0])
+				red := parseRocketOrCargoShipWrapper(infos[2])
+				if blue == nil || red == nil {
+					return;
+				}
+
+				breakdown["blue"]["bay1"] = blue[7]
+				breakdown["blue"]["bay2"] = blue[6]
+				breakdown["blue"]["bay3"] = blue[5]
+				breakdown["blue"]["bay4"] = blue[4]
+				breakdown["blue"]["bay5"] = blue[3]
+				breakdown["blue"]["bay6"] = blue[0]
+				breakdown["blue"]["bay7"] = blue[1]
+				breakdown["blue"]["bay8"] = blue[2]
+
+				breakdown["red"]["bay1"] = red[5]
+				breakdown["red"]["bay2"] = red[6]
+				breakdown["red"]["bay3"] = red[7]
+				breakdown["red"]["bay4"] = red[4]
+				breakdown["red"]["bay5"] = red[3]
+				breakdown["red"]["bay6"] = red[2]
+				breakdown["red"]["bay7"] = red[1]
+				breakdown["red"]["bay8"] = red[0]
+			} else if identifier == "Far SideRocket" {
+				blue := parseRocketOrCargoShipWrapper(infos[0])
+				red := parseRocketOrCargoShipWrapper(infos[2])
+				if blue == nil || red == nil {
+					return;
+				}
+
+				assignRocket(breakdown["blue"], blue, "Far")
+				assignRocket(breakdown["red"], red, "Far")
+			} else if identifier == "Scoring Table SideRocket" {
+				blue := parseRocketOrCargoShipWrapper(infos[0])
+				red := parseRocketOrCargoShipWrapper(infos[2])
+				if blue == nil || red == nil {
+					return;
+				}
+
+				assignRocket(breakdown["blue"], blue, "Near")
+				assignRocket(breakdown["red"], red, "Near")
 			} else if apiField, ok := simpleFields2019[identifier]; ok {
 				blue_points, err := strconv.ParseInt(infos[0], 10, 0)
 				red_points, err := strconv.ParseInt(infos[2], 10, 0)
