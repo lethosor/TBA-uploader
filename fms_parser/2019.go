@@ -184,12 +184,33 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		makeFmsScoreInfo2019(),
 	}
 
-	parse_error := ""
+	parse_errors := make([]string, 0)
 
-	parseRocketOrCargoShipWrapper := func(raw string) []string {
-		out, err := parseRocketOrCargoShip2019(raw)
+	checkParseInt := func(s, desc string) int64 {
+		n, err := strconv.ParseInt(s, 10, 0)
 		if err != nil {
-			parse_error += err.Error() + "\n"
+			panic(fmt.Sprintf("parse int %s failed: %s", desc, err))
+		}
+		return n
+	}
+
+	parseRocketOrCargoShipWrapper := func(raw string, is_rocket bool) []string {
+		out, err := parseRocketOrCargoShip2019(raw)
+		var desc string
+		var expected_len int
+		if is_rocket {
+			desc = "rocket"
+			expected_len = 6
+		} else {
+			desc = "cargo ship"
+			expected_len = 8
+		}
+
+		if err != nil {
+			panic(fmt.Sprintf("parse %s failed: %s", desc, err))
+		}
+		if len(out) != expected_len {
+			panic(fmt.Sprintf("parse %s failed: bad length: %d", desc, len(out)))
 		}
 		return out
 	}
@@ -220,6 +241,13 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 	}
 
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Parse error in %s: %s\n", filename, r)
+				parse_errors = append(parse_errors, fmt.Sprint(r))
+			}
+		}()
+
 		columns := s.Children()
 		if columns.Length() == 3 {
 			var infos [3]string
@@ -232,11 +260,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 			if identifier == "" {
 				// Skip
 			} else if identifier == "Final Score" {
-				blue_score, err := strconv.ParseInt(infos[0], 10, 0)
-				red_score, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "final score failed"
-				}
+				blue_score := checkParseInt(infos[0], "blue final score")
+				red_score := checkParseInt(infos[2], "red final score")
 				breakdown["blue"]["totalPoints"] = blue_score
 				breakdown["red"]["totalPoints"] = red_score
 				alliances["blue"]["score"] = blue_score
@@ -269,21 +294,15 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 					"frc" + red_teams[2],
 				}
 			} else if identifier == "Sandstorm" {
-				blue_auto_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_auto_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "sandstorm points failed"
-				}
+				blue_auto_points := checkParseInt(infos[0], "blue sandstorm points")
+				red_auto_points := checkParseInt(infos[2], "red sandstorm points")
 				scoreInfo.blue.auto = blue_auto_points
 				breakdown["blue"]["autoPoints"] = blue_auto_points
 				scoreInfo.red.auto = red_auto_points
 				breakdown["red"]["autoPoints"] = red_auto_points
 			} else if identifier == "Teleop" {
-				blue_teleop_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_teleop_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "teleop points failed"
-				}
+				blue_teleop_points := checkParseInt(infos[0], "blue teleop points")
+				red_teleop_points := checkParseInt(infos[2], "red teleop points")
 				breakdown["blue"]["teleopPoints"] = blue_teleop_points
 				breakdown["red"]["teleopPoints"] = red_teleop_points
 				scoreInfo.blue.teleop = blue_teleop_points
@@ -291,19 +310,13 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 			} else if identifier == "Fouls/Techs Committed" {
 				blue_foul := split_and_strip(infos[0], "•")
 				red_foul := split_and_strip(infos[2], "•")
-				breakdown["blue"]["foulCount"], err = strconv.ParseInt(blue_foul[0], 10, 0)
-				breakdown["blue"]["techFoulCount"], err = strconv.ParseInt(blue_foul[1], 10, 0)
-				breakdown["red"]["foulCount"], err = strconv.ParseInt(red_foul[0], 10, 0)
-				breakdown["red"]["techFoulCount"], err = strconv.ParseInt(red_foul[1], 10, 0)
-				if err != nil {
-					parse_error = "foul/tech count failed"
-				}
+				breakdown["blue"]["foulCount"] = checkParseInt(blue_foul[0], "blue foul count")
+				breakdown["blue"]["techFoulCount"] = checkParseInt(blue_foul[1], "blue tech foul count")
+				breakdown["red"]["foulCount"] = checkParseInt(red_foul[0], "red foul count")
+				breakdown["red"]["techFoulCount"] = checkParseInt(red_foul[1], "red tech foul count")
 			} else if identifier == "Foul Points" {
-				blue_foul_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_foul_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "foul points failed"
-				}
+				blue_foul_points := checkParseInt(infos[0], "blue foul points")
+				red_foul_points := checkParseInt(infos[2], "red foul points")
 				breakdown["blue"]["foulPoints"] = blue_foul_points
 				breakdown["red"]["foulPoints"] = red_foul_points
 				scoreInfo.blue.fouls = blue_foul_points
@@ -351,11 +364,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				breakdown["red"]["endgameRobot2"] = red[1]
 				breakdown["red"]["endgameRobot3"] = red[2]
 			} else if identifier == "Cargoships" {
-				blue := parseRocketOrCargoShipWrapper(infos[0])
-				red := parseRocketOrCargoShipWrapper(infos[2])
-				if blue == nil || red == nil {
-					return;
-				}
+				blue := parseRocketOrCargoShipWrapper(infos[0], false)
+				red := parseRocketOrCargoShipWrapper(infos[2], false)
 				scoreInfo.blue.hatchPanels += countHatchPanels2019(blue)
 				scoreInfo.red.hatchPanels += countHatchPanels2019(red)
 
@@ -377,29 +387,20 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				breakdown["red"]["bay7"] = red[1]
 				breakdown["red"]["bay8"] = red[0]
 			} else if identifier == "Far SideRocket" {
-				blue := parseRocketOrCargoShipWrapper(infos[0])
-				red := parseRocketOrCargoShipWrapper(infos[2])
-				if blue == nil || red == nil {
-					return;
-				}
+				blue := parseRocketOrCargoShipWrapper(infos[0], true)
+				red := parseRocketOrCargoShipWrapper(infos[2], true)
 
 				assignRocket(breakdown["blue"], &scoreInfo.blue, blue, "Far")
 				assignRocket(breakdown["red"], &scoreInfo.red, red, "Far")
 			} else if identifier == "Scoring Table SideRocket" {
-				blue := parseRocketOrCargoShipWrapper(infos[0])
-				red := parseRocketOrCargoShipWrapper(infos[2])
-				if blue == nil || red == nil {
-					return;
-				}
+				blue := parseRocketOrCargoShipWrapper(infos[0], true)
+				red := parseRocketOrCargoShipWrapper(infos[2], true)
 
 				assignRocket(breakdown["blue"], &scoreInfo.blue, blue, "Near")
 				assignRocket(breakdown["red"], &scoreInfo.red, red, "Near")
 			} else if apiField, ok := simpleFields2019[identifier]; ok {
-				blue_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "parse integer field \"" + apiField + "\" failed"
-				}
+				blue_points := checkParseInt(infos[0], "blue " + apiField)
+				red_points := checkParseInt(infos[2], "red " + apiField)
 				breakdown["blue"][apiField] = blue_points
 				breakdown["red"][apiField] = red_points
 				scoreInfo.blue.fields[apiField] = blue_points
@@ -422,8 +423,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 	addManualFields2019(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
 	addManualFields2019(breakdown["red"], scoreInfo.red, extra_info["red"], playoff)
 
-	if parse_error != "" {
-		return nil, fmt.Errorf("Parse error: %s", parse_error)
+	if len(parse_errors) > 0 {
+		return nil, fmt.Errorf("Parse error (%d):\n%s", len(parse_errors), strings.Join(parse_errors, "\n"))
 	}
 
 	all_json["alliances"] = alliances

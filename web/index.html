@@ -85,7 +85,7 @@
           </div>
           <div><span class="warning">Warning:</span> only click the above buttons <strong>soon after</strong> posting a score</div>
           <div class="alert alert-danger" v-if="rankingsError">
-            Rankings: {{rankingsError}}
+            Rankings: <span class="raw-message">{{rankingsError}}</span>
             <button @click="rankingsError=''" type="button" class="close" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -107,7 +107,7 @@
             </div>
             <hr>
           </div>
-          <div class="alert alert-danger" v-if="matchError">{{matchError}}</div>
+          <div class="alert alert-danger raw-message" v-if="matchError">{{matchError}}</div>
           <div v-if="matchSummaries.length">
             <h3>Matches to upload ({{matchSummaries.length}})</h3>
             <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</button>
@@ -200,7 +200,7 @@
               <button class="btn btn-danger" @click="resetFMSConfig">Reset</button>
             </div>
           </div>
-          <div class="alert alert-danger" v-if="fmsConfigError">{{fmsConfigError}}</div>
+          <div class="alert alert-danger raw-message" v-if="fmsConfigError">{{fmsConfigError}}</div>
         </div>
 
         <div class="tab-pane fade" id="help" role="tabpanel" aria-labelledby="help-tab">
@@ -219,7 +219,7 @@
               </button>
             </div>
             <div class="modal-body">
-              <div class="alert alert-danger" v-if="matchEditError">{{matchEditError}}</div>
+              <div class="alert alert-danger raw-message" v-if="matchEditError">{{matchEditError}}</div>
               <table class="table match-edit">
                 <thead>
                   <tr>
