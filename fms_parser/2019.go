@@ -22,6 +22,9 @@ type fmsScoreInfo2019 struct {
 	rocketRP bool
 	habRP bool
 
+	hatchPanels int64
+	scoredHatchPanels int64
+
 	fields map[string]int64  // indexed by values of simpleFields2019
 }
 
@@ -52,14 +55,26 @@ func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019
 
 	rocket_rp := info.rocketRP || extra.AddRpRocket
 	breakdown["completeRocketRankingPoint"] = rocket_rp
-	if (rocket_rp) {
+	if rocket_rp {
 		rp++
 	}
 
 	hab_rp := info.habRP || extra.AddRpHabClimb
 	breakdown["habDockingRankingPoint"] = hab_rp
-	if (hab_rp) {
+	if hab_rp {
 		rp++
+	}
+
+	// we don't have pre-match bay info so we have to guess
+	nullHatchPanels := int(info.hatchPanels - info.scoredHatchPanels)
+	// they're more likely to be farther from the drivers
+	nullHatchLikelyLocations := []string{"1", "8", "2", "7", "3", "6"}
+	for i, bay := range nullHatchLikelyLocations {
+		if i < nullHatchPanels {
+			breakdown["preMatchBay" + bay] = K2019_BAY_PANEL
+		} else {
+			breakdown["preMatchBay" + bay] = K2019_BAY_CARGO
+		}
 	}
 
 	breakdown["rp"] = rp
@@ -76,6 +91,7 @@ var simpleFields2019 = map[string]string {
 const (
 	K2019_BAY_NONE = "None"
 	K2019_BAY_PANEL = "Panel"
+	K2019_BAY_CARGO = "Cargo"  // preload only
 	K2019_BAY_PANEL_AND_CARGO = "PanelAndCargo"
 )
 
@@ -97,6 +113,16 @@ func parseRocketOrCargoShip2019(raw string) ([]string, error) {
 		}
 	}
 	return out, nil
+}
+
+func countHatchPanels2019(parsed []string) (n int64) {
+	n = 0
+	for _, s := range parsed {
+		if s != K2019_BAY_NONE {
+			n++
+		}
+	}
+	return n
 }
 
 func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{}, error) {
@@ -182,6 +208,9 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		for _, s := range parsedRocket {
 			if s != K2019_BAY_PANEL_AND_CARGO {
 				complete = false
+			}
+			if s != K2019_BAY_NONE {
+				score_info.hatchPanels++
 			}
 		}
 		alliance_breakdown["completedRocket" + loc] = complete
@@ -327,6 +356,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				if blue == nil || red == nil {
 					return;
 				}
+				scoreInfo.blue.hatchPanels += countHatchPanels2019(blue)
+				scoreInfo.red.hatchPanels += countHatchPanels2019(red)
 
 				breakdown["blue"]["bay1"] = blue[7]
 				breakdown["blue"]["bay2"] = blue[6]
@@ -377,6 +408,9 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				if apiField == "habClimbPoints" {
 					scoreInfo.blue.habRP = (blue_points >= 15)
 					scoreInfo.red.habRP = (red_points >= 15)
+				} else if apiField == "hatchPanelPoints" {
+					scoreInfo.blue.scoredHatchPanels = blue_points / 2
+					scoreInfo.red.scoredHatchPanels = red_points / 2
 				}
 			} else {
 				breakdown["blue"]["!" + identifier] = strings.TrimSpace(infos[0])
