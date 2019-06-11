@@ -19,6 +19,10 @@ body {
     color: #f60;
 }
 
+.raw-message {
+    white-space: pre;
+}
+
 table.score td, table.match-edit td {
     border: 1px solid #ccc;
 }

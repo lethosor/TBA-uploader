@@ -18,55 +18,111 @@ type fmsScoreInfo2019 struct {
 	fouls int64
 	total int64
 
-	autoRunPoints int64
-	autoSwitchSec int64
-	endgamePoints int64
 	baseRP int64  // win-loss-tie RP only
+	rocketRP bool
+	habRP bool
+
+	hatchPanels int64
+	scoredHatchPanels int64
+
+	fields map[string]int64  // indexed by values of simpleFields2019
+}
+
+func makeFmsScoreInfo2019() fmsScoreInfo2019 {
+	return fmsScoreInfo2019{
+		fields: make(map[string]int64),
+	}
 }
 
 type extraMatchInfo2019 struct {
 	Dqs []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
-	InvertAuto bool `json:"invert_auto"`
+	AddRpRocket bool `json:"add_rp_rocket"`
+	AddRpHabClimb bool `json:"add_rp_hab_climb"`
 }
 
 func makeExtraMatchInfo2019() extraMatchInfo2019 {
 	return extraMatchInfo2019{
 		Dqs: make([]string, 0),
 		Surrogates: make([]string, 0),
-		InvertAuto: false,
 	}
 }
 
-func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, playoff bool, invert_auto bool) {
+func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, extra extraMatchInfo2019, playoff bool) {
 	rp := info.baseRP
 	// adjust should be negative when total = 0
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
-	// no way to tell if switch was lost before T=0, so assume it wasn't
-	breakdown["autoSwitchAtZero"] = info.autoSwitchSec > 0
-	if !playoff {
-		auto_rp := info.autoSwitchSec > 0 && info.autoRunPoints == 15
-		if invert_auto {
-			auto_rp = !auto_rp
-		}
-		breakdown["autoQuestRankingPoint"] = auto_rp
-		if auto_rp {
-			rp++
-		}
-	}
 
-	if !playoff && info.endgamePoints >= 90 {
-		breakdown["faceTheBossRankingPoint"] = true
+	rocket_rp := info.rocketRP || extra.AddRpRocket
+	breakdown["completeRocketRankingPoint"] = rocket_rp
+	if rocket_rp {
 		rp++
-	} else {
-		breakdown["faceTheBossRankingPoint"] = false
 	}
 
-	if playoff {
-		breakdown["rp"] = 0
-	} else {
-		breakdown["rp"] = rp
+	hab_rp := info.habRP || extra.AddRpHabClimb
+	breakdown["habDockingRankingPoint"] = hab_rp
+	if hab_rp {
+		rp++
 	}
+
+	// we don't have pre-match bay info so we have to guess
+	nullHatchPanels := int(info.hatchPanels - info.scoredHatchPanels)
+	// they're more likely to be farther from the drivers
+	nullHatchLikelyLocations := []string{"1", "8", "2", "7", "3", "6"}
+	for i, bay := range nullHatchLikelyLocations {
+		if i < nullHatchPanels {
+			breakdown["preMatchBay" + bay] = K2019_BAY_PANEL
+		} else {
+			breakdown["preMatchBay" + bay] = K2019_BAY_CARGO
+		}
+	}
+
+	breakdown["rp"] = rp
+}
+
+// map FMS names to API names of basic integer fields
+var simpleFields2019 = map[string]string {
+	"Cargo Points": "cargoPoints",
+	"HAB Climb Points": "habClimbPoints",
+	"Hatch Panel Points": "hatchPanelPoints",
+	"Sandstorm Bonus Points": "sandStormBonusPoints",
+}
+
+const (
+	K2019_BAY_NONE = "None"
+	K2019_BAY_PANEL = "Panel"
+	K2019_BAY_CARGO = "Cargo"  // preload only
+	K2019_BAY_PANEL_AND_CARGO = "PanelAndCargo"
+)
+
+func parseRocketOrCargoShip2019(raw string) ([]string, error) {
+	raw = strings.Replace(raw, "•", " ", -1)
+	out := strings.Fields(raw)
+	if len(out) != 6 && len(out) != 8 {
+		return nil, fmt.Errorf("Invalid cargo/rocket ship: expected 6 or 8 bays, got %d", len(out))
+	}
+	for i := range out {
+		if out[i] == "N" {
+			out[i] = K2019_BAY_NONE
+		} else if out[i] == "P" {
+			out[i] = K2019_BAY_PANEL
+		} else if out[i] == "B" {
+			out[i] = K2019_BAY_PANEL_AND_CARGO
+		} else {
+			return nil, fmt.Errorf("Invalid cargo/rocket ship item: %s", out[i])
+		}
+	}
+	return out, nil
+}
+
+func countHatchPanels2019(parsed []string) (n int64) {
+	n = 0
+	for _, s := range parsed {
+		if s != K2019_BAY_NONE {
+			n++
+		}
+	}
+	return n
 }
 
 func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{}, error) {
@@ -120,13 +176,78 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		"red": make(map[string]interface{}),
 	}
 
-	var scoreInfo struct {
+	var scoreInfo = struct {
 		blue fmsScoreInfo2019
 		red fmsScoreInfo2019
+	}{
+		makeFmsScoreInfo2019(),
+		makeFmsScoreInfo2019(),
 	}
 
-	parse_error := ""
+	parse_errors := make([]string, 0)
+
+	checkParseInt := func(s, desc string) int64 {
+		n, err := strconv.ParseInt(s, 10, 0)
+		if err != nil {
+			panic(fmt.Sprintf("parse int %s failed: %s", desc, err))
+		}
+		return n
+	}
+
+	parseRocketOrCargoShipWrapper := func(raw string, is_rocket bool) []string {
+		out, err := parseRocketOrCargoShip2019(raw)
+		var desc string
+		var expected_len int
+		if is_rocket {
+			desc = "rocket"
+			expected_len = 6
+		} else {
+			desc = "cargo ship"
+			expected_len = 8
+		}
+
+		if err != nil {
+			panic(fmt.Sprintf("parse %s failed: %s", desc, err))
+		}
+		if len(out) != expected_len {
+			panic(fmt.Sprintf("parse %s failed: bad length: %d", desc, len(out)))
+		}
+		return out
+	}
+
+	assignRocket := func(alliance_breakdown map[string]interface{}, score_info *fmsScoreInfo2019, parsedRocket []string, loc string) {
+		// modifies alliance_breakdown, score_info
+		// loc: Near | Far
+		alliance_breakdown["topLeftRocket" + loc]  = parsedRocket[0]
+		alliance_breakdown["topRightRocket" + loc] = parsedRocket[1]
+		alliance_breakdown["midLeftRocket" + loc]  = parsedRocket[2]
+		alliance_breakdown["midRightRocket" + loc] = parsedRocket[3]
+		alliance_breakdown["lowLeftRocket" + loc]  = parsedRocket[4]
+		alliance_breakdown["lowRightRocket" + loc] = parsedRocket[5]
+
+		complete := true
+		for _, s := range parsedRocket {
+			if s != K2019_BAY_PANEL_AND_CARGO {
+				complete = false
+			}
+			if s != K2019_BAY_NONE {
+				score_info.hatchPanels++
+			}
+		}
+		alliance_breakdown["completedRocket" + loc] = complete
+		if complete {
+			score_info.rocketRP = true
+		}
+	}
+
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Parse error in %s: %s\n", filename, r)
+				parse_errors = append(parse_errors, fmt.Sprint(r))
+			}
+		}()
+
 		columns := s.Children()
 		if columns.Length() == 3 {
 			var infos [3]string
@@ -139,11 +260,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 			if identifier == "" {
 				// Skip
 			} else if identifier == "Final Score" {
-				blue_score, err := strconv.ParseInt(infos[0], 10, 0)
-				red_score, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "final score failed"
-				}
+				blue_score := checkParseInt(infos[0], "blue final score")
+				red_score := checkParseInt(infos[2], "red final score")
 				breakdown["blue"]["totalPoints"] = blue_score
 				breakdown["red"]["totalPoints"] = red_score
 				alliances["blue"]["score"] = blue_score
@@ -160,6 +278,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 					scoreInfo.blue.baseRP = 0
 					scoreInfo.red.baseRP = 2
 				}
+			} else if identifier == "Ranking Points" {
+				// discard because it's always 0
 			} else if identifier == "Teams" {
 				blue_teams := split_and_strip(infos[0], "•")
 				red_teams := split_and_strip(infos[2], "•")
@@ -173,114 +293,16 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 					"frc" + red_teams[1],
 					"frc" + red_teams[2],
 				}
-			} else if identifier == "Ownership Points" {
-				key := "autoOwnershipPoints"
-				if _, in := breakdown["blue"][key]; in {
-					key = "teleopOwnershipPoints"
-				}
-				breakdown["blue"][key], err = strconv.ParseInt(infos[0], 10, 0)
-				breakdown["red"][key], err = strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = key + " ownership points failed"
-				}
-			} else if identifier == "Auto-Run" {
-				blue_auto := split_and_strip(infos[0], "•")
-				red_auto := split_and_strip(infos[2], "•")
-				breakdown["blue"]["autoRobot1"] = blue_auto[0]
-				breakdown["blue"]["autoRobot2"] = blue_auto[1]
-				breakdown["blue"]["autoRobot3"] = blue_auto[2]
-				breakdown["red"]["autoRobot1"] = red_auto[0]
-				breakdown["red"]["autoRobot2"] = red_auto[1]
-				breakdown["red"]["autoRobot3"] = red_auto[2]
-			} else if identifier == "Auto-Run Points" {
-				blue_autorun_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_autorun_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "auto-run points failed"
-				}
-				scoreInfo.blue.autoRunPoints = blue_autorun_points
-				breakdown["blue"]["autoRunPoints"] = blue_autorun_points
-				scoreInfo.red.autoRunPoints = red_autorun_points
-				breakdown["red"]["autoRunPoints"] = red_autorun_points
-			} else if identifier == "Autonomous" {
-				blue_auto_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_auto_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "autonomous points failed"
-				}
+			} else if identifier == "Sandstorm" {
+				blue_auto_points := checkParseInt(infos[0], "blue sandstorm points")
+				red_auto_points := checkParseInt(infos[2], "red sandstorm points")
 				scoreInfo.blue.auto = blue_auto_points
 				breakdown["blue"]["autoPoints"] = blue_auto_points
 				scoreInfo.red.auto = red_auto_points
 				breakdown["red"]["autoPoints"] = red_auto_points
-			} else if identifier == "Switch / Scale Ownership Seconds" {
-				period := "auto"
-				if _, in := breakdown["blue"]["autoScaleOwnershipSec"]; in {
-					period = "teleop"
-				}
-				blue_ownership := split_and_strip(infos[0], "\n")
-				red_ownership := split_and_strip(infos[2], "\n")
-				breakdown["blue"][period + "SwitchOwnershipSec"], err = strconv.ParseInt(blue_ownership[0], 10, 0)
-				breakdown["blue"][period + "ScaleOwnershipSec"], err = strconv.ParseInt(blue_ownership[1], 10, 0)
-				breakdown["red"][period + "SwitchOwnershipSec"], err = strconv.ParseInt(red_ownership[0], 10, 0)
-				breakdown["red"][period + "ScaleOwnershipSec"], err = strconv.ParseInt(red_ownership[1], 10, 0)
-				if period == "auto" {
-					scoreInfo.blue.autoSwitchSec, err = strconv.ParseInt(blue_ownership[0], 10, 0)
-					scoreInfo.red.autoSwitchSec, err = strconv.ParseInt(red_ownership[0], 10, 0)
-				}
-				if err != nil {
-					parse_error = period + " ownership seconds failed"
-				}
-			} else if identifier == "Switch / Scale Boost Seconds" {
-				blue_boost := split_and_strip(infos[0], "\n")
-				red_boost := split_and_strip(infos[2], "\n")
-				breakdown["blue"]["teleopSwitchBoostSec"], err = strconv.ParseInt(blue_boost[0], 10, 0)
-				breakdown["blue"]["teleopScaleBoostSec"], err = strconv.ParseInt(blue_boost[1], 10, 0)
-				breakdown["red"]["teleopSwitchBoostSec"], err = strconv.ParseInt(red_boost[0], 10, 0)
-				breakdown["red"]["teleopScaleBoostSec"], err = strconv.ParseInt(red_boost[1], 10, 0)
-				if err != nil {
-					parse_error = "teleop boost seconds failed"
-				}
-			} else if identifier == "Switch / Scale Force Seconds" {
-				blue_force := split_and_strip(infos[0], "\n")
-				red_force := split_and_strip(infos[2], "\n")
-				breakdown["blue"]["teleopSwitchForceSec"], err = strconv.ParseInt(blue_force[0], 10, 0)
-				breakdown["blue"]["teleopScaleForceSec"], err = strconv.ParseInt(blue_force[1], 10, 0)
-				breakdown["red"]["teleopSwitchForceSec"], err = strconv.ParseInt(red_force[0], 10, 0)
-				breakdown["red"]["teleopScaleForceSec"], err = strconv.ParseInt(red_force[1], 10, 0)
-				if err != nil {
-					parse_error = "teleop force seconds failed"
-				}
-			} else if identifier == "Vault Points" {
-				breakdown["blue"]["vaultPoints"], err = strconv.ParseInt(infos[0], 10, 0)
-				breakdown["red"]["vaultPoints"], err = strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "vault points failed"
-				}
-			} else if identifier == "Endgame" {
-				blue_endgame := split_and_strip(infos[0], "•")
-				red_endgame := split_and_strip(infos[2], "•")
-				breakdown["blue"]["endgameRobot1"] = blue_endgame[0]
-				breakdown["blue"]["endgameRobot2"] = blue_endgame[1]
-				breakdown["blue"]["endgameRobot3"] = blue_endgame[2]
-				breakdown["red"]["endgameRobot1"] = red_endgame[0]
-				breakdown["red"]["endgameRobot2"] = red_endgame[1]
-				breakdown["red"]["endgameRobot3"] = red_endgame[2]
-			} else if identifier == "Endgame Points" {
-				blue_endgame_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_endgame_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "endgame points failed"
-				}
-				breakdown["blue"]["endgamePoints"] = blue_endgame_points
-				breakdown["red"]["endgamePoints"] = red_endgame_points
-				scoreInfo.blue.endgamePoints = blue_endgame_points
-				scoreInfo.red.endgamePoints = red_endgame_points
 			} else if identifier == "Teleop" {
-				blue_teleop_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_teleop_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "teleop points failed"
-				}
+				blue_teleop_points := checkParseInt(infos[0], "blue teleop points")
+				red_teleop_points := checkParseInt(infos[2], "red teleop points")
 				breakdown["blue"]["teleopPoints"] = blue_teleop_points
 				breakdown["red"]["teleopPoints"] = red_teleop_points
 				scoreInfo.blue.teleop = blue_teleop_points
@@ -288,97 +310,121 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 			} else if identifier == "Fouls/Techs Committed" {
 				blue_foul := split_and_strip(infos[0], "•")
 				red_foul := split_and_strip(infos[2], "•")
-				breakdown["blue"]["foulCount"], err = strconv.ParseInt(blue_foul[0], 10, 0)
-				breakdown["blue"]["techFoulCount"], err = strconv.ParseInt(blue_foul[1], 10, 0)
-				breakdown["red"]["foulCount"], err = strconv.ParseInt(red_foul[0], 10, 0)
-				breakdown["red"]["techFoulCount"], err = strconv.ParseInt(red_foul[1], 10, 0)
-				if err != nil {
-					parse_error = "foul/tech count failed"
-				}
+				breakdown["blue"]["foulCount"] = checkParseInt(blue_foul[0], "blue foul count")
+				breakdown["blue"]["techFoulCount"] = checkParseInt(blue_foul[1], "blue tech foul count")
+				breakdown["red"]["foulCount"] = checkParseInt(red_foul[0], "red foul count")
+				breakdown["red"]["techFoulCount"] = checkParseInt(red_foul[1], "red tech foul count")
 			} else if identifier == "Foul Points" {
-				blue_foul_points, err := strconv.ParseInt(infos[0], 10, 0)
-				red_foul_points, err := strconv.ParseInt(infos[2], 10, 0)
-				if err != nil {
-					parse_error = "foul points failed"
-				}
+				blue_foul_points := checkParseInt(infos[0], "blue foul points")
+				red_foul_points := checkParseInt(infos[2], "red foul points")
 				breakdown["blue"]["foulPoints"] = blue_foul_points
 				breakdown["red"]["foulPoints"] = red_foul_points
 				scoreInfo.blue.fouls = blue_foul_points
 				scoreInfo.red.fouls = red_foul_points
-			} else if identifier == "Force Powerup" || identifier == "Boost Powerup" {
-				powerup := string(identifier[0:5])
-				// first character
-				blue_total, err := strconv.ParseInt(string(infos[0][0]), 10, 0)
-				red_total, err := strconv.ParseInt(string(infos[2][0]), 10, 0)
-				if err != nil {
-					parse_error = "failed to parse powerup total: " + powerup
-				}
-				var blue_played int64
-				var red_played int64
-				if blue_total == 0 {
-					blue_played = 0
-				} else {
-					if strings.HasSuffix(infos[0], "Not Played") {
-						blue_played = 0
-					} else {
-						blue_played, err = strconv.ParseInt(string(infos[0][len(infos[0])-1:]), 10, 0)
-						if err != nil {
-							parse_error = "failed to parse powerup played: " + powerup + " (blue)"
+			} else if identifier == "Pre-Match Robot Levels" {
+				blue := split_and_strip(infos[0], "•")
+				red := split_and_strip(infos[2], "•")
+				breakdown["blue"]["preMatchLevelRobot1"] = blue[0]
+				breakdown["blue"]["preMatchLevelRobot2"] = blue[1]
+				breakdown["blue"]["preMatchLevelRobot3"] = blue[2]
+				breakdown["red"]["preMatchLevelRobot1"] = red[0]
+				breakdown["red"]["preMatchLevelRobot2"] = red[1]
+				breakdown["red"]["preMatchLevelRobot3"] = red[2]
+			} else if identifier == "HAB Line" {
+				blue := split_and_strip(infos[0], "•")
+				red := split_and_strip(infos[2], "•")
+				process := func(arr []string) {
+					for i := range arr {
+						if (strings.Contains(arr[i], "Sandstorm")) {
+							arr[i] = "CrossedHabLineInSandstorm"
+						} else if (strings.Contains(arr[i], "Teleop")) {
+							arr[i] = "CrossedHabLineInTeleop"
+						} else {
+							arr[i] = "None"
 						}
 					}
 				}
-				if red_total == 0 {
-					red_played = 0
-				} else {
-					if strings.HasSuffix(infos[2], "Not Played") {
-						red_played = 0
-					} else {
-						red_played, err = strconv.ParseInt(string(infos[2][len(infos[2])-1:]), 10, 0)
-						if err != nil {
-							parse_error = "failed to parse powerup played: " + powerup + " (red)"
-						}
-					}
-				}
-				breakdown["blue"]["vault" + powerup + "Total"] = blue_total
-				breakdown["blue"]["vault" + powerup + "Played"] = blue_played
+				process(red)
+				process(blue)
+				breakdown["blue"]["habLineRobot1"] = blue[0]
+				breakdown["blue"]["habLineRobot2"] = blue[1]
+				breakdown["blue"]["habLineRobot3"] = blue[2]
+				breakdown["red"]["habLineRobot1"] = red[0]
+				breakdown["red"]["habLineRobot2"] = red[1]
+				breakdown["red"]["habLineRobot3"] = red[2]
+			} else if identifier == "HAB Line in Sandstorm" {
+				// skip because provided by "Hab Line"
+			} else if identifier == "HAB Endgame Climb" {
+				blue := split_and_strip(infos[0], "•")
+				red := split_and_strip(infos[2], "•")
+				breakdown["blue"]["endgameRobot1"] = blue[0]
+				breakdown["blue"]["endgameRobot2"] = blue[1]
+				breakdown["blue"]["endgameRobot3"] = blue[2]
+				breakdown["red"]["endgameRobot1"] = red[0]
+				breakdown["red"]["endgameRobot2"] = red[1]
+				breakdown["red"]["endgameRobot3"] = red[2]
+			} else if identifier == "Cargoships" {
+				blue := parseRocketOrCargoShipWrapper(infos[0], false)
+				red := parseRocketOrCargoShipWrapper(infos[2], false)
+				scoreInfo.blue.hatchPanels += countHatchPanels2019(blue)
+				scoreInfo.red.hatchPanels += countHatchPanels2019(red)
 
-				breakdown["red"]["vault" + powerup + "Total"] = red_total
-				breakdown["red"]["vault" + powerup + "Played"] = red_played
-			} else if identifier == "Levitate Powerup" {
-				// first character
-				blue_total, err := strconv.ParseInt(string(infos[0][0]), 10, 0)
-				red_total, err := strconv.ParseInt(string(infos[2][0]), 10, 0)
-				if err != nil {
-					parse_error = "failed to parse levitate total"
+				breakdown["blue"]["bay1"] = blue[7]
+				breakdown["blue"]["bay2"] = blue[6]
+				breakdown["blue"]["bay3"] = blue[5]
+				breakdown["blue"]["bay4"] = blue[4]
+				breakdown["blue"]["bay5"] = blue[3]
+				breakdown["blue"]["bay6"] = blue[0]
+				breakdown["blue"]["bay7"] = blue[1]
+				breakdown["blue"]["bay8"] = blue[2]
+
+				breakdown["red"]["bay1"] = red[5]
+				breakdown["red"]["bay2"] = red[6]
+				breakdown["red"]["bay3"] = red[7]
+				breakdown["red"]["bay4"] = red[4]
+				breakdown["red"]["bay5"] = red[3]
+				breakdown["red"]["bay6"] = red[2]
+				breakdown["red"]["bay7"] = red[1]
+				breakdown["red"]["bay8"] = red[0]
+			} else if identifier == "Far SideRocket" {
+				blue := parseRocketOrCargoShipWrapper(infos[0], true)
+				red := parseRocketOrCargoShipWrapper(infos[2], true)
+
+				assignRocket(breakdown["blue"], &scoreInfo.blue, blue, "Far")
+				assignRocket(breakdown["red"], &scoreInfo.red, red, "Far")
+			} else if identifier == "Scoring Table SideRocket" {
+				blue := parseRocketOrCargoShipWrapper(infos[0], true)
+				red := parseRocketOrCargoShipWrapper(infos[2], true)
+
+				assignRocket(breakdown["blue"], &scoreInfo.blue, blue, "Near")
+				assignRocket(breakdown["red"], &scoreInfo.red, red, "Near")
+			} else if apiField, ok := simpleFields2019[identifier]; ok {
+				blue_points := checkParseInt(infos[0], "blue " + apiField)
+				red_points := checkParseInt(infos[2], "red " + apiField)
+				breakdown["blue"][apiField] = blue_points
+				breakdown["red"][apiField] = red_points
+				scoreInfo.blue.fields[apiField] = blue_points
+				scoreInfo.red.fields[apiField] = red_points
+
+				if apiField == "habClimbPoints" {
+					scoreInfo.blue.habRP = (blue_points >= 15)
+					scoreInfo.red.habRP = (red_points >= 15)
+				} else if apiField == "hatchPanelPoints" {
+					scoreInfo.blue.scoredHatchPanels = blue_points / 2
+					scoreInfo.red.scoredHatchPanels = red_points / 2
 				}
-				blue_played := 0
-				red_played := 0
-				if blue_total == 3 && strings.HasSuffix(infos[0], ", Played") {
-					blue_played = 3
-				}
-				if red_total == 3 && strings.HasSuffix(infos[2], ", Played") {
-					red_played = 3
-				}
-				breakdown["blue"]["vaultLevitateTotal"] = blue_total
-				breakdown["blue"]["vaultLevitatePlayed"] = blue_played
-				breakdown["red"]["vaultLevitateTotal"] = red_total
-				breakdown["red"]["vaultLevitatePlayed"] = red_played
 			} else {
-				breakdown["blue"][identifier] = strings.TrimSpace(infos[0])
-				breakdown["red"][identifier] = strings.TrimSpace(infos[2])
+				breakdown["blue"]["!" + identifier] = strings.TrimSpace(infos[0])
+				breakdown["red"]["!" + identifier] = strings.TrimSpace(infos[2])
 			}
 		}
 	})
 
-	gamedata := dom.Find(".panel-body.text-center").Text()
-	breakdown["blue"]["tba_gameData"] = gamedata
-	breakdown["red"]["tba_gameData"] = gamedata
+	addManualFields2019(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
+	addManualFields2019(breakdown["red"], scoreInfo.red, extra_info["red"], playoff)
 
-	addManualFields2019(breakdown["blue"], scoreInfo.blue, playoff, extra_info["blue"].InvertAuto)
-	addManualFields2019(breakdown["red"], scoreInfo.red, playoff, extra_info["red"].InvertAuto)
-
-	if parse_error != "" {
-		return nil, fmt.Errorf("Parse error: %s", parse_error)
+	if len(parse_errors) > 0 {
+		return nil, fmt.Errorf("Parse error (%d):\n%s", len(parse_errors), strings.Join(parse_errors, "\n"))
 	}
 
 	all_json["alliances"] = alliances

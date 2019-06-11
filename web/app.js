@@ -106,6 +106,16 @@ TBARankingNames = {
     ],
 };
 
+EXTRA_FIELDS = {
+    2018: {
+        invert_auto: false,
+    },
+    2019: {
+        add_rp_rocket: false,
+        add_rp_hab_climb: false,
+    },
+};
+
 app = new Vue({
     el: '#main',
     data: {
@@ -435,14 +445,18 @@ app = new Vue({
                         };
                     }
                     else {
-                        this.matchEditData.flags[color] = {
-                            invert_auto: data[color].invert_auto,
-                        };
-                        this.matchEditData.text[color] = {
-                            auto_rp: score_breakdown[color].autoQuestRankingPoint ^ data[color].invert_auto ?
-                                     'missed (FMS returned scored)' :
-                                     'scored (FMS returned missed)',
-                        };
+                        var editData = {};
+                        Object.keys(EXTRA_FIELDS[this.eventYear]).forEach(function(field) {
+                            editData[field] = data[color][field];
+                        });
+                        this.matchEditData.flags[color] = editData;
+                        if (this.eventYear == 2018) {
+                            this.matchEditData.text[color] = {
+                                auto_rp: score_breakdown[color].autoQuestRankingPoint ^ data[color].invert_auto ?
+                                         'missed (FMS returned scored)' :
+                                         'scored (FMS returned missed)',
+                            };
+                        }
                     }
                 }.bind(this));
                 $('#match-edit-modal').modal('show');
@@ -471,21 +485,19 @@ app = new Vue({
             }.bind(this);
             var genExtraData = function(color) {
                 if (this.matchLevel == 3) {
-                    return {
+                    return Object.assign({
                         dqs: this.matchEditData.flags[color].dq ?
                              this.matchEditData.teams[color].map(function(t) {
                                 return 'frc' + t.team;
                              }) :
                              [],
                         surrogates: [],
-                        invert_auto: false,
-                    };
+                    }, EXTRA_FIELDS[this.eventYear]);
                 }
-                return {
+                return Object.assign({
                     dqs: findTeamKeysByFlag(color, 'dq'),
                     surrogates: findTeamKeysByFlag(color, 'surrogate'),
-                    invert_auto: this.matchEditData.flags[color].invert_auto,
-                };
+                }, this.matchEditData.flags[color]);
             }.bind(this);
             var data = {
                 blue: genExtraData('blue'),
