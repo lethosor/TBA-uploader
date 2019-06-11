@@ -358,6 +358,10 @@ func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
     ioutil.WriteFile(extra_filename, body, os.ModePerm)
 }
 
+func apiDeleteMatches(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("matches/delete", w, r)
+}
+
 func apiFetchRankings(w http.ResponseWriter, r *http.Request) {
     out, err := downloadRankings()
     if err != nil {
@@ -391,6 +395,7 @@ func RunWebServer(port int, web_folder string) {
     r.HandleFunc("/api/matches/purge", apiPurgeMatches)
     r.HandleFunc("/api/matches/extra", apiMatchLoadExtra)
     r.HandleFunc("/api/matches/extra/save", apiMatchSaveExtra)
+    r.HandleFunc("/api/matches/delete", apiDeleteMatches)
     r.HandleFunc("/api/rankings/fetch", apiFetchRankings)
     r.HandleFunc("/api/rankings/upload", apiUploadRankings)
     r.PathPrefix("/").Handler(http.FileServer(fs))
