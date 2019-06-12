@@ -162,9 +162,7 @@ app = new Vue({
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
         readApiKey: localStorage.getItem('readApiKey'),
-        tbaEventData: {
-            name: '',
-        },
+        tbaEventData: {},
         tbaReadError: '',
 
         matchLevel: 2,
@@ -275,7 +273,7 @@ app = new Vue({
         },
         fetchEventData: function() {
             this.tbaReadError = '';
-            this.tbaEventData = {};
+            this.$set(this, 'tbaEventData', {});
             if (!isValidEventCode(this.selectedEvent)) {
                 return;
             }
@@ -284,7 +282,7 @@ app = new Vue({
                 return;
             }
             tbaApiEventRequest(this.selectedEvent).then(function(data) {
-                this.tbaEventData = data;
+                this.$set(this, 'tbaEventData', data);
             }.bind(this))
             .fail(function(error) {
                 this.tbaReadError = parseTbaError(error);

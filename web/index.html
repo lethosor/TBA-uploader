@@ -44,7 +44,7 @@
             </label>
           </div>
           <div v-if="!inAddEvent">
-            <div v-if="tbaEventData.name">Event name: {{tbaEventData.name}}</div>
+            <div v-if="tbaEventData.name">Event name: {{tbaEventData.name}} ({{tbaEventData.year}})</div>
             <hr>
             <div v-if="tbaReadError" class="alert alert-danger">
               <span class="raw-message">{{tbaReadError}}</span>
