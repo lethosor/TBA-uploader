@@ -31,6 +31,36 @@ function sendApiRequest(url, event, body) {
     });
 }
 
+function tbaApiEventRequest(event, route) {
+    var url = 'https://www.thebluealliance.com/api/v3/event/' + event;
+    if (route) {
+        url += '/' + route;
+    }
+    return $.ajax({
+        type: 'GET',
+        url: url,
+        headers: {
+            'X-TBA-Auth-Key': localStorage.getItem('readApiKey'),
+        },
+    });
+}
+
+function parseTbaError(error) {
+    if (error.responseJSON) {
+        if (Array.isArray(error.responseJSON.Errors)) {
+            return error.responseJSON.Errors.map(function(err) {
+                return Object.values(err).join('\n');
+            }).join('\n');
+        }
+        else if (typeof error.responseJSON.Error == 'string') {
+            return error.responseJSON.Error;
+        }
+    }
+    else {
+        return error;
+    }
+}
+
 function confirmPurge() {
     return confirm('Are you sure? This may replace old match results and re-send notifications when these match(es) are uploaded again.');
 }
@@ -126,6 +156,11 @@ app = new Vue({
         events: Object.keys(STORED_EVENTS).sort(),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
+        readApiKey: localStorage.getItem('readApiKey'),
+        tbaEventData: {
+            name: '',
+        },
+        tbaReadError: '',
 
         matchLevel: 2,
         showAllLevels: false,
@@ -232,6 +267,23 @@ app = new Vue({
                 return event != oldEvent;
             }.bind(this));
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
+        },
+        fetchEventData: function() {
+            this.tbaReadError = '';
+            this.tbaEventData = {};
+            if (!this.selectedEvent) {
+                return;
+            }
+            if (!this.readApiKey) {
+                this.tbaReadError = 'No TBA Read API key is present, so event data cannot be retrieved from TBA.';
+                return;
+            }
+            tbaApiEventRequest(this.selectedEvent).then(function(data) {
+                this.tbaEventData = data;
+            }.bind(this))
+            .fail(function(error) {
+                this.tbaReadError = parseTbaError(error);
+            }.bind(this));
         },
 
         fetchMatches: function(all) {
@@ -584,12 +636,16 @@ app = new Vue({
         },
     },
     watch: {
+        readApiKey: function(key) {
+            localStorage.setItem('readApiKey', key);
+        },
         selectedEvent: function(event) {
             localStorage.setItem('selectedEvent', event);
             if (!this.awards[event]) {
                 this.awards[event] = [makeAward()];
                 this.saveAwards();
             }
+            this.fetchEventData();
         },
     },
     mounted: function() {

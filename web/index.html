@@ -43,6 +43,29 @@
               <button class="btn btn-danger ml-auto" :disabled="!eventSelected" @click="deleteSelectedEvent">Delete this event</button>
             </label>
           </div>
+          <div v-if="!inAddEvent">
+            <div v-if="tbaEventData.name">Event name: {{tbaEventData.name}}</div>
+            <hr>
+            <div v-if="tbaReadError" class="alert alert-danger">
+              <span class="raw-message">{{tbaReadError}}</span>
+              <button @click="tbaReadError=''" type="button" class="close" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <label class="row col">
+              Read API key (<a href="https://www.thebluealliance.com/account" target="_blank">create a key</a>&nbsp;if needed)
+              <input class="form-control" :type="authInputType" v-model="readApiKey">
+            </label>
+            <div>
+              <label>
+                <input type="checkbox" v-model="addEventUI.showAuth">
+                Show key
+              </label>
+            </div>
+            <div>
+              <button class="btn btn-success" @click="fetchEventData">Fetch event data from TBA</button>
+            </div>
+          </div>
           <div v-if="inAddEvent">
             <h3>Add event</h3>
             <label>
