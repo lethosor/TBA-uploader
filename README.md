@@ -46,7 +46,14 @@ There are several tabs available once you have set up and selected an event:
 
 The "Event setup" tab allows you to create or select an event. The event code
 must match the code used on TBA exactly (e.g.
-"[2018marc](https://www.thebluealliance.com/event/2018marc)").
+"[2018marc](https://www.thebluealliance.com/event/2018marc)"). The auth ID and
+auth secret can be found on https://www.thebluealliance.com/account under "Write
+API Keys".
+
+This screen also allows you to enter a separate Read API key to fetch data from
+TBA. This is not strictly required, but is recommended and is easy to create at
+any time, under "Read API keys" at https://www.thebluealliance.com/account (as
+long as you are logged in to TBA). The key is in the "X-TBA-Auth-Key" column.
 
 ### Match play
 
@@ -64,8 +71,8 @@ visible.
 
 *Before* clicking "upload all", if red cards were issued in a match, or there
 were surrogate teams, click on the match scores to enter them. You can also
-override the "auto quest" ranking point in this screen by toggling the "Invert
-Auto RP" checkbox if it was misdetected (see limitations below).
+award ranking points due to rule violations in this screen by clicking the "Give
+rocket RP" or "Give HAB climb RP" checkboxes.
 
 If you see all 0s in a score, you probably fetched the scores before they were
 posted in FMS (see limitations below). You should see a warning in this case,
@@ -77,14 +84,18 @@ Click "upload rankings" at any time to upload qualification rankings. This
 button is only available when "qualification" is selected.
 
 If you forget to fetch a match before the next match starts, avoid clicking
-"fetch new match(es)" before scores for the next match have been posted. After
-scores for the next match have been posted, any un-uploaded matches will be
+"fetch new match(es)" before the current match has ended and its scores have
+been posted. After posting scores from FMS, any un-uploaded matches will be
 fetched when you click "fetch matches".
 
 ### Awards
 
 This tab is only visible when an event is selected. Each award can have an
 associated team, person, or both.
+
+Winners and finalists can be filled in automatically by clicking "Auto-detect
+winners/finalists" after the last finals match is uploaded. Note that this
+requires a read API key to be set in the "event setup" tab.
 
 The "duplicate award" button will create a new award with the same name as the
 chosen award. The "upload awards" button will overwrite all awards online for
@@ -127,16 +138,22 @@ matches).
   scores have been committed before clicking any "fetch" buttons. If this
   happens, a warning should be displayed, and clicking "Re-fetch scores" after
   posting scores in FMS should resolve the issue.
-* 2018: the "auto quest" ranking point cannot be reliably determined due to FMS
-  limitations. Sometimes alliances will be credited with this ranking point when
-  they didn't actually earn it. Note that this only applies to match scores -
-  rankings are unaffected. This can be toggled in the match edit dialog by
-  clicking on the match results before uploading scores.
 * Editing properties of a specific play of a match that has already been
   uploaded to TBA is rather convoluted. See "advanced options" below. Note that
   a *replay* of a match for any reason counts as a separate play in FMS and can
   be treated normally like any other match (TBA-uploader will fetch and upload
   it separately, overwriting the earlier play(s) if necessary).
+* 2019: any manually-added ranking points in FMS must also be manually added in
+  this tool (by clicking on the match scores before uploading them).
+* 2019: the preloaded contents of the cargo ship cannot be determined, so this
+  tool will make its best guess based on the hatch panel points of each
+  alliance. Specifically, the number of null hatch panels will always be
+  correct, but their positions may not always be.
+* 2018: the "auto quest" ranking point cannot be reliably determined due to FMS
+  limitations. Sometimes alliances will be credited with this ranking point when
+  they didn't actually earn it. Note that this only applies to match scores -
+  rankings are unaffected. This can be toggled in the match edit dialog by
+  clicking on the match results before uploading scores.
 
 ## Advanced options
 
@@ -155,7 +172,7 @@ uploaded in the next batch of uploads. "Mark as uploaded" will partially undo
 "Purge" - it will prevent the match from being uploaded in the next batch of
 uploads.
 
-One common use case: if a match play was uploaded with errors (i.e. the auton
+One common use case: if a match play was uploaded with errors (i.e. the rocket
 RP, red cards, or surrogates were wrong, or the score was all 0s), this can be
 changed with the following procedure:
 
