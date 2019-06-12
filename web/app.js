@@ -42,6 +42,7 @@ function tbaApiEventRequest(event, route) {
         headers: {
             'X-TBA-Auth-Key': localStorage.getItem('readApiKey'),
         },
+        cache: false,
     });
 }
 
