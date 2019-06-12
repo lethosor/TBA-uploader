@@ -241,7 +241,7 @@ app = new Vue({
             if (this.events.indexOf(event) == -1) {
                 this.events.push(event);
                 this.events.sort();
-                this.awards[event] = this.awards[event] || [makeAward()];
+                this.initAwards(event);
             }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
             this.saveAwards();
@@ -271,7 +271,7 @@ app = new Vue({
         fetchEventData: function() {
             this.tbaReadError = '';
             this.tbaEventData = {};
-            if (!this.selectedEvent) {
+            if (!this.selectedEvent || this.selectedEvent == '_add') {
                 return;
             }
             if (!this.readApiKey) {
@@ -593,6 +593,12 @@ app = new Vue({
             }.bind(this));
         },
 
+        initAwards: function(event) {
+            if (!event || event == '_add') {
+                return;
+            }
+            this.$set(this.awards, event, this.awards[event] || [makeAward()]);
+        },
         addAward: function() {
             this.awards[this.selectedEvent].push(makeAward());
         },
@@ -664,6 +670,11 @@ app = new Vue({
             }.bind(this))
         },
         saveAwards: function() {
+            if (typeof this.awards != 'object' ||
+                !Array.isArray(this.awards[this.selectedEvent]) ||
+                Array.isArray(this.awards)) {
+                throw new TypeError('awards is not a map');
+            }
             localStorage.setItem('awards', JSON.stringify(this.awards));
         },
         uploadAwards: function() {
@@ -705,7 +716,7 @@ app = new Vue({
         $(this.$el).removeClass('hidden');
         var event = localStorage.getItem('selectedEvent') || '';
         if (event) {
-            this.awards[event] = this.awards[event] || [makeAward()];
+            this.initAwards(event);
             this.saveAwards();
         }
         this.selectedEvent = event;
