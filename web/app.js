@@ -82,6 +82,10 @@ function makeAward(data) {
     }, data || {});
 }
 
+function isValidEventCode(event) {
+    return event && Boolean(event.match(/^\d+/));
+}
+
 function isValidYear(year) {
     year = parseInt(year);
     return year >= 2018 && year <= 2019;
@@ -271,7 +275,7 @@ app = new Vue({
         fetchEventData: function() {
             this.tbaReadError = '';
             this.tbaEventData = {};
-            if (!this.selectedEvent || this.selectedEvent == '_add') {
+            if (!isValidEventCode(this.selectedEvent)) {
                 return;
             }
             if (!this.readApiKey) {
@@ -594,27 +598,34 @@ app = new Vue({
         },
 
         initAwards: function(event) {
-            if (!event || event == '_add') {
+            if (!isValidEventCode(event)) {
                 return;
             }
-            this.$set(this.awards, event, this.awards[event] || [makeAward()]);
+            if (this.awards[event] && this.awards[event].length) {
+                return;
+            }
+            this.$set(this.awards, event, [makeAward()]);
         },
         addAward: function() {
             this.awards[this.selectedEvent].push(makeAward());
+            this.saveAwards();
         },
         duplicateAward: function(award) {
             var newAward = makeAward();
             newAward.name = award.name;
             this.awards[this.selectedEvent].splice(this.awards[this.selectedEvent].indexOf(award) + 1, 0, newAward);
+            this.saveAwards();
         },
         clearAward: function(award) {
             award.name = award.team = award.person = '';
+            this.saveAwards();
         },
         deleteAward: function(award) {
             var index = this.awards[this.selectedEvent].indexOf(award);
             if (index >= 0) {
                 this.awards[this.selectedEvent].splice(index, 1);
             }
+            this.saveAwards();
         },
         fetchAutomaticAwards: function() {
             var cleanedAwards = this.awards[this.selectedEvent].filter(function(award) {
@@ -670,10 +681,11 @@ app = new Vue({
             }.bind(this))
         },
         saveAwards: function() {
-            if (typeof this.awards != 'object' ||
-                !Array.isArray(this.awards[this.selectedEvent]) ||
-                Array.isArray(this.awards)) {
+            if (typeof this.awards != 'object' || Array.isArray(this.awards)) {
                 throw new TypeError('awards is not a map');
+            }
+            if (isValidEventCode(this.selectedEvent) && !Array.isArray(this.awards[this.selectedEvent])) {
+                throw new TypeError('awards[' + this.selectedEvent + '] is not an array');
             }
             localStorage.setItem('awards', JSON.stringify(this.awards));
         },
