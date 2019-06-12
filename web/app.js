@@ -74,12 +74,12 @@ function makeAddEventUI() {
     };
 }
 
-function makeAward() {
-    return {
+function makeAward(data) {
+    return $.extend({}, {
         name: '',
         team: '',
         person: '',
-    };
+    }, data || {});
 }
 
 function isValidYear(year) {
@@ -183,7 +183,7 @@ app = new Vue({
 
         awards: STORED_AWARDS,
         awardStatus: '',
-        uploadingAwards: false,
+        inAwardRequest: false,
     },
     computed: {
         eventSelected: function() {
@@ -610,6 +610,59 @@ app = new Vue({
                 this.awards[this.selectedEvent].splice(index, 1);
             }
         },
+        fetchAutomaticAwards: function() {
+            var cleanedAwards = this.awards[this.selectedEvent].filter(function(award) {
+                return ['winner', 'finalist'].indexOf(award.name.toLowerCase().trim()) == -1;
+            });
+            if (cleanedAwards.length != this.awards[this.selectedEvent].length &&
+                    !confirm('This will remove all current Winner/Finalist awards from this event. Continue?')) {
+                return;
+            }
+            this.awards[this.selectedEvent] = cleanedAwards;
+
+            this.inAwardRequest = true;
+            tbaApiEventRequest(this.selectedEvent, 'alliances')
+            .always(function() {
+                this.inAwardRequest = false;
+            }.bind(this))
+            .then(function(data) {
+                var alliances = data || [];
+                var winnerAwards = [];
+                var finalistAwards = [];
+                alliances.forEach(function(alliance) {
+                    var status = alliance.status || {};
+                    if (status.level == 'f') {
+                        var awardName;
+                        var awardList;
+                        if (status.status == 'won') {
+                            awardName = 'Winner';
+                            awardList = winnerAwards;
+                        }
+                        else if (status.status == 'eliminated') {
+                            awardName = 'Finalist';
+                            awardList = finalistAwards;
+                        }
+                        if (awardName) {
+                            alliance.picks.forEach(function(team) {
+                                awardList.push(makeAward({
+                                    team: team.replace('frc', ''),
+                                    name: awardName,
+                                }));
+                            });
+                        }
+                    }
+                });
+                if (!winnerAwards.length && !finalistAwards.length) {
+                    this.awardStatus = 'No winners or finalists were detected. Make sure finals have been uploaded ' +
+                        'and the TBA event page is up to date.';
+                }
+                this.awards[this.selectedEvent] = [].concat(winnerAwards, finalistAwards, this.awards[this.selectedEvent]);
+                this.saveAwards();
+            }.bind(this))
+            .fail(function(error) {
+                this.awardStatus = parseTbaError(error);
+            }.bind(this))
+        },
         saveAwards: function() {
             localStorage.setItem('awards', JSON.stringify(this.awards));
         },
@@ -621,11 +674,11 @@ app = new Vue({
                     awardee: award.person || null,
                 };
             });
-            this.uploadingAwards = true;
+            this.inAwardRequest = true;
             this.awardStatus = 'Uploading...';
             var request = sendApiRequest('/api/awards/upload', this.selectedEvent, json);
             request.always(function() {
-                this.uploadingAwards = false;
+                this.inAwardRequest = false;
             }.bind(this));
             request.then(function() {
                 this.awardStatus = '';

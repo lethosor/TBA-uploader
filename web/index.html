@@ -185,7 +185,7 @@
                   <input class="form-control" title="Person" placeholder="Person" v-model="award.person" @blur="saveAwards">
                 </td>
                 <td>
-                  <button class="btn btn-info" @click="duplicateAward(award)">Duplicate</button>
+                  <button class="btn btn-info" @click="duplicateAward(award)" title="Create a new award with the same name">Duplicate</button>
                   <button class="btn btn-danger" @click="clearAward(award)">Clear</button>
                   <button class="btn btn-danger" @click="deleteAward(award)">Delete</button>
                 </td>
@@ -193,8 +193,9 @@
             </tbody>
           </table>
           <button class="btn btn-success" @click="addAward">Add award</button>
+          <button class="btn btn-success" @click="fetchAutomaticAwards">Auto-detect winners/finalists</button>
           <hr>
-          <button class="btn btn-success" @click="uploadAwards" :disabled="uploadingAwards">Upload all awards</button>
+          <button class="btn btn-success" @click="uploadAwards" :disabled="inAwardRequest">Upload all awards</button>
           <span>{{awardStatus}}</span>
         </div>
 
