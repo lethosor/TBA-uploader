@@ -5,7 +5,7 @@ catch (e) {
     STORED_EVENTS = {};
 }
 try {
-    STORED_AWARDS = JSON.parse(localStorage.getItem('awards'));
+    STORED_AWARDS = JSON.parse(localStorage.getItem('awards')) || {};
 }
 catch (e) {
     STORED_AWARDS = {};
@@ -161,7 +161,7 @@ app = new Vue({
         events: Object.keys(STORED_EVENTS).sort(),
         selectedEvent: '',
         addEventUI: makeAddEventUI(),
-        readApiKey: localStorage.getItem('readApiKey'),
+        readApiKey: localStorage.getItem('readApiKey') || '',
         tbaEventData: {},
         tbaReadError: '',
 
