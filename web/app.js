@@ -1,15 +1,21 @@
-try {
-    STORED_EVENTS = JSON.parse(localStorage.getItem('storedEvents')) || {};
+function safeParseLocalStorageObject(key, allow_array) {
+    var res;
+    try {
+        res = JSON.parse(localStorage.getItem(key));
+        if (typeof res != 'object') {
+            throw new TypeError();
+        }
+        if (!allow_array && Array.isArray(res)) {
+            throw new TypeError();
+        }
+    }
+    catch (e) { }
+    return res || {};
 }
-catch (e) {
-    STORED_EVENTS = {};
-}
-try {
-    STORED_AWARDS = JSON.parse(localStorage.getItem('awards')) || {};
-}
-catch (e) {
-    STORED_AWARDS = {};
-}
+
+STORED_EVENTS = safeParseLocalStorageObject('storedEvents');
+STORED_AWARDS = safeParseLocalStorageObject('awards');
+
 if (Array.isArray(STORED_AWARDS)) {
     // move old awards from array to object
     var new_awards = {};
@@ -164,6 +170,10 @@ app = new Vue({
         readApiKey: localStorage.getItem('readApiKey') || '',
         tbaEventData: {},
         tbaReadError: '',
+
+        uiOptions: $.extend({
+            showAllLevels: false,
+        }, safeParseLocalStorageObject('uiOptions')),
 
         matchLevel: 2,
         showAllLevels: false,
@@ -721,6 +731,12 @@ app = new Vue({
                 this.saveAwards();
             }
             this.fetchEventData();
+        },
+        uiOptions: {
+            handler: function() {
+                localStorage.setItem('uiOptions', JSON.stringify(this.uiOptions));
+            },
+            deep: true,
         },
     },
     mounted: function() {
