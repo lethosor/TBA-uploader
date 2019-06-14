@@ -92,6 +92,28 @@
               <button class="btn btn-success" @click="addEvent" :disabled="!canAddEvent">Add</button>
             </div>
           </div>
+          <div v-if="isEventSelected">
+            <hr>
+
+            <div>
+              <h3>Team remappings</h3>
+
+              <ul>
+                <li v-for="(remap, i) in eventExtras[selectedEvent].remap_teams">
+                  <form class="form-inline">
+                    <input v-model="remap.fms" class="form-control"> &rarr;
+                    <input v-model="remap.tba" class="form-control">
+                    <button @click="removeTeamRemap(i)" type="button" class="close" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </form>
+                </li>
+              </ul>
+
+              <button class="btn btn-success" @click="addTeamRemap">Add</button>
+              <button class="btn btn-success" :disabled="!eventExtras[selectedEvent].remap_teams.length">Upload</button>
+            </div>
+          </div>
         </div>
 
         <div class="tab-pane fade" id="match-play" role="tabpanel" aria-labelledby="match-play-tab">

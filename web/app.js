@@ -174,6 +174,7 @@ app = new Vue({
         uiOptions: $.extend({
             showAllLevels: false,
         }, safeParseLocalStorageObject('uiOptions')),
+        eventExtras: safeParseLocalStorageObject('eventExtras'),
 
         matchLevel: 2,
         showAllLevels: false,
@@ -215,6 +216,9 @@ app = new Vue({
         authInputType: function() {
             return this.addEventUI.showAuth ? 'text' : 'password';
         },
+        isEventSelected: function() {
+            return isValidEventCode(this.selectedEvent);
+        },
         eventYear: function() {
             var year = parseInt(this.selectedEvent);
             if (isNaN(year)) {
@@ -255,6 +259,7 @@ app = new Vue({
                 this.events.push(event);
                 this.events.sort();
                 this.initAwards(event);
+                this.initEventExtras(event);
             }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
             this.saveAwards();
@@ -297,6 +302,24 @@ app = new Vue({
             .fail(function(error) {
                 this.tbaReadError = parseTbaError(error);
             }.bind(this));
+        },
+
+        initEventExtras: function(event) {
+            if (!isValidEventCode(event)) {
+                return;
+            }
+            this.$set(this.eventExtras, event, $.extend({}, {
+                remap_teams: [],
+            }, this.eventExtras[event]));
+        },
+        addTeamRemap: function() {
+            this.eventExtras[this.selectedEvent].remap_teams.push({
+                fms: '',
+                tba: '',
+            });
+        },
+        removeTeamRemap: function(i) {
+            this.eventExtras[this.selectedEvent].remap_teams.splice(i, 1);
         },
 
         fetchMatches: function(all) {
@@ -730,11 +753,18 @@ app = new Vue({
                 this.awards[event] = [makeAward()];
                 this.saveAwards();
             }
+            this.initEventExtras(event);
             this.fetchEventData();
         },
         uiOptions: {
             handler: function() {
                 localStorage.setItem('uiOptions', JSON.stringify(this.uiOptions));
+            },
+            deep: true,
+        },
+        eventExtras: {
+            handler: function() {
+                localStorage.setItem('eventExtras', JSON.stringify(this.eventExtras));
             },
             deep: true,
         },
@@ -744,6 +774,7 @@ app = new Vue({
         var event = localStorage.getItem('selectedEvent') || '';
         if (event) {
             this.initAwards(event);
+            this.initEventExtras(event);
             this.saveAwards();
         }
         this.selectedEvent = event;
