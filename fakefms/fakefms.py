@@ -45,7 +45,7 @@ def build_level_index(level):
 
 # [match level] -> [{UUID: name}, ...]
 level_index = {}
-for i in range(1, 3 + 1):
+for i in range(0, 3 + 1):
     try:
         level_index[i] = build_level_index(i)
     except IOError as e:

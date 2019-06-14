@@ -251,7 +251,7 @@
                     <th>Blue</th>
                   </tr>
                 </thead>
-                <tbody v-if="matchLevel == 2">
+                <tbody v-if="matchLevel != 3">
                   <tr v-for="i in 3">
                     <td class="red">
                       <h6>{{matchEditData.teams.red[i-1].team}}</h6>
