@@ -123,6 +123,10 @@ func apiSetFMSConfig(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func apiUploadEventInfo(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("info/update", w, r)
+}
+
 func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("awards/update", w, r)
 }
@@ -388,6 +392,7 @@ func RunWebServer(port int, web_folder string) {
     r.HandleFunc("/js/fms_config.js", jsFMSConfig)
     r.HandleFunc("/api/fms_config/get", apiGetFMSConfig)
     r.HandleFunc("/api/fms_config/set", apiSetFMSConfig)
+    r.HandleFunc("/api/info/upload", apiUploadEventInfo)
     r.HandleFunc("/api/awards/upload", apiUploadAwards)
     r.HandleFunc("/api/matches/fetch", apiFetchMatches)
     r.HandleFunc("/api/matches/upload", apiUploadMatches)

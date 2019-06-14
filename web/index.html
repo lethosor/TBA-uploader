@@ -98,6 +98,13 @@
             <div>
               <h3>Team remappings</h3>
 
+              <div class="alert alert-danger" v-if="remapError">
+                <span class="raw-message">{{remapError}}</span>
+                <button @click="remapError=''" type="button" class="close" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+
               <ul>
                 <li v-for="(remap, i) in eventExtras[selectedEvent].remap_teams">
                   <form class="form-inline">
@@ -111,7 +118,7 @@
               </ul>
 
               <button class="btn btn-success" @click="addTeamRemap">Add</button>
-              <button class="btn btn-success" :disabled="!eventExtras[selectedEvent].remap_teams.length">Upload</button>
+              <button class="btn btn-success" @click="uploadTeamRemap" :disabled="!eventExtras[selectedEvent].remap_teams.length">Upload</button>
             </div>
           </div>
         </div>

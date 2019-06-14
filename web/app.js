@@ -175,6 +175,7 @@ app = new Vue({
             showAllLevels: false,
         }, safeParseLocalStorageObject('uiOptions')),
         eventExtras: safeParseLocalStorageObject('eventExtras'),
+        remapError: '',
 
         matchLevel: 2,
         showAllLevels: false,
@@ -320,6 +321,38 @@ app = new Vue({
         },
         removeTeamRemap: function(i) {
             this.eventExtras[this.selectedEvent].remap_teams.splice(i, 1);
+        },
+        uploadTeamRemap: function() {
+            this.remapError = '';
+            var remapList = this.eventExtras[this.selectedEvent].remap_teams;
+            var remapMap = {};
+            var validate = function(team, isTba) {
+                var match = team
+                    .toUpperCase()
+                    .trim()
+                    .replace(/^FRC/, '')
+                    .match(isTba ? /^\d+[B-Z]$/ : /^\d+$/);
+                if (!match) {
+                    this.remapError += 'Invalid ' + (isTba ? 'TBA' : 'FMS') + ' team number: ' + team +
+                        ': expected format: 1234' + (isTba ? 'B (or 1234C, etc.)' : '') + '\n';
+                }
+                return 'frc' + match;
+            }.bind(this);
+            remapList.forEach(function(r) {
+                var fms_team = validate(r.fms);
+                var tba_team = validate(r.tba, true);
+                if (fms_team && tba_team) {
+                    remapMap[fms_team] = tba_team;
+                }
+            });
+            if (this.remapError) {
+                return;
+            }
+            sendApiRequest('/api/info/upload', this.selectedEvent, {
+                remap_teams: remapMap,
+            }).fail(function(error) {
+                this.remapError = parseTbaError(error);
+            }.bind(this));
         },
 
         fetchMatches: function(all) {
