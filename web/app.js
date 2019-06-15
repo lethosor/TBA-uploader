@@ -196,6 +196,11 @@ app = new Vue({
         inUploadRankings: false,
         rankingsError: '',
 
+        videos: {},
+        inVideoRequest: false,
+        videoError: '',
+        showExistingVideos: false,
+
         awards: STORED_AWARDS,
         awardStatus: '',
         inAwardRequest: false,
@@ -660,6 +665,78 @@ app = new Vue({
                 this.rankingsError = 'fetch failed: ' + res.responseText;
                 this.inUploadRankings = false;
             }.bind(this));
+        },
+
+        fetchVideos: function() {
+            this.inVideoRequest = true;
+            this.videoError = '';
+            tbaApiEventRequest(this.selectedEvent, 'matches')
+            .always(function() {
+                this.inVideoRequest = false;
+            }.bind(this))
+            .then(function(matches) {
+                matches.forEach(function(match) {
+                    var key = match.key.split('_')[1];
+                    if (match.alliances && match.alliances.blue && match.alliances.blue.score != -1) {
+                        var v = this.videos[key] || {};
+                        v.tba = match.videos.filter(function(cv) {
+                            return cv.type == 'youtube';
+                        }).map(function(cv) {
+                            return cv.key;
+                        })[0] || '';
+                        v.current = v.current || v.tba || '';
+                        Vue.set(this.videos, key, v);
+                    }
+                }.bind(this));
+            }.bind(this))
+            .fail(function(error) {
+                this.videoError = parseTbaError(error);
+            }.bind(this));
+        },
+        uploadVideos: function() {
+            this.cleanVideoUrls();
+            var videos = this.getChangedVideos();
+            if (!Object.keys(videos).length) {
+                this.videoError = 'No videos have changed; not uploading anything.';
+                return;
+            }
+
+            this.inVideoRequest = true;
+            this.videoError = '';
+            sendApiRequest('/api/videos/upload', this.selectedEvent, videos)
+            .always(function() {
+                this.inVideoRequest = false;
+            }.bind(this))
+            .then(function() {
+                this.fetchVideos();
+            }.bind(this))
+            .fail(function(error) {
+                this.videoError = parseTbaError(error);
+            }.bind(this));
+        },
+        getSortedVideos: function() {
+            return Object.entries(this.videos).sort(function(a, b) {
+                return Number(a[0].replace(/[^\d]/g, '')) - Number(b[0].replace(/[^\d]/g, ''));
+            }).filter(function(v) {
+                return this.showExistingVideos || !v[1].tba;
+            }.bind(this));
+        },
+        getChangedVideos: function() {
+            var videos = {};
+            Object.entries(this.videos).forEach(function(v) {
+                if (v[1].current && v[1].current != v[1].tba) {
+                    videos[v[0]] = v[1].current;
+                }
+            });
+            return videos;
+        },
+        cleanVideoUrls: function() {
+            Object.values(this.videos).forEach(function(v) {
+                var match = v.current.match(/[?&]v=([A-Za-z0-9_-]+)/);
+                if (match) {
+                    v.current = match[1];
+                }
+            });
         },
 
         initAwards: function(event) {

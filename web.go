@@ -380,6 +380,10 @@ func apiUploadRankings(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("rankings/update", w, r)
 }
 
+func apiUploadVideos(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("match_videos/add", w, r)
+}
+
 func RunWebServer(port int, web_folder string) {
     r := mux.NewRouter()
     var fs http.FileSystem
@@ -403,6 +407,7 @@ func RunWebServer(port int, web_folder string) {
     r.HandleFunc("/api/matches/delete", apiDeleteMatches)
     r.HandleFunc("/api/rankings/fetch", apiFetchRankings)
     r.HandleFunc("/api/rankings/upload", apiUploadRankings)
+    r.HandleFunc("/api/videos/upload", apiUploadVideos)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
     log.Printf("Serving on %s\n", addr)

@@ -19,6 +19,9 @@
           <a class="nav-link" id="match-play-tab" data-toggle="tab" href="#match-play" role="tab" aria-controls="match-play" aria-selected="false">Match play</a>
         </li>
         <li class="nav-item" v-if="eventSelected">
+          <a class="nav-link" id="match-videos-tab" data-toggle="tab" href="#match-videos" role="tab" aria-controls="match-videos" aria-selected="false">Match videos</a>
+        </li>
+        <li class="nav-item" v-if="eventSelected">
           <a class="nav-link" id="awards-tab" data-toggle="tab" href="#awards" role="tab" aria-controls="awards" aria-selected="false">Awards</a>
         </li>
         <li class="nav-item ml-auto">
@@ -192,6 +195,38 @@
               </div> <!-- col -->
             </div> <!-- row -->
           </div>
+        </div>
+
+        <div class="tab-pane fade" id="match-videos" role="tabpanel" aria-labelledby="match-videos-tab">
+          <div>
+            <button class="btn btn-success" @click="fetchVideos" :disabled="inVideoRequest">Fetch data from TBA</button>
+            <button class="btn btn-success" @click="uploadVideos" :disabled="inVideoRequest">Upload data to TBA</button>
+          </div>
+          <div><span class="warning">Warning:</span> anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</div>
+          <div>Videos cannot be removed once they are uploaded.</div>
+
+          <div class="alert alert-danger" v-if="videoError">
+            <span class="raw-message">{{videoError}}</span>
+            <button @click="videoError=''" type="button" class="close" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+
+          <label>
+            <input type="checkbox" v-model="showExistingVideos">
+            Show matches that already have videos
+          </label>
+
+          <ul>
+            <li v-for="[key, video] in getSortedVideos()">
+              <div class="form-inline">
+                <label>
+                  {{key}}:
+                  <input class="form-control" v-model="video.current" @blur="cleanVideoUrls">
+                </label>
+              </div>
+            </li>
+          </ul>
         </div>
 
         <div class="tab-pane fade" id="awards" role="tabpanel" aria-labelledby="awards-tab">
