@@ -118,7 +118,9 @@
               </ul>
 
               <button class="btn btn-success" @click="addTeamRemap">Add</button>
-              <button class="btn btn-success" @click="uploadTeamRemap" :disabled="!eventExtras[selectedEvent].remap_teams.length">Upload</button>
+              <button class="btn btn-success" @click="uploadTeamRemap" v-if="eventExtras[selectedEvent].remap_teams.length">Upload</button>
+              <button v-else class="btn btn-warning" @click="uploadTeamRemap">Remove all remappings from TBA</button>
+              <div>Note: any changes here may not be reflected quickly in data that is already uploaded to TBA (e.g. match schedules) unless they are uploaded again.</div>
             </div>
           </div>
         </div>
