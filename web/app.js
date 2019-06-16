@@ -481,15 +481,9 @@ app = new Vue({
             }.bind(this));
         },
         checkScorelessMatches: function(matches) {
-            var foundScoreless = false;
-            matches.forEach(function(match) {
-                Object.values(match.score_breakdown).forEach(function(breakdown) {
-                    if (breakdown.totalPoints === 0 && breakdown.adjustPoints === 0) {
-                        foundScoreless = true;
-                    }
-                });
-            });
-            return foundScoreless;
+            return matches.filter(function(match) {
+                return match.alliances.blue.score == -1 || match.alliancs.blue.teams[0] == '';
+            }).length > 0;
         },
         _checkAdvSelectedMatch: function() {
             parts = this.advSelectedMatch.split('-');
