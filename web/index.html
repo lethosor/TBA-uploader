@@ -9,7 +9,9 @@
   <body>
     <div class="container hidden" id="main">
       <div class="float-right">{{version}}</div>
-      <h2>TBA uploader<span v-if="eventSelected"> - {{selectedEvent}}</span></h2>
+      <h2>TBA uploader<span v-if="eventSelected"> -
+        <a :href="'https://www.thebluealliance.com/event/' + selectedEvent" target="_blank">{{selectedEvent}}</a>
+      </span></h2>
 
       <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item">
