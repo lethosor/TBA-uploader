@@ -177,7 +177,7 @@ app = new Vue({
         eventExtras: safeParseLocalStorageObject('eventExtras'),
         remapError: '',
 
-        matchLevel: 2,
+        matchLevel: MATCH_LEVEL_QUAL,
         showAllLevels: false,
         inMatchRequest: false,
         matchError: '',
@@ -231,6 +231,12 @@ app = new Vue({
                 return new Date().getFullYear();
             }
             return year;
+        },
+        isQual: function() {
+            return this.matchLevel == MATCH_LEVEL_QUAL;
+        },
+        isPlayoff: function() {
+            return this.matchLevel == MATCH_LEVEL_PLAYOFF;
         },
     },
     methods: {
@@ -559,7 +565,7 @@ app = new Vue({
                             surrogate: data[color].surrogates.indexOf('frc' + team) != -1,
                         };
                     });
-                    if (this.matchLevel == 3) {
+                    if (this.isPlayoff) {
                         this.matchEditData.flags[color] = {
                             dq: data[color].dqs.length > 0,
                         };
@@ -604,7 +610,7 @@ app = new Vue({
                 });
             }.bind(this);
             var genExtraData = function(color) {
-                if (this.matchLevel == 3) {
+                if (this.isPlayoff) {
                     return Object.assign({
                         dqs: this.matchEditData.flags[color].dq ?
                              this.matchEditData.teams[color].map(function(t) {

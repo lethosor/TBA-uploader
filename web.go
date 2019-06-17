@@ -86,6 +86,12 @@ func marshalFMSConfig(w http.ResponseWriter) ([]byte, error) {
     return out, nil
 }
 
+func jsConsts(w http.ResponseWriter, r *http.Request) {
+    for name, value := range getConstsMap() {
+        w.Write([]byte(fmt.Sprintf("window.%s = %v;\n", name, value)))
+    }
+}
+
 func jsVersion(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte(fmt.Sprintf("window.VERSION=\"%s\";", Version)))
 }
@@ -171,14 +177,14 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             fname_trimmed := strings.TrimSuffix(fname, filepath.Ext(fname))
             fname_json := fname_trimmed + ".json"
 
-            match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], level == 3)
+            match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], level == MATCH_LEVEL_PLAYOFF)
             if err != nil {
                 w.WriteHeader(http.StatusInternalServerError)
                 w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", fname, err)))
                 return
             }
 
-            if (level == 3) {
+            if (level == MATCH_LEVEL_PLAYOFF) {
                 // playoffs
                 code := getTBAPlayoffCode(match_number)
                 match_info["comp_level"] = code.level
@@ -396,6 +402,7 @@ func RunWebServer(port int, web_folder string) {
     } else {
         fs = assetFS()
     }
+    r.HandleFunc("/js/consts.js", jsConsts)
     r.HandleFunc("/js/version.js", jsVersion)
     r.HandleFunc("/js/fms_config.js", jsFMSConfig)
     r.HandleFunc("/api/fms_config/get", apiGetFMSConfig)

@@ -14,8 +14,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestDownloadMatches(t *testing.T) {
-    fmt.Println(getMatchDownloadPath(2, "all"))
-    files, err := downloadNewMatches(2, "all")
+    fmt.Println(getMatchDownloadPath(MATCH_LEVEL_QUAL, "all"))
+    files, err := downloadNewMatches(MATCH_LEVEL_QUAL, "all")
     if err != nil {
         t.Error("downloadNewMatches: ", err)
     }
@@ -24,7 +24,7 @@ func TestDownloadMatches(t *testing.T) {
         fmt.Printf("files[%d] = %s\n", i, files[i])
     }
 
-    files, err = downloadAllMatches(2, "all")
+    files, err = downloadAllMatches(MATCH_LEVEL_QUAL, "all")
     if err != nil {
         t.Error("downloadAllMatches: ", err)
     }

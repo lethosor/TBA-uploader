@@ -140,7 +140,7 @@
             </select>
             <button class="btn btn-success" @click="fetchMatches(false)" :disabled="inMatchRequest">Fetch new match(es)</button>
             <button class="btn btn-danger" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</button>
-            <button class="btn btn-info ml-auto" @click="uploadRankings" :disabled="inUploadRankings" v-if="matchLevel == 2">Upload rankings</button>
+            <button class="btn btn-info ml-auto" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</button>
           </div>
           <div><span class="warning">Warning:</span> only click the above buttons <strong>soon after</strong> posting a score</div>
           <div class="alert alert-danger" v-if="rankingsError">
@@ -319,7 +319,7 @@
                     <th>Blue</th>
                   </tr>
                 </thead>
-                <tbody v-if="matchLevel != 3">
+                <tbody v-if="!isPlayoff">
                   <tr v-for="i in 3">
                     <td class="red">
                       <h6>{{matchEditData.teams.red[i-1].team}}</h6>
@@ -384,7 +384,7 @@
                   </tr>
                 </tbody>
 
-                <tbody v-if="matchLevel == 3">
+                <tbody v-if="isPlayoff">
                   <tr>
                     <td class="red">
                       <h6>{{matchEditData.teams.red[0].team}} &bull; {{matchEditData.teams.red[1].team}} &bull; {{matchEditData.teams.red[2].team}}</h6>
@@ -416,6 +416,7 @@
     <script type="text/javascript" src="bootstrap.min.js"></script>
     <script type="text/javascript" src="vue.js"></script>
     <script type="text/javascript" src="showdown.min.js"></script>
+    <script type="text/javascript" src="/js/consts.js"></script>
     <script type="text/javascript" src="/js/version.js"></script>
     <script type="text/javascript" src="/js/fms_config.js"></script>
     <script type="text/javascript" src="app.js"></script>
