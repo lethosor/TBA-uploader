@@ -860,6 +860,9 @@ app = new Vue({
             this.initEventExtras(event);
             this.fetchEventData();
         },
+        matchLevel: function() {
+            localStorage.setItem('matchLevel', this.matchLevel);
+        },
         uiOptions: {
             handler: function() {
                 localStorage.setItem('uiOptions', JSON.stringify(this.uiOptions));
@@ -881,6 +884,7 @@ app = new Vue({
             this.saveAwards();
         }
         this.selectedEvent = event;
+        this.matchLevel = localStorage.getItem('matchLevel') || this.matchLevel;
         $.get('/README.md', function(readme) {
             // remove first line (header)
             readme = readme.substr(readme.indexOf('\n'));
