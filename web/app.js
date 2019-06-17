@@ -874,7 +874,6 @@ app = new Vue({
         },
     },
     mounted: function() {
-        $(this.$el).removeClass('hidden');
         var event = localStorage.getItem('selectedEvent') || '';
         if (event) {
             this.initAwards(event);
@@ -886,6 +885,23 @@ app = new Vue({
             // remove first line (header)
             readme = readme.substr(readme.indexOf('\n'));
             this.helpHTML = new showdown.Converter().makeHtml(readme);
+        }.bind(this));
+
+        $(this.$refs.mainTabs).on('shown.bs.tab', 'a', function() {
+            localStorage.setItem('lastTab', this.id);
+        });
+
+        $(function() {
+            $(this.$el).removeClass('hidden');
+            var lastTab = localStorage.getItem('lastTab');
+            if (lastTab) {
+                var tab = document.getElementById(lastTab);
+                if (tab) {
+                    tab.click();
+                    $('.tab-pane').removeClass('show active');
+                    $('.tab-pane[aria-labelledby=' + lastTab + ']').addClass('show active');
+                }
+            }
         }.bind(this));
     },
 });
