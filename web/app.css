@@ -20,7 +20,7 @@ body {
 }
 
 .raw-message {
-    white-space: pre;
+    white-space: pre-wrap;
 }
 
 table.score td, table.match-edit td {
