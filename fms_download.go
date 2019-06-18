@@ -91,6 +91,7 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
     if err != nil {
         return nil, err
     }
+    defer reader.Close()
     dom, err := goquery.NewDocumentFromReader(reader)
     if err != nil {
         return nil, err

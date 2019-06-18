@@ -79,6 +79,7 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 	if err != nil {
 		return nil, fmt.Errorf("Error opening file: %s", filename)
 	}
+	defer r.Close()
 
 	// Read from file
 	dom, err := goquery.NewDocumentFromReader(r)
