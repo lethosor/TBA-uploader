@@ -309,7 +309,10 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
         if _, in_match_ids := match_ids[strings.Split(file.Name(), ".")[0]]; in_match_ids || all {
             ext := filepath.Ext(file.Name())
             if ext == ".html" || ext == ".json" || ext == ".receipt" {
-                os.Remove(path.Join(match_folder, file.Name()))
+                err := os.Remove(path.Join(match_folder, file.Name()))
+                if err != nil {
+                    log.Printf("purge: failed to delete %s: %v\n", file.Name(), err)
+                }
             }
         }
     }
