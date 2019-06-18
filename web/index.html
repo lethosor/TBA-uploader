@@ -52,10 +52,10 @@
             <div v-if="tbaEventData.name">Event name: {{tbaEventData.name}} ({{tbaEventData.year}})</div>
             <hr>
             <div v-if="tbaReadError" class="alert alert-danger">
-              <span class="raw-message">{{tbaReadError}}</span>
               <button @click="tbaReadError=''" type="button" class="close" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
+              <span class="raw-message">{{tbaReadError}}</span>
             </div>
             <label class="row col">
               Read API key (<a href="https://www.thebluealliance.com/account" target="_blank">create a key</a>&nbsp;if needed)
@@ -104,10 +104,10 @@
               <h3>Team remappings</h3>
 
               <div class="alert alert-danger" v-if="remapError">
-                <span class="raw-message">{{remapError}}</span>
                 <button @click="remapError=''" type="button" class="close" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
+                <span class="raw-message">{{remapError}}</span>
               </div>
 
               <ul>
@@ -144,10 +144,10 @@
           </div>
           <div><span class="warning">Warning:</span> only click the above buttons <strong>soon after</strong> posting a score</div>
           <div class="alert alert-danger" v-if="rankingsError">
-            Rankings: <span class="raw-message">{{rankingsError}}</span>
             <button @click="rankingsError=''" type="button" class="close" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
+            Rankings: <span class="raw-message">{{rankingsError}}</span>
           </div>
           <div v-if="inMatchAdvanced">
             <hr>
@@ -208,10 +208,10 @@
           <div>Videos cannot be removed once they are uploaded.</div>
 
           <div class="alert alert-danger" v-if="videoError">
-            <span class="raw-message">{{videoError}}</span>
             <button @click="videoError=''" type="button" class="close" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
+            <span class="raw-message">{{videoError}}</span>
           </div>
 
           <label>
