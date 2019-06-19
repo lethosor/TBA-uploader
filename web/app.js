@@ -488,7 +488,7 @@ app = new Vue({
         },
         checkScorelessMatches: function(matches) {
             return matches.filter(function(match) {
-                return match.alliances.blue.score == -1 || match.alliancs.blue.teams[0] == '';
+                return match.alliances.blue.score == -1 || match.alliances.blue.teams[0] == '';
             }).length > 0;
         },
         _checkAdvSelectedMatch: function() {
