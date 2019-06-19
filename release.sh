@@ -23,18 +23,20 @@ echo "Generating assets..."
 go-bindata-assetfs web/...
 
 build_release() {
-    build_dir="$rel_dir/$1-$2"
-    exe_name="TBA-uploader"
     if [ "$1" = "windows" ]; then
+        build_dir="$rel_dir/$1-$2"
         exe_name="TBA-uploader.exe"
+    else
+        build_dir="$rel_dir/$1-$2/TBA-uploader-$version-$3"
+        exe_name="TBA-uploader"
     fi
     echo "[$1/$2] Building $exe_name"
     mkdir -p "$build_dir"
     GOOS="$1" GOARCH="$2" go build -o "$build_dir/$exe_name" -ldflags "-X main.Version=$version"
     zip_name="TBA-uploader-$version-$3.zip"
     echo "[$1/$2] Generating $zip_name"
-    pushd "$build_dir" >/dev/null
-    zip "$zip_name" "$exe_name"
+    pushd "$rel_dir/$1-$2" >/dev/null
+    zip -r "$zip_name" TBA-uploader*
     mv "$zip_name" ../
     popd >/dev/null
     echo "[$1/$2] Done"
