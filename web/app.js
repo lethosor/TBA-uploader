@@ -177,6 +177,10 @@ app = new Vue({
         eventExtras: safeParseLocalStorageObject('eventExtras'),
         remapError: '',
 
+        inScheduleRequest: false,
+        scheduleError: '',
+        scheduleStats: [],
+
         matchLevel: MATCH_LEVEL_QUAL,
         showAllLevels: false,
         inMatchRequest: false,
@@ -366,6 +370,39 @@ app = new Vue({
             }.bind(this));
         },
 
+        onScheduleUpload: function(event) {
+            this.scheduleStats = [];
+            try {
+                var schedule = Schedule.parse(event.body);
+            }
+            catch (error) {
+                if (typeof error == 'string') {
+                    this.scheduleError = error;
+                    return;
+                }
+                else {
+                    throw error;
+                }
+            }
+            this.scheduleStats.push(schedule.length + ' match(es) found');
+            var numSurrogates = schedule.map(function(match) {
+                return match.alliances.red.surrogates.length + match.alliances.blue.surrogates.length;
+            }).reduce(function(a, b) {
+                return a + b;
+            }, 0);
+            this.scheduleStats.push(numSurrogates + ' surrogate team(s)');
+
+            this.scheduleStats.push('Checking against TBA schedule...');
+            this.inScheduleRequest = true;
+            tbaApiEventRequest(this.selectedEvent, 'matches').always(function() {
+                this.inScheduleRequest = false;
+            }.bind(this)).then(function(res) {
+
+            }.bind(this)).fail(function() {
+
+            });
+        },
+
         fetchMatches: function(all) {
             if (all && !confirmPurge()) {
                 return;
@@ -409,14 +446,6 @@ app = new Vue({
             var rmFRC = function(team) {
                 return team.replace('frc', '');
             };
-            var formatMatchCode = function(match) {
-                if (match.comp_level == 'qm') {
-                    return 'qm' + match.match_number;
-                }
-                else {
-                    return match.comp_level + match.set_number + 'm' + match.match_number;
-                }
-            };
             var formatScoreSummary = function(match, breakdown, color) {
                 var s = '' + match.alliances[color].score;
                 if (match.comp_level == 'qm') {
@@ -445,7 +474,7 @@ app = new Vue({
                 });
                 return {
                     id: match._fms_id,
-                    code: formatMatchCode(match),
+                    code: Schedule.getTBAMatchKey(match),
                     teams: {
                         blue: match.alliances.blue.teams.map(rmFRC),
                         red: match.alliances.red.teams.map(rmFRC),
@@ -913,5 +942,7 @@ app = new Vue({
                 }
             }
         }.bind(this));
+
+        this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
     },
 });

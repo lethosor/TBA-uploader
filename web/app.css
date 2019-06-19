@@ -26,11 +26,13 @@ body {
 .dropzone {
     background: #eee;
     border: 1px dashed #bbb;
-    width: 300px;
+    min-width: 300px;
     min-height: 4em;
+    margin-bottom: 1em;
     padding: 1em;
     text-align: center;
     cursor: pointer;
+    word-break: break-word;
 }
 
 .dropzone.active {
