@@ -31,6 +31,11 @@ Vue.component('dropzone', {
                 }.bind(this))[0];
             }
         },
+        reset: function() {
+            this.filename = '';
+            this.message = '';
+            this.$refs.file.value = '';
+        },
         onClick: function() {
             this.active = true;
             this.$refs.file.click();

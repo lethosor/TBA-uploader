@@ -397,7 +397,7 @@ app = new Vue({
             }.bind(this));
         },
 
-        onScheduleUpload: function(event) {
+        scheduleReset: function(keepFile) {
             this.inScheduleRequest = false;
             this.scheduleVerified = false;
             this.scheduleUploaded = false;
@@ -405,6 +405,12 @@ app = new Vue({
             this.scheduleStats = [];
             this.schedulePendingMatches = [];
 
+            if (!keepFile) {
+                this.$refs.scheduleUpload.reset();
+            }
+        },
+        onScheduleUpload: function(event) {
+            this.scheduleReset(true);
             try {
                 var schedule = Schedule.parse(event.body);
             }
@@ -959,6 +965,7 @@ app = new Vue({
             }
             this.initEventExtras(event);
             this.fetchEventData();
+            this.scheduleReset(false);
         },
         matchLevel: function() {
             localStorage.setItem('matchLevel', this.matchLevel);
