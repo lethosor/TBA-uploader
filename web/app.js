@@ -465,10 +465,8 @@ app = new Vue({
             sendApiRequest('/api/matches/upload', this.selectedEvent, this.schedulePendingMatches).always(function() {
                 this.inScheduleRequest = false;
             }.bind(this)).then(function() {
-                this.scheduleVerified = false;
-                this.scheduleStats = [];
+                this.scheduleReset(false);
                 this.scheduleUploaded = true;
-                this.schedulePendingMatches = [];
             }.bind(this)).fail(function(res) {
                 this.scheduleError = res.responseText;
             }.bind(this));
