@@ -37,6 +37,9 @@ Schedule.parse = function(rawCsv) {
     var lines = rawCsv.split('\n').map(function(line) {
         return line.trim().toLowerCase().replace(/\s*/g, '').split(',');
     });
+    if (lines[0][0].indexOf('matchschedule') < 0) {
+        throw 'Wrong report type. You uploaded: ' + rawCsv.split(',')[0];
+    }
     // find header
     var columnIndices = {};
     for (var i = 0; i < lines.length; i++) {
@@ -49,8 +52,11 @@ Schedule.parse = function(rawCsv) {
             break;
         }
     }
-    if (!columnIndices['red1']) {
-        throw 'Missing red 1 column';
+    var missingColumns = ['red1', 'red2', 'red3', 'blue1', 'blue2', 'blue3', 'time', 'description'].filter(function(col) {
+        return columnIndices[col] === undefined;
+    });
+    if (missingColumns.length) {
+        throw 'Missing columns: ' + missingColumns.join(', ');
     }
 
     var genTeams = function(match, color) {
