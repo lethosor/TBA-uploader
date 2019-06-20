@@ -110,6 +110,12 @@ Schedule.parse = function(rawCsv) {
     });
 };
 
-Schedule.removeExistingMatches = function(schedule, existing) {
-
+Schedule.findAllCompLevels = function(matches) {
+    var levels = [];
+    matches.forEach(function(m) {
+        if (levels.indexOf(m.comp_level) < 0) {
+            levels.push(m.comp_level);
+        }
+    });
+    return levels;
 };

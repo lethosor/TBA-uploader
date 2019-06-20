@@ -178,8 +178,11 @@ app = new Vue({
         remapError: '',
 
         inScheduleRequest: false,
+        scheduleVerified: false,
+        scheduleUploaded: false,
         scheduleError: '',
         scheduleStats: [],
+        schedulePendingMatches: [],
 
         matchLevel: MATCH_LEVEL_QUAL,
         showAllLevels: false,
@@ -241,6 +244,30 @@ app = new Vue({
         },
         isPlayoff: function() {
             return this.matchLevel == MATCH_LEVEL_PLAYOFF;
+        },
+        schedulePendingMatchCells: function() {
+            var addTeamCell = function(cells, match, color, i) {
+                var cls = {};
+                cls[color] = true;
+                cls['surrogate'] = match.alliances[color].surrogates.indexOf(match.alliances[color].teams[i]) >= 0;
+                cells.push({
+                    text: match.alliances[color].teams[i].replace('frc', ''),
+                    cls: cls,
+                });
+            };
+            return this.schedulePendingMatches.map(function(match) {
+                var cells = [
+                    {text: match._id},
+                    {text: match._key},
+                    {text: match.time_string},
+                ];
+                ['red', 'blue'].forEach(function(color) {
+                    for (var i = 0; i < 3; i++) {
+                        addTeamCell(cells, match, color, i);
+                    }
+                });
+                return cells;
+            });
         },
     },
     methods: {
@@ -371,7 +398,13 @@ app = new Vue({
         },
 
         onScheduleUpload: function(event) {
+            this.inScheduleRequest = false;
+            this.scheduleVerified = false;
+            this.scheduleUploaded = false;
+            this.scheduleError = '';
             this.scheduleStats = [];
+            this.schedulePendingMatches = [];
+
             try {
                 var schedule = Schedule.parse(event.body);
             }
@@ -396,11 +429,42 @@ app = new Vue({
             this.inScheduleRequest = true;
             tbaApiEventRequest(this.selectedEvent, 'matches').always(function() {
                 this.inScheduleRequest = false;
-            }.bind(this)).then(function(res) {
-
-            }.bind(this)).fail(function() {
-
+            }.bind(this)).then(function(tbaMatches) {
+                if (!tbaMatches) {
+                    tbaMatches = [];
+                }
+                var newLevels = Schedule.findAllCompLevels(schedule);
+                var tbaLevels = Schedule.findAllCompLevels(tbaMatches);
+                newLevels = newLevels.filter(function(level) {
+                    return tbaLevels.indexOf(level) < 0;
+                });
+                this.scheduleStats.pop();
+                this.scheduleStats.push('TBA has level(s): ' + tbaLevels.join(', '));
+                if (!newLevels.length) {
+                    this.scheduleStats.push('No new levels are present in the FMS report.');
+                    return;
+                }
+                this.scheduleStats.push('The FMS report has new level(s): ' + newLevels.join(', '));
+                this.schedulePendingMatches = schedule.filter(function(match) {
+                    return newLevels.indexOf(match.comp_level) >= 0;
+                });
+            }.bind(this)).fail(function(error) {
+                this.scheduleError = parseTbaError(error);
             });
+        },
+        postSchedule: function() {
+            this.scheduleError = '';
+            this.inScheduleRequest = true;
+            sendApiRequest('/api/matches/upload', this.selectedEvent, this.schedulePendingMatches).always(function() {
+                this.inScheduleRequest = false;
+            }.bind(this)).then(function() {
+                this.scheduleVerified = false;
+                this.scheduleStats = [];
+                this.scheduleUploaded = true;
+                this.schedulePendingMatches = [];
+            }.bind(this)).fail(function(res) {
+                this.scheduleError = res.responseText;
+            }.bind(this));
         },
 
         fetchMatches: function(all) {
