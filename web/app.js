@@ -435,16 +435,17 @@ app = new Vue({
                 }
                 var newLevels = Schedule.findAllCompLevels(schedule);
                 var tbaLevels = Schedule.findAllCompLevels(tbaMatches);
+                this.scheduleStats.pop();
+                this.scheduleStats.push('TBA has level(s): ' + tbaLevels.join(', '));
+                this.scheduleStats.push('The FMS report has level(s): ' + newLevels.join(', '));
                 newLevels = newLevels.filter(function(level) {
                     return tbaLevels.indexOf(level) < 0;
                 });
-                this.scheduleStats.pop();
-                this.scheduleStats.push('TBA has level(s): ' + tbaLevels.join(', '));
                 if (!newLevels.length) {
                     this.scheduleStats.push('No new levels are present in the FMS report.');
                     return;
                 }
-                this.scheduleStats.push('The FMS report has new level(s): ' + newLevels.join(', '));
+                this.scheduleStats.push('Level(s) to be added from the FMS report: ' + newLevels.join(', '));
                 this.schedulePendingMatches = schedule.filter(function(match) {
                     return newLevels.indexOf(match.comp_level) >= 0;
                 });

@@ -155,29 +155,34 @@
             <ul>
               <li v-for="s in scheduleStats">{{s}}</li>
             </ul>
-            <p>If this schedule looks right, confirm below.</p>
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Key</th>
-                  <th>Time</th>
-                  <th>Red 1</th>
-                  <th>Red 2</th>
-                  <th>Red 3</th>
-                  <th>Blue 1</th>
-                  <th>Blue 2</th>
-                  <th>Blue 3</th>
+            <div v-if="schedulePendingMatches.length">
+              <p>If this schedule looks right, confirm below.</p>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Key</th>
+                    <th>Time</th>
+                    <th>Red 1</th>
+                    <th>Red 2</th>
+                    <th>Red 3</th>
+                    <th>Blue 1</th>
+                    <th>Blue 2</th>
+                    <th>Blue 3</th>
+                  </tr>
+                </thead>
+                <tr v-for="match in schedulePendingMatchCells">
+                  <td v-for="cell in match" :class="cell.cls"><span :class="cell.cls">{{cell.text}}</span></td>
                 </tr>
-              </thead>
-              <tr v-for="match in schedulePendingMatchCells">
-                <td v-for="cell in match" :class="cell.cls"><span :class="cell.cls">{{cell.text}}</span></td>
-              </tr>
-            </table>
-            <label>
-              <input type="checkbox" v-model="scheduleVerified">
-              This information is correct
-            </label>
+              </table>
+              <label>
+                <input type="checkbox" v-model="scheduleVerified">
+                This information is correct
+              </label>
+            </div>
+            <div v-else-if="!inScheduleRequest" class="alert alert-warning">
+              No new competition levels detected; nothing to upload.
+            </div>
           </div>
           <div v-if="scheduleVerified">
             <h3>3. Upload to TBA ({{selectedEvent}})</h3>
