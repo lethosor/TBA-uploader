@@ -17,7 +17,7 @@
         <li class="nav-item">
           <a class="nav-link active" id="event-setup-tab" data-toggle="tab" href="#event-setup" role="tab" aria-controls="event-setup" aria-selected="true">Event setup</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" v-if="eventSelected">
           <a class="nav-link" id="schedule-tab" data-toggle="tab" href="#schedule" role="tab" aria-controls="schedule" aria-selected="false">Schedule</a>
         </li>
         <li class="nav-item" v-if="eventSelected">
