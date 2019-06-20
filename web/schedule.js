@@ -91,20 +91,24 @@ Schedule.parse = function(rawCsv) {
         });
         return match;
     }).map(function(match) {
+        var raw_id;
         var code;
         if (match.description.startsWith('qual')) {
+            raw_id = Number(match.description.match(/\d+/)[0]);
             code = {
                 comp_level: 'qm',
                 set_number: 1,
-                match_number: Number(match.description.match(/\d+/)[0]),
+                match_number: raw_id,
             };
         }
         else {
-            code = Schedule.getTBAPlayoffCode(match.description.match(/#(\d+)/)[1]);
+            raw_id = match.description.match(/#(\d+)/)[1];
+            code = Schedule.getTBAPlayoffCode(raw_id);
         }
 
         return Object.assign(code, {
             _key: Schedule.getTBAMatchKey(code),
+            _id: raw_id,
             alliances: {
                 red: genAlliance(match, 'red'),
                 blue: genAlliance(match, 'blue'),
