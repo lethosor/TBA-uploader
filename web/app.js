@@ -937,6 +937,10 @@ app = new Vue({
                     awardee: award.person || null,
                 };
             });
+            if (json.filter(function(award) { return !award.name_str; }).length) {
+                this.awardStatus = 'One or more awards have an empty name. Please correct this and try again.';
+                return;
+            }
             this.inAwardRequest = true;
             this.awardStatus = 'Uploading...';
             var request = sendApiRequest('/api/awards/upload', this.selectedEvent, json);
@@ -944,7 +948,7 @@ app = new Vue({
                 this.inAwardRequest = false;
             }.bind(this));
             request.then(function() {
-                this.awardStatus = '';
+                this.awardStatus = 'Upload succeeded.';
             }.bind(this));
             request.fail(function(res) {
                 this.awardStatus = 'Error: ' + res.responseText;
