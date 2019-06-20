@@ -215,7 +215,9 @@
             <button class="btn btn-danger" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</button>
             <button class="btn btn-info ml-auto" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</button>
           </div>
-          <div><span class="warning">Warning:</span> only click the above buttons <strong>soon after</strong> posting a score</div>
+          <p>
+            <span class="warning">Warning:</span> only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS, and never while a match is running.
+          </p>
           <div class="alert alert-danger" v-if="rankingsError">
             <button @click="rankingsError=''" type="button" class="close" aria-label="Close">
               <span aria-hidden="true">&times;</span>
@@ -277,9 +279,14 @@
             <button class="btn btn-success" @click="fetchVideos" :disabled="inVideoRequest">Fetch data from TBA</button>
             <button class="btn btn-success" @click="uploadVideos" :disabled="inVideoRequest">Upload data to TBA</button>
           </div>
-          <div><span class="warning">Warning:</span> anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</div>
-          <div>Videos cannot be removed once they are uploaded.</div>
-
+          <ul>
+            <li><span class="warning">Warning:</span> Anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</li>
+            <li>Videos cannot be removed from TBA once they are uploaded.</li>
+            <li>Uploading videos will cause videos to be fetched from TBA immediately after.
+              In some cases, TBA is slow to update and does not return the video(s) you just uploaded,
+              causing them to appear in the list below again. If this happens, waiting about a minute
+              and clicking "fetch" again should resolve the issue (you can still enter other videos in the meantime).</li>
+          </ul>
           <div class="alert alert-danger" v-if="videoError">
             <button @click="videoError=''" type="button" class="close" aria-label="Close">
               <span aria-hidden="true">&times;</span>
@@ -342,6 +349,7 @@
 
         <div class="tab-pane fade" id="options" role="tabpanel" aria-labelledby="options-tab">
           <h2>UI options</h2>
+          <p>All options in this section are saved automatically.</p>
           <div class="row">
             <div class="col-sm-12 col-md-6">
               <label>
@@ -350,10 +358,12 @@
               </label>
             </div>
           </div>
+          <hr>
           <h2>FMS options</h2>
+          <p>Options in this section need to be saved by clicking "Save" below. Also note that these can be specified on the command line as well, which is more useful for development.</p>
           <div class="row mb-2">
             <label class="col-sm-12 col-md-8">
-              Server:
+              Server (default: <code>http://10.0.100.5</code>):
               <input class="form-control" v-model="fmsConfig.server">
             </label>
             <label class="col-sm-12 col-md-8">
