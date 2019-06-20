@@ -177,6 +177,13 @@ app = new Vue({
         eventExtras: safeParseLocalStorageObject('eventExtras'),
         remapError: '',
 
+        inScheduleRequest: false,
+        scheduleVerified: false,
+        scheduleUploaded: false,
+        scheduleError: '',
+        scheduleStats: [],
+        schedulePendingMatches: [],
+
         matchLevel: MATCH_LEVEL_QUAL,
         showAllLevels: false,
         inMatchRequest: false,
@@ -237,6 +244,30 @@ app = new Vue({
         },
         isPlayoff: function() {
             return this.matchLevel == MATCH_LEVEL_PLAYOFF;
+        },
+        schedulePendingMatchCells: function() {
+            var addTeamCell = function(cells, match, color, i) {
+                var cls = {};
+                cls[color] = true;
+                cls['surrogate'] = match.alliances[color].surrogates.indexOf(match.alliances[color].teams[i]) >= 0;
+                cells.push({
+                    text: match.alliances[color].teams[i].replace('frc', ''),
+                    cls: cls,
+                });
+            };
+            return this.schedulePendingMatches.map(function(match) {
+                var cells = [
+                    {text: match._id},
+                    {text: match._key},
+                    {text: match.time_string},
+                ];
+                ['red', 'blue'].forEach(function(color) {
+                    for (var i = 0; i < 3; i++) {
+                        addTeamCell(cells, match, color, i);
+                    }
+                });
+                return cells;
+            });
         },
     },
     methods: {
@@ -366,6 +397,81 @@ app = new Vue({
             }.bind(this));
         },
 
+        scheduleReset: function(keepFile) {
+            this.inScheduleRequest = false;
+            this.scheduleVerified = false;
+            this.scheduleUploaded = false;
+            this.scheduleError = '';
+            this.scheduleStats = [];
+            this.schedulePendingMatches = [];
+
+            if (!keepFile) {
+                this.$refs.scheduleUpload.reset();
+            }
+        },
+        onScheduleUpload: function(event) {
+            this.scheduleReset(true);
+            try {
+                var schedule = Schedule.parse(event.body);
+            }
+            catch (error) {
+                if (typeof error == 'string') {
+                    this.scheduleError = error;
+                    return;
+                }
+                else {
+                    throw error;
+                }
+            }
+            this.scheduleStats.push(schedule.length + ' match(es) found');
+            var numSurrogates = schedule.map(function(match) {
+                return match.alliances.red.surrogates.length + match.alliances.blue.surrogates.length;
+            }).reduce(function(a, b) {
+                return a + b;
+            }, 0);
+            this.scheduleStats.push(numSurrogates + ' surrogate team(s)');
+
+            this.scheduleStats.push('Checking against TBA schedule...');
+            this.inScheduleRequest = true;
+            tbaApiEventRequest(this.selectedEvent, 'matches').always(function() {
+                this.inScheduleRequest = false;
+            }.bind(this)).then(function(tbaMatches) {
+                if (!tbaMatches) {
+                    tbaMatches = [];
+                }
+                var newLevels = Schedule.findAllCompLevels(schedule);
+                var tbaLevels = Schedule.findAllCompLevels(tbaMatches);
+                this.scheduleStats.pop();
+                this.scheduleStats.push('TBA has level(s): ' + tbaLevels.join(', '));
+                this.scheduleStats.push('The FMS report has level(s): ' + newLevels.join(', '));
+                newLevels = newLevels.filter(function(level) {
+                    return tbaLevels.indexOf(level) < 0;
+                });
+                if (!newLevels.length) {
+                    this.scheduleStats.push('No new levels are present in the FMS report.');
+                    return;
+                }
+                this.scheduleStats.push('Level(s) to be added from the FMS report: ' + newLevels.join(', '));
+                this.schedulePendingMatches = schedule.filter(function(match) {
+                    return newLevels.indexOf(match.comp_level) >= 0;
+                });
+            }.bind(this)).fail(function(error) {
+                this.scheduleError = parseTbaError(error);
+            });
+        },
+        postSchedule: function() {
+            this.scheduleError = '';
+            this.inScheduleRequest = true;
+            sendApiRequest('/api/matches/upload', this.selectedEvent, this.schedulePendingMatches).always(function() {
+                this.inScheduleRequest = false;
+            }.bind(this)).then(function() {
+                this.scheduleReset(false);
+                this.scheduleUploaded = true;
+            }.bind(this)).fail(function(res) {
+                this.scheduleError = res.responseText;
+            }.bind(this));
+        },
+
         fetchMatches: function(all) {
             if (all && !confirmPurge()) {
                 return;
@@ -409,14 +515,6 @@ app = new Vue({
             var rmFRC = function(team) {
                 return team.replace('frc', '');
             };
-            var formatMatchCode = function(match) {
-                if (match.comp_level == 'qm') {
-                    return 'qm' + match.match_number;
-                }
-                else {
-                    return match.comp_level + match.set_number + 'm' + match.match_number;
-                }
-            };
             var formatScoreSummary = function(match, breakdown, color) {
                 var s = '' + match.alliances[color].score;
                 if (match.comp_level == 'qm') {
@@ -445,7 +543,7 @@ app = new Vue({
                 });
                 return {
                     id: match._fms_id,
-                    code: formatMatchCode(match),
+                    code: Schedule.getTBAMatchKey(match),
                     teams: {
                         blue: match.alliances.blue.teams.map(rmFRC),
                         red: match.alliances.red.teams.map(rmFRC),
@@ -865,6 +963,7 @@ app = new Vue({
             }
             this.initEventExtras(event);
             this.fetchEventData();
+            this.scheduleReset(false);
         },
         matchLevel: function() {
             localStorage.setItem('matchLevel', this.matchLevel);
@@ -913,5 +1012,7 @@ app = new Vue({
                 }
             }
         }.bind(this));
+
+        this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
     },
 });
