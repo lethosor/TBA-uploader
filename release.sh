@@ -20,7 +20,8 @@ mkdir -p "$rel_dir"
 echo "Build folder: $rel_dir"
 
 echo "Generating assets..."
-go-bindata-assetfs web/...
+cp README.md web/
+go-bindata-assetfs web/... -o bindata_assetfs.go
 
 build_release() {
     if [ "$1" = "windows" ]; then
