@@ -830,9 +830,9 @@ app = new Vue({
         },
         cleanVideoUrls: function() {
             Object.values(this.videos).forEach(function(v) {
-                var match = v.current.match(/[?&]v=([A-Za-z0-9_-]+)/);
+                var match = v.current.match(/(youtu.be\/|[?&]v=)([A-Za-z0-9_-]+)/);
                 if (match) {
-                    v.current = match[1];
+                    v.current = match[2];
                 }
             });
         },
