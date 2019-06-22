@@ -81,6 +81,14 @@ function makeAddEventUI() {
     };
 }
 
+function cleanVideoUrl(url) {
+    var match = url.match(/(youtu.be\/|[?&]v=)([A-Za-z0-9_-]+)/);
+    if (match) {
+        url = match[2];
+    }
+    return url;
+}
+
 function makeAward(data) {
     return $.extend({}, {
         name: '',
@@ -783,6 +791,7 @@ app = new Vue({
                             return cv.key;
                         })[0] || '';
                         v.current = v.current || v.tba || '';
+                        v.uploaded = Boolean(v.uploaded);
                         Vue.set(this.videos, key, v);
                     }
                 }.bind(this));
@@ -806,6 +815,9 @@ app = new Vue({
                 this.inVideoRequest = false;
             }.bind(this))
             .then(function() {
+                Object.keys(videos).forEach(function(key) {
+                    this.videos[key].uploaded = true;
+                }.bind(this));
                 this.fetchVideos();
             }.bind(this))
             .fail(function(error) {
@@ -816,13 +828,13 @@ app = new Vue({
             return Object.entries(this.videos).sort(function(a, b) {
                 return Number(a[0].replace(/[^\d]/g, '')) - Number(b[0].replace(/[^\d]/g, ''));
             }).filter(function(v) {
-                return this.showExistingVideos || !v[1].tba;
+                return this.showExistingVideos || (!v[1].uploaded && !v[1].tba);
             }.bind(this));
         },
         getChangedVideos: function() {
             var videos = {};
             Object.entries(this.videos).forEach(function(v) {
-                if (v[1].current && v[1].current != v[1].tba) {
+                if (v[1].current && cleanVideoUrl(v[1].current) != cleanVideoUrl(v[1].tba)) {
                     videos[v[0]] = v[1].current;
                 }
             });
@@ -830,10 +842,7 @@ app = new Vue({
         },
         cleanVideoUrls: function() {
             Object.values(this.videos).forEach(function(v) {
-                var match = v.current.match(/(youtu.be\/|[?&]v=)([A-Za-z0-9_-]+)/);
-                if (match) {
-                    v.current = match[2];
-                }
+                v.current = cleanVideoUrl(v.current);
             });
         },
 

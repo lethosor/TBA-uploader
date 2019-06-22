@@ -282,10 +282,6 @@
           <ul>
             <li><span class="warning">Warning:</span> Anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</li>
             <li>Videos cannot be removed from TBA once they are uploaded.</li>
-            <li>Uploading videos will cause videos to be fetched from TBA immediately after.
-              In some cases, TBA is slow to update and does not return the video(s) you just uploaded,
-              causing them to appear in the list below again. If this happens, waiting about a minute
-              and clicking "fetch" again should resolve the issue (you can still enter other videos in the meantime).</li>
           </ul>
           <div class="alert alert-danger" v-if="videoError">
             <button @click="videoError=''" type="button" class="close" aria-label="Close">
