@@ -82,7 +82,7 @@ function makeAddEventUI() {
 }
 
 function cleanVideoUrl(url) {
-    var match = url.match(/(youtu.be\/|[?&]v=)([A-Za-z0-9_-]+)/);
+    var match = url.match(/(youtu.be\/|\/video\/|[?&]v=)([A-Za-z0-9_-]+)/);
     if (match) {
         url = match[2];
     }
@@ -805,6 +805,14 @@ app = new Vue({
             var videos = this.getChangedVideos();
             if (!Object.keys(videos).length) {
                 this.videoError = 'No videos have changed; not uploading anything.';
+                return;
+            }
+            var invalidVideos = Object.values(videos).filter(function(value) {
+                return !value.match(/^[A-Za-z0-9_-]{11}$/);
+            });
+            if (invalidVideos.length) {
+                this.videoError = 'The following IDs are not valid Youtube video IDs. Please submit only the 11-character video ID.\n' +
+                    invalidVideos.join('\n');
                 return;
             }
 
