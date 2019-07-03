@@ -40,6 +40,11 @@ build_release() {
     zip -r "$zip_name" TBA-uploader*
     mv "$zip_name" ../
     popd >/dev/null
+    if [ "$1" != "windows" ]; then
+        echo "[$1/$2] Removing intermediate folder"
+        mv "$build_dir/$exe_name" "$build_dir/../"
+        rmdir "$build_dir"
+    fi
     echo "[$1/$2] Done"
 }
 
