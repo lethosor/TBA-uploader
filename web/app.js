@@ -309,11 +309,9 @@ app = new Vue({
             if (this.events.indexOf(event) == -1) {
                 this.events.push(event);
                 this.events.sort();
-                this.initAwards(event);
-                this.initEventExtras(event);
+                this.initEvent(event);
             }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
-            this.saveAwards();
             this.addEventUI = makeAddEventUI();
         },
         cancelAddEvent: function() {
@@ -354,15 +352,21 @@ app = new Vue({
                 this.tbaReadError = parseTbaError(error);
             }.bind(this));
         },
-
-        initEventExtras: function(event) {
+        initEvent: function(event) {
             if (!isValidEventCode(event)) {
                 return;
             }
+
             this.$set(this.eventExtras, event, $.extend({}, {
                 remap_teams: [],
             }, this.eventExtras[event]));
+
+            if (!this.awards[event] || !this.awards[event].length) {
+                this.$set(this.awards, event, [makeAward()]);
+                this.saveAwards();
+            }
         },
+
         addTeamRemap: function() {
             this.eventExtras[this.selectedEvent].remap_teams.push({
                 fms: '',
@@ -854,15 +858,6 @@ app = new Vue({
             });
         },
 
-        initAwards: function(event) {
-            if (!isValidEventCode(event)) {
-                return;
-            }
-            if (this.awards[event] && this.awards[event].length) {
-                return;
-            }
-            this.$set(this.awards, event, [makeAward()]);
-        },
         addAward: function() {
             this.awards[this.selectedEvent].push(makeAward());
             this.saveAwards();
@@ -978,11 +973,7 @@ app = new Vue({
         },
         selectedEvent: function(event) {
             localStorage.setItem('selectedEvent', event);
-            if (!this.awards[event]) {
-                this.awards[event] = [makeAward()];
-                this.saveAwards();
-            }
-            this.initEventExtras(event);
+            this.initEvent(event);
             this.fetchEventData();
             this.scheduleReset(false);
         },
@@ -1005,9 +996,7 @@ app = new Vue({
     mounted: function() {
         var event = localStorage.getItem('selectedEvent') || '';
         if (event) {
-            this.initAwards(event);
-            this.initEventExtras(event);
-            this.saveAwards();
+            this.initEvent(event);
         }
         this.selectedEvent = event;
         this.matchLevel = localStorage.getItem('matchLevel') || this.matchLevel;
