@@ -44,7 +44,7 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
     filepath = path.Join(folder, filename)
     ok = false
     if !overwrite {
-        if _, err := os.Stat(filepath); err == nil {
+        if fileExists(filepath) {
             // exists, don't overwrite
             return filepath, true, errors.New("already downloaded")
         }

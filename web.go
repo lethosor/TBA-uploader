@@ -174,8 +174,6 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 return
             }
             folder := filepath.Dir(files[i])
-            fname_trimmed := strings.TrimSuffix(fname, filepath.Ext(fname))
-            fname_json := fname_trimmed + ".json"
 
             match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], level == MATCH_LEVEL_PLAYOFF)
             if err != nil {
@@ -202,29 +200,28 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 w.Write([]byte(fmt.Sprintf("%s: JSON serialization failed %s", fname, err)))
                 return
             }
+
+            fname_json := replaceExtension(fname, "json")
             ioutil.WriteFile(path.Join(folder, fname_json), match_json, os.ModePerm)
 
             // remove any receipts for newly-downloaded files
-            fname_receipt := fname_trimmed + ".receipt"
+            fname_receipt := replaceExtension(fname, "receipt")
             os.Remove(path.Join(folder, fname_receipt))
         }
     }
 
     match_json_list := make([]map[string]interface{}, 0)
-    match_files, err := ioutil.ReadDir(match_folder)
+    json_files, err := listFilesWithExtension(match_folder, "json")
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
         w.Write([]byte(fmt.Sprintf("download folder %s scan failed: %s", match_folder, err)))
         return
     }
 
-    for _, json_file := range match_files {
-        if (!strings.HasSuffix(json_file.Name(), ".json")) {
-            continue
-        }
+    for _, json_file := range json_files {
         json_path := path.Join(match_folder, json_file.Name())
-        receipt_path := strings.TrimSuffix(json_path, filepath.Ext(json_path)) + ".receipt"
-        if _, err := os.Stat(receipt_path); err == nil {
+        receipt_path := replaceExtension(json_path, "receipt")
+        if fileExists(receipt_path) {
             // receipt exists, match was already uploaded to TBA
             continue
         }
