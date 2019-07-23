@@ -45,32 +45,45 @@ func getEventYear(event string) int {
     return year
 }
 
+type APIError struct {
+    code int
+    message string
+}
+
+func apiPanicCode(code int, message string, args ...interface{}) {
+    log.Printf("API Error %d: " + message, append([]interface{}{code}, args...)...)
+    panic(APIError{
+        code: code,
+        message: fmt.Sprintf(message, args...),
+    })
+}
+
+func apiPanicBadRequest(message string, args ...interface{}) {
+    apiPanicCode(http.StatusBadRequest, message, args...)
+}
+
+func apiPanicInternal(message string, args ...interface{}) {
+    apiPanicCode(http.StatusInternalServerError, message, args...)
+}
+
 func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
     params, ok := getRequestEventParams(r)
     if !ok {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing event/auth API parameters"))
-        return
+        apiPanicBadRequest("missing event/auth API parameters")
     }
     body, err := ioutil.ReadAll(r.Body)
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("read failed: %s", err)))
-        return
+        apiPanicInternal("read failed: %s", err)
     }
 
     res, err := sendTBARequest(path, body, params)
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("TBA request failed: %s", err)))
-        return
+        apiPanicInternal("TBA request failed: %s", err)
     }
 
     if res.StatusCode != http.StatusOK {
-        w.WriteHeader(http.StatusInternalServerError)
         res_body, _ := ioutil.ReadAll(res.Body)
-        w.Write([]byte(fmt.Sprintf("TBA error %d: %s", res.StatusCode, res_body)))
-        return
+        apiPanicInternal("TBA error %d: %s", res.StatusCode, res_body)
     }
 
     w.Write([]byte("ok"));
@@ -145,9 +158,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     download_all := (r.URL.Query().Get("all") != "")
     level, err := getRequestLevel(w, r)
     if err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(fmt.Sprintf("invalid level: %d", level)))
-        return
+        apiPanicBadRequest("invalid level: %d", level)
     }
     var event_year = getEventYear(r.URL.Query().Get("event"))
     var match_folder = getMatchDownloadPath(level, r.URL.Query().Get("event"))
@@ -158,9 +169,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
         files, err = downloadNewMatches(level, r.URL.Query().Get("event"))
     }
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("match downloaded failed: %s", err)))
-        return
+        apiPanicInternal("match downloaded failed: %s", err)
     }
 
     if files != nil {
@@ -169,17 +178,13 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             fname := filepath.Base(files[i])
             match_number, err := strconv.Atoi(strings.Split(fname, "-")[0])
             if err != nil {
-                w.WriteHeader(http.StatusInternalServerError)
-                w.Write([]byte(fmt.Sprintf("%s: failed to parse match ID", fname)))
-                return
+                apiPanicInternal("%s: failed to parse match ID", fname)
             }
             folder := filepath.Dir(files[i])
 
             match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], level == MATCH_LEVEL_PLAYOFF)
             if err != nil {
-                w.WriteHeader(http.StatusInternalServerError)
-                w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", fname, err)))
-                return
+                apiPanicInternal("failed to parse %s: %s", fname, err)
             }
 
             if (level == MATCH_LEVEL_PLAYOFF) {
@@ -196,9 +201,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 
             match_json, err := json.Marshal(match_info)
             if err != nil {
-                w.WriteHeader(http.StatusInternalServerError)
-                w.Write([]byte(fmt.Sprintf("%s: JSON serialization failed %s", fname, err)))
-                return
+                apiPanicInternal("%s: JSON serialization failed %s", fname, err)
             }
 
             fname_json := replaceExtension(fname, "json")
@@ -213,9 +216,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     match_json_list := make([]map[string]interface{}, 0)
     json_files, err := listFilesWithExtension(match_folder, "json")
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("download folder %s scan failed: %s", match_folder, err)))
-        return
+        apiPanicInternal("download folder %s scan failed: %s", match_folder, err)
     }
 
     for _, json_file := range json_files {
@@ -230,9 +231,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
         contents, err := ioutil.ReadFile(json_path)
         err = json.Unmarshal(contents, &match_info)
         if err != nil {
-            w.WriteHeader(http.StatusInternalServerError)
-            w.Write([]byte(fmt.Sprintf("failed to parse %s: %s", json_path, err)))
-            return
+            apiPanicInternal("failed to parse %s: %s", json_path, err)
         }
 
         match_info["_fms_id"] = strings.Split(json_file.Name(), ".")[0]
@@ -241,9 +240,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 
     output, err := json.Marshal(match_json_list)
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("json encode failed: %s", err)))
-        return
+        apiPanicInternal("json encode failed: %s", err)
     }
 
     w.Write(output)
@@ -253,18 +250,14 @@ func apiMarkMatchesUploaded(w http.ResponseWriter, r *http.Request) {
     params, ok := getRequestEventParams(r)
     level, err := getRequestLevel(w, r)
     if !ok || err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing event/auth or level API parameters"))
-        return
+        apiPanicBadRequest("missing event/auth or level API parameters")
     }
     var match_folder = getMatchDownloadPath(level, params.event)
     match_ids := make([]string, 0)
     body, err := ioutil.ReadAll(r.Body)
     err = json.Unmarshal(body, &match_ids)
     if err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte(fmt.Sprintf("failed to parse match ID list: %s", err)))
-        return
+        apiPanicBadRequest("failed to parse match ID list: %s", err)
     }
     for _, match_id := range match_ids {
         ioutil.WriteFile(path.Join(match_folder, match_id + ".receipt"), []byte(match_id), os.ModePerm)
@@ -275,9 +268,7 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
     params, ok := getRequestEventParams(r)
     level, err := getRequestLevel(w, r)
     if !ok || err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing event/auth or level API parameters"))
-        return
+        apiPanicBadRequest("missing event/auth or level API parameters")
     }
     match_folder := getMatchDownloadPath(level, params.event)
     all := (r.URL.Query().Get("all") != "")
@@ -287,9 +278,7 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
         body, err := ioutil.ReadAll(r.Body)
         err = json.Unmarshal(body, &match_id_list)
         if err != nil {
-            w.WriteHeader(http.StatusBadRequest)
-            w.Write([]byte(fmt.Sprintf("failed to parse match ID list: %s", err)))
-            return
+            apiPanicBadRequest("failed to parse match ID list: %s", err)
         }
         for _, mid := range match_id_list {
             match_ids[mid] = true
@@ -298,9 +287,7 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
 
     match_files, err := ioutil.ReadDir(match_folder)
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("download folder %s scan failed: %s", match_folder, err)))
-        return
+        apiPanicInternal("download folder %s scan failed: %s", match_folder, err)
     }
     for _, file := range match_files {
         if _, in_match_ids := match_ids[strings.Split(file.Name(), ".")[0]]; in_match_ids || all {
@@ -320,15 +307,11 @@ func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
     event_year := getEventYear(params.event)
     level, err := getRequestLevel(w, r)
     if !ok || err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing event/auth or level API parameters"))
-        return
+        apiPanicBadRequest("missing event/auth or level API parameters")
     }
     id := r.URL.Query().Get("id");
     if id == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing id parameter"))
-        return
+        apiPanicBadRequest("missing id parameter")
     }
     extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
     extra_json, err := ioutil.ReadFile(extra_filename)
@@ -346,24 +329,18 @@ func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
     params, ok := getRequestEventParams(r)
     level, err := getRequestLevel(w, r)
     if !ok || err != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing event/auth or level API parameters"))
-        return
+        apiPanicBadRequest("missing event/auth or level API parameters")
     }
     id := r.URL.Query().Get("id");
     if id == "" {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("missing id parameter"))
-        return
+        apiPanicBadRequest("missing id parameter")
     }
 
     extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
     var tmp map[string]fms_parser.ExtraMatchInfo
     body, _ := ioutil.ReadAll(r.Body)
     if json.Unmarshal(body, &tmp) != nil {
-        w.WriteHeader(http.StatusBadRequest)
-        w.Write([]byte("invalid json"))
-        return
+        apiPanicBadRequest("invalid json")
     }
     ioutil.WriteFile(extra_filename, body, os.ModePerm)
 }
@@ -375,9 +352,7 @@ func apiDeleteMatches(w http.ResponseWriter, r *http.Request) {
 func apiFetchRankings(w http.ResponseWriter, r *http.Request) {
     out, err := downloadRankings()
     if err != nil {
-        w.WriteHeader(http.StatusInternalServerError)
-        w.Write([]byte(fmt.Sprintf("ranking fetch failed: %s", err)))
-        return
+        apiPanicInternal("ranking fetch failed: %s", err)
     }
     w.Write(out)
 }
@@ -394,6 +369,24 @@ func apiUploadMedia(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("media/add", w, r)
 }
 
+func handleFuncWrapper(r *mux.Router, route string, handler func(w http.ResponseWriter, r *http.Request)) {
+    r.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
+        defer func() {
+            if r := recover(); r != nil {
+                switch err := r.(type) {
+                case APIError:
+                    w.WriteHeader(err.code)
+                    w.Write([]byte(err.message))
+                default:
+                    w.WriteHeader(http.StatusInternalServerError)
+                    w.Write([]byte(fmt.Sprintf("Unknown internal error: %v", err)))
+                }
+            }
+        }()
+        handler(w, r)
+    })
+}
+
 func RunWebServer(port int, web_folder string) {
     r := mux.NewRouter()
     var fs http.FileSystem
@@ -402,24 +395,24 @@ func RunWebServer(port int, web_folder string) {
     } else {
         fs = assetFS()
     }
-    r.HandleFunc("/js/consts.js", jsConsts)
-    r.HandleFunc("/js/version.js", jsVersion)
-    r.HandleFunc("/js/fms_config.js", jsFMSConfig)
-    r.HandleFunc("/api/fms_config/get", apiGetFMSConfig)
-    r.HandleFunc("/api/fms_config/set", apiSetFMSConfig)
-    r.HandleFunc("/api/info/upload", apiUploadEventInfo)
-    r.HandleFunc("/api/awards/upload", apiUploadAwards)
-    r.HandleFunc("/api/matches/fetch", apiFetchMatches)
-    r.HandleFunc("/api/matches/upload", apiUploadMatches)
-    r.HandleFunc("/api/matches/mark_uploaded", apiMarkMatchesUploaded)
-    r.HandleFunc("/api/matches/purge", apiPurgeMatches)
-    r.HandleFunc("/api/matches/extra", apiMatchLoadExtra)
-    r.HandleFunc("/api/matches/extra/save", apiMatchSaveExtra)
-    r.HandleFunc("/api/matches/delete", apiDeleteMatches)
-    r.HandleFunc("/api/rankings/fetch", apiFetchRankings)
-    r.HandleFunc("/api/rankings/upload", apiUploadRankings)
-    r.HandleFunc("/api/videos/upload", apiUploadVideos)
-    r.HandleFunc("/api/media/upload", apiUploadMedia)
+    handleFuncWrapper(r, "/js/consts.js", jsConsts)
+    handleFuncWrapper(r, "/js/version.js", jsVersion)
+    handleFuncWrapper(r, "/js/fms_config.js", jsFMSConfig)
+    handleFuncWrapper(r, "/api/fms_config/get", apiGetFMSConfig)
+    handleFuncWrapper(r, "/api/fms_config/set", apiSetFMSConfig)
+    handleFuncWrapper(r, "/api/info/upload", apiUploadEventInfo)
+    handleFuncWrapper(r, "/api/awards/upload", apiUploadAwards)
+    handleFuncWrapper(r, "/api/matches/fetch", apiFetchMatches)
+    handleFuncWrapper(r, "/api/matches/upload", apiUploadMatches)
+    handleFuncWrapper(r, "/api/matches/mark_uploaded", apiMarkMatchesUploaded)
+    handleFuncWrapper(r, "/api/matches/purge", apiPurgeMatches)
+    handleFuncWrapper(r, "/api/matches/extra", apiMatchLoadExtra)
+    handleFuncWrapper(r, "/api/matches/extra/save", apiMatchSaveExtra)
+    handleFuncWrapper(r, "/api/matches/delete", apiDeleteMatches)
+    handleFuncWrapper(r, "/api/rankings/fetch", apiFetchRankings)
+    handleFuncWrapper(r, "/api/rankings/upload", apiUploadRankings)
+    handleFuncWrapper(r, "/api/videos/upload", apiUploadVideos)
+    handleFuncWrapper(r, "/api/media/upload", apiUploadMedia)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
     log.Printf("Serving on %s\n", addr)
