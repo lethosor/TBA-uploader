@@ -17,34 +17,6 @@ import (
     "./fms_parser"
 )
 
-func getRequestEventParams(r *http.Request) (*eventParams, bool) {
-    if len(r.Header.Get("X-Event")) > 0 && len(r.Header.Get("X-Auth")) > 0 && len(r.Header.Get("X-Secret")) > 0 {
-        return &eventParams{
-            event: r.Header.Get("X-Event"),
-            auth: r.Header.Get("X-Auth"),
-            secret: r.Header.Get("X-Secret"),
-        }, true
-    }
-    return nil, false
-}
-
-func getRequestLevel(w http.ResponseWriter, r *http.Request) (int, error) {
-    level, err := strconv.Atoi(r.URL.Query().Get("level"))
-    if err != nil {
-        return -1, err
-    } else if level < 0 || level > 3 {
-        return -1, fmt.Errorf("Invalid level: %d", level)
-    } else {
-        return level, nil
-    }
-}
-
-func getEventYear(event string) int {
-    var year int
-    fmt.Sscanf(event, "%d", &year)
-    return year
-}
-
 type APIError struct {
     code int
     message string
@@ -66,11 +38,60 @@ func apiPanicInternal(message string, args ...interface{}) {
     apiPanicCode(http.StatusInternalServerError, message, args...)
 }
 
-func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
-    params, ok := getRequestEventParams(r)
-    if !ok {
-        apiPanicBadRequest("missing event/auth API parameters")
+func getRequestEventParams(r *http.Request) (*eventParams, bool) {
+    if len(r.Header.Get("X-Event")) > 0 && len(r.Header.Get("X-Auth")) > 0 && len(r.Header.Get("X-Secret")) > 0 {
+        return &eventParams{
+            event: r.Header.Get("X-Event"),
+            auth: r.Header.Get("X-Auth"),
+            secret: r.Header.Get("X-Secret"),
+        }, true
     }
+    return nil, false
+}
+
+func checkRequestEventParams(r *http.Request) *eventParams {
+    params, ok := getRequestEventParams(r)
+    if params == nil || !ok {
+        apiPanicBadRequest("missing event/auth parameters")
+    }
+    return params
+}
+
+func getRequestLevel(r *http.Request) (int, error) {
+    level, err := strconv.Atoi(r.URL.Query().Get("level"))
+    if err != nil {
+        return -1, err
+    } else if level < 0 || level > 3 {
+        return -1, fmt.Errorf("Invalid level: %d", level)
+    } else {
+        return level, nil
+    }
+}
+
+func checkRequestLevel(r *http.Request) int {
+    level, err := getRequestLevel(r)
+    if err != nil {
+        apiPanicBadRequest("bad level parameter: %v", err)
+    }
+    return level
+}
+
+func checkRequestQueryParam(r *http.Request, param string) string {
+    res := r.URL.Query().Get(param)
+    if res == "" {
+        apiPanicBadRequest("missing parameter: %s", param)
+    }
+    return res
+}
+
+func parseEventYear(event string) int {
+    var year int
+    fmt.Sscanf(event, "%d", &year)
+    return year
+}
+
+func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
+    params := checkRequestEventParams(r)
     body, err := ioutil.ReadAll(r.Body)
     if err != nil {
         apiPanicInternal("read failed: %s", err)
@@ -156,13 +177,11 @@ func apiUploadMatches(w http.ResponseWriter, r *http.Request) {
 
 func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
     download_all := (r.URL.Query().Get("all") != "")
-    level, err := getRequestLevel(w, r)
-    if err != nil {
-        apiPanicBadRequest("invalid level: %d", level)
-    }
-    var event_year = getEventYear(r.URL.Query().Get("event"))
+    level := checkRequestLevel(r)
+    var event_year = parseEventYear(r.URL.Query().Get("event"))
     var match_folder = getMatchDownloadPath(level, r.URL.Query().Get("event"))
     var files []string
+    var err error
     if download_all {
         files, err = downloadAllMatches(level, r.URL.Query().Get("event"))
     } else {
@@ -247,11 +266,8 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiMarkMatchesUploaded(w http.ResponseWriter, r *http.Request) {
-    params, ok := getRequestEventParams(r)
-    level, err := getRequestLevel(w, r)
-    if !ok || err != nil {
-        apiPanicBadRequest("missing event/auth or level API parameters")
-    }
+    params := checkRequestEventParams(r)
+    level := checkRequestLevel(r)
     var match_folder = getMatchDownloadPath(level, params.event)
     match_ids := make([]string, 0)
     body, err := ioutil.ReadAll(r.Body)
@@ -265,11 +281,8 @@ func apiMarkMatchesUploaded(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
-    params, ok := getRequestEventParams(r)
-    level, err := getRequestLevel(w, r)
-    if !ok || err != nil {
-        apiPanicBadRequest("missing event/auth or level API parameters")
-    }
+    params := checkRequestEventParams(r)
+    level := checkRequestLevel(r)
     match_folder := getMatchDownloadPath(level, params.event)
     all := (r.URL.Query().Get("all") != "")
     match_ids := make(map[string]bool)
@@ -303,16 +316,11 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
-    params, ok := getRequestEventParams(r)
-    event_year := getEventYear(params.event)
-    level, err := getRequestLevel(w, r)
-    if !ok || err != nil {
-        apiPanicBadRequest("missing event/auth or level API parameters")
-    }
-    id := r.URL.Query().Get("id");
-    if id == "" {
-        apiPanicBadRequest("missing id parameter")
-    }
+    params := checkRequestEventParams(r)
+    event_year := parseEventYear(params.event)
+    level := checkRequestLevel(r)
+    id := checkRequestQueryParam(r, "id")
+
     extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
     extra_json, err := ioutil.ReadFile(extra_filename)
     if err != nil {
@@ -326,15 +334,9 @@ func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
-    params, ok := getRequestEventParams(r)
-    level, err := getRequestLevel(w, r)
-    if !ok || err != nil {
-        apiPanicBadRequest("missing event/auth or level API parameters")
-    }
-    id := r.URL.Query().Get("id");
-    if id == "" {
-        apiPanicBadRequest("missing id parameter")
-    }
+    params := checkRequestEventParams(r)
+    level := checkRequestLevel(r)
+    id := checkRequestQueryParam(r, "id")
 
     extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
     var tmp map[string]fms_parser.ExtraMatchInfo
