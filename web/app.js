@@ -469,7 +469,7 @@ app = new Vue({
                 });
             }.bind(this)).fail(function(error) {
                 this.scheduleError = parseTbaError(error);
-            });
+            }.bind(this));
         },
         postSchedule: function() {
             this.scheduleError = '';
