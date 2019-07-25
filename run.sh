@@ -1,10 +1,6 @@
 #!/bin/sh
-set -e
 
-run_cmd() {
-    echo "=> $@"
-    "$@"
-}
+. common.inc.sh
 
 cd $(dirname "$0")
 test -n "$build" && ./build.sh

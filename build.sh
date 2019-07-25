@@ -1,16 +1,6 @@
 #!/bin/sh
-set -e
 
-if [ "$(uname)" = "Darwin" ]; then
-    # need to use system compiler
-    unset CC
-    unset CXX
-fi
-
-run_cmd() {
-    echo "=> $@"
-    "$@"
-}
+. common.inc.sh
 
 cd $(dirname "$0")
 run_cmd cp README.md web/
