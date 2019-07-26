@@ -1,4 +1,4 @@
-import Schedule from './schedule.js';
+import Schedule from 'src/schedule.js';
 
 function safeParseLocalStorageObject(key, allow_array) {
     var res;

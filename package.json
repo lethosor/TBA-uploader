@@ -1,6 +1,6 @@
 {
   "name": "TBA-uploader",
-  "main": "web/app.js",
+  "main": "web/src/app.js",
   "scripts": {
     "build": "webpack",
     "dev": "webpack --watch"

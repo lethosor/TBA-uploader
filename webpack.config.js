@@ -5,11 +5,11 @@ const path = require('path');
 module.exports = {
     mode: 'development',
     entry: [
-        path.join(__dirname, 'web', 'app.js'),
+        path.join(__dirname, 'web', 'src', 'app.js'),
     ],
     output: {
         filename: 'bundle.js',
-        path: path.join(__dirname, 'web'),
+        path: path.join(__dirname, 'web', 'dist'),
     },
     module: {
         rules: [
@@ -21,5 +21,10 @@ module.exports = {
                 },
             },
         ],
+    },
+    resolve: {
+        alias: {
+            src: path.join(__dirname, 'web', 'src'),
+        },
     },
 };
