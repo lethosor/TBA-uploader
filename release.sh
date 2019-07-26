@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-set -e
-export CGO_ENABLED=0
+
+. common.inc.sh
 
 cd $(dirname "$0")
 
@@ -20,8 +20,9 @@ mkdir -p "$rel_dir"
 echo "Build folder: $rel_dir"
 
 echo "Generating assets..."
-cp README.md web/
-go-bindata-assetfs web/... -o bindata_assetfs.go
+yarn run build
+cp README.md web/dist/
+go-bindata -fs -prefix web/dist/ -o bindata_assetfs.go web/dist/...
 
 build_release() {
     if [ "$1" = "windows" ]; then
