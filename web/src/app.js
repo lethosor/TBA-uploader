@@ -592,7 +592,7 @@ const app = new Vue({
                 this.pendingMatches = [];
                 this.matchSummaries = [];
                 sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
-                                this.selectedEvent, match_ids
+                    this.selectedEvent, match_ids
                 ).fail(function(res) {
                     this.matchError += '\nReceipt generation failed: ' + res.responseText;
                 }.bind(this));
@@ -642,7 +642,7 @@ const app = new Vue({
             this.inMatchRequest = true;
             this.advMatchError = '';
             sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
-                            this.selectedEvent, [this.advSelectedMatch])
+                this.selectedEvent, [this.advSelectedMatch])
             .always(function() {
                 this.inMatchRequest = false;
             }.bind(this))
@@ -693,8 +693,8 @@ const app = new Vue({
                         if (this.eventYear == 2018) {
                             this.matchEditData.text[color] = {
                                 auto_rp: score_breakdown[color].autoQuestRankingPoint ^ data[color].invert_auto ?
-                                         'missed (FMS returned scored)' :
-                                         'scored (FMS returned missed)',
+                                    'missed (FMS returned scored)' :
+                                    'scored (FMS returned missed)',
                             };
                         }
                     }
@@ -727,10 +727,10 @@ const app = new Vue({
                 if (this.isPlayoff) {
                     return Object.assign({
                         dqs: this.matchEditData.flags[color].dq ?
-                             this.matchEditData.teams[color].map(function(t) {
+                            this.matchEditData.teams[color].map(function(t) {
                                 return 'frc' + t.team;
-                             }) :
-                             [],
+                            }) :
+                            [],
                         surrogates: [],
                     }, EXTRA_FIELDS[this.eventYear]);
                 }
@@ -745,7 +745,7 @@ const app = new Vue({
             };
 
             sendApiRequest('/api/matches/extra/save?id=' + this.matchEditing.id + '&level=' + this.matchLevel,
-                           this.selectedEvent, data)
+                this.selectedEvent, data)
             .always(function() {
                 this.inMatchRequest = false;
             }.bind(this))

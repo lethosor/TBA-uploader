@@ -14,4 +14,13 @@ module.exports = {
         "MATCH_LEVEL_QUAL": "readonly",
         "MATCH_LEVEL_PLAYOFF": "readonly",
     },
+    "rules": {
+        "indent": [
+            "error",
+            4,
+            {
+                "MemberExpression": "off",
+            },
+        ],
+    },
 };

@@ -3,7 +3,9 @@
   "main": "web/src/app.js",
   "scripts": {
     "build": "webpack",
-    "dev": "webpack --watch"
+    "dev": "webpack --watch",
+    "lint": "eslint web/src/",
+    "lint:fix": "eslint web/src/ --fix"
   },
   "dependencies": {},
   "devDependencies": {
