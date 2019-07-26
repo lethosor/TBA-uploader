@@ -11,12 +11,14 @@ function safeParseLocalStorageObject(key, allow_array) {
             throw new TypeError();
         }
     }
-    catch (e) { }
+    catch (e) {
+        // ignore
+    }
     return res || {};
 }
 
 const STORED_EVENTS = safeParseLocalStorageObject('storedEvents');
-const STORED_AWARDS = safeParseLocalStorageObject('awards');
+var STORED_AWARDS = safeParseLocalStorageObject('awards');
 
 if (Array.isArray(STORED_AWARDS)) {
     // move old awards from array to object
@@ -548,7 +550,7 @@ const app = new Vue({
             };
 
             return matches.map(function(match) {
-                classes = {};
+                var classes = {};
                 match.alliances.blue.teams.forEach(function(team_key) {
                     classes[rmFRC(team_key)] = genClasses(match, team_key, 'blue');
                 });
@@ -572,7 +574,7 @@ const app = new Vue({
         },
         cleanMatches: function(matches) {
             return matches.map(function(match) {
-                var match = Object.assign({}, match);
+                match = Object.assign({}, match);
                 delete match._fms_id;
                 return match;
             });
@@ -604,13 +606,13 @@ const app = new Vue({
             }).length > 0;
         },
         _checkAdvSelectedMatch: function() {
-            parts = this.advSelectedMatch.split('-');
+            var parts = this.advSelectedMatch.split('-');
             if (parts.length == 1) {
                 parts.push('1');
             }
             this.advSelectedMatch = parts.join('-');
             this.advMatchError = '';
-            if (!this.advSelectedMatch.match(/^\d+\-\d+$/)) {
+            if (!this.advSelectedMatch.match(/^\d+-\d+$/)) {
                 this.advMatchError = 'Invalid match ID format';
                 return false;
             }
