@@ -1,10 +1,25 @@
-Vue.component('dropzone', {
-    template: '<div :class="{dropzone: true, active: active, blocked: blocked}" @click="onClick" @drop.prevent="onDrop" @dragenter.prevent="onDragEnter" @dragover.prevent="onDragEnter" @dragexit.prevent="onDragLeave" @dragleave.prevent="onDragLeave">' +
-        '<input type="file" ref="file" :accept="accept" @change="onFileChange">' +
-        '<p class="title">{{title}}</p>' +
-        '<p>{{filename || "(no file selected)"}}</p>' +
-        '<p>{{message}}</p>' +
-    '</div>',
+<template>
+    <div :class="{dropzone: true, active: active, blocked: blocked}"
+        @click="onClick"
+        @drop.prevent="onDrop"
+        @dragenter.prevent="onDragEnter"
+        @dragover.prevent="onDragEnter"
+        @dragexit.prevent="onDragLeave"
+        @dragleave.prevent="onDragLeave">
+        <input type="file" ref="file" :accept="accept" @change="onFileChange">
+        <p class="title">{{title}}</p>
+        <p>{{filename || "(no file selected)"}}</p>
+        <p>{{message}}</p>
+    </div>
+</template>
+
+<style scoped>
+
+</style>
+
+<script>
+export default {
+    name: 'dropzone',
     props: {
         title: {
             type: String,
@@ -90,4 +105,5 @@ Vue.component('dropzone', {
             this.$refs.file.value = '';
         },
     },
-});
+};
+</script>

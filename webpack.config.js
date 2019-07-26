@@ -2,8 +2,13 @@
 
 const path = require('path');
 
+const VueLoaderPlugin = require('vue-loader/lib/plugin');
+
 module.exports = {
     mode: 'development',
+    plugins: [
+        new VueLoaderPlugin(),
+    ],
     entry: [
         path.join(__dirname, 'web', 'src', 'app.js'),
     ],
@@ -20,11 +25,16 @@ module.exports = {
                     presets: ['@babel/env'],
                 },
             },
+            {
+                test: /\.vue$/,
+                loader: 'vue-loader',
+            }
         ],
     },
     resolve: {
         alias: {
             src: path.join(__dirname, 'web', 'src'),
+            components: path.join(__dirname, 'web', 'src', 'components'),
         },
     },
 };

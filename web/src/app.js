@@ -1,5 +1,7 @@
 import Schedule from 'src/schedule.js';
 
+import Dropzone from 'components/Dropzone.vue';
+
 function safeParseLocalStorageObject(key, allow_array) {
     var res;
     try {
@@ -171,6 +173,9 @@ const EXTRA_FIELDS = {
 
 const app = new Vue({
     el: '#main',
+    components: {
+        Dropzone,
+    },
     data: {
         version: window.VERSION || 'missing version',
         helpHTML: '',
