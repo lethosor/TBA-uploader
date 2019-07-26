@@ -2,3 +2,9 @@ bin/
 bindata_assetfs.go
 fms_data*/
 web/README.md
+
+node_modules/
+yarn.lock
+yarn*.log
+package-lock.json
+bundle.js
