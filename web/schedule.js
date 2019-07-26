@@ -1,4 +1,4 @@
-Schedule = {};
+const Schedule = {};
 
 Schedule.getTBAPlayoffCode = function(match_id) {
     if (match_id <= 12) {
@@ -129,3 +129,5 @@ Schedule.findAllCompLevels = function(matches) {
     });
     return levels;
 };
+
+export default Object.freeze(Schedule);

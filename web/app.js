@@ -1,3 +1,5 @@
+import Schedule from './schedule.js';
+
 function safeParseLocalStorageObject(key, allow_array) {
     var res;
     try {
@@ -13,8 +15,8 @@ function safeParseLocalStorageObject(key, allow_array) {
     return res || {};
 }
 
-STORED_EVENTS = safeParseLocalStorageObject('storedEvents');
-STORED_AWARDS = safeParseLocalStorageObject('awards');
+const STORED_EVENTS = safeParseLocalStorageObject('storedEvents');
+const STORED_AWARDS = safeParseLocalStorageObject('awards');
 
 if (Array.isArray(STORED_AWARDS)) {
     // move old awards from array to object
@@ -106,7 +108,7 @@ function isValidYear(year) {
     return year >= 2018 && year <= 2019;
 }
 
-convertToTBARankings = {
+const convertToTBARankings = {
     common: function(r) {
         return {
             team_key: 'frc' + r.team,
@@ -136,7 +138,7 @@ convertToTBARankings = {
     },
 };
 
-TBARankingNames = {
+const TBARankingNames = {
     2018: [
         "Ranking Score",
         "End Game",
@@ -155,7 +157,7 @@ TBARankingNames = {
     ],
 };
 
-EXTRA_FIELDS = {
+const EXTRA_FIELDS = {
     2018: {
         invert_auto: false,
     },
@@ -165,7 +167,7 @@ EXTRA_FIELDS = {
     },
 };
 
-app = new Vue({
+const app = new Vue({
     el: '#main',
     data: {
         version: window.VERSION || 'missing version',

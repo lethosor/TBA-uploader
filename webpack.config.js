@@ -11,4 +11,15 @@ module.exports = {
         filename: 'bundle.js',
         path: path.join(__dirname, 'web'),
     },
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                loader: 'babel-loader',
+                query: {
+                    presets: ['@babel/env'],
+                },
+            },
+        ],
+    },
 };
