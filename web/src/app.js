@@ -1,33 +1,10 @@
 import Schedule from 'src/schedule.js';
+import utils from 'src/utils.js'
 
 import Dropzone from 'components/Dropzone.vue';
 
-function safeParseLocalStorageObject(key, allow_array) {
-    var res;
-    try {
-        res = JSON.parse(localStorage.getItem(key));
-        if (typeof res != 'object') {
-            throw new TypeError();
-        }
-        if (!allow_array && Array.isArray(res)) {
-            throw new TypeError();
-        }
-    }
-    catch (e) {
-        // ignore
-    }
-    return res || {};
-}
-
-const STORED_EVENTS = safeParseLocalStorageObject('storedEvents');
-var STORED_AWARDS = safeParseLocalStorageObject('awards');
-
-if (Array.isArray(STORED_AWARDS)) {
-    // move old awards from array to object
-    var new_awards = {};
-    new_awards[localStorage.getItem('selectedEvent') || '?'] = STORED_AWARDS;
-    STORED_AWARDS = new_awards;
-}
+const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
+const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
 
 function sendApiRequest(url, event, body) {
     return $.ajax({
@@ -190,8 +167,8 @@ const app = new Vue({
 
         uiOptions: $.extend({
             showAllLevels: false,
-        }, safeParseLocalStorageObject('uiOptions')),
-        eventExtras: safeParseLocalStorageObject('eventExtras'),
+        }, utils.safeParseLocalStorageObject('uiOptions')),
+        eventExtras: utils.safeParseLocalStorageObject('eventExtras'),
         remapError: '',
 
         inScheduleRequest: false,
