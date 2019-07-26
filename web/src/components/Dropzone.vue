@@ -14,7 +14,39 @@
 </template>
 
 <style scoped>
+.dropzone {
+    background: #eee;
+    border: 1px dashed #bbb;
+    min-width: 300px;
+    min-height: 4em;
+    margin-bottom: 1em;
+    padding: 1em;
+    text-align: center;
+    cursor: pointer;
+    word-break: break-word;
+}
 
+.dropzone.active {
+    cursor: copy;
+    background: #bbb;
+}
+
+.dropzone.blocked {
+    cursor: no-drop;
+    background: #ebb;
+}
+
+.dropzone input {
+    display: none;
+}
+
+.dropzone p {
+    margin-bottom: 0;
+}
+
+.dropzone p.title {
+    font-weight: bold;
+}
 </style>
 
 <script>
