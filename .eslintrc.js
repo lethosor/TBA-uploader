@@ -22,5 +22,7 @@ module.exports = {
                 "MemberExpression": "off",
             },
         ],
+        "no-console": "error",
+        "comma-dangle": ["error", "always-multiline"],
     },
 };
