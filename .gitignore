@@ -4,7 +4,6 @@ fms_data*/
 web/dist/README.md
 
 node_modules/
-yarn.lock
 yarn*.log
 package-lock.json
 bundle.js
