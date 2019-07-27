@@ -1,3 +1,5 @@
+import 'regenerator-runtime';
+
 import Schedule from 'src/schedule.js';
 import tba from 'src/tba.js';
 import utils from 'src/utils.js';
