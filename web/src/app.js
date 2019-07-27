@@ -1,5 +1,6 @@
 import 'regenerator-runtime';
 
+import api from 'src/api.js';
 import Schedule from 'src/schedule.js';
 import tba from 'src/tba.js';
 import utils from 'src/utils.js';
@@ -142,6 +143,16 @@ const app = new Vue({
         },
         addEventIsValidYear: function() {
             return tba.isValidYear(this.addEventUI.event);
+        },
+        eventRequestHeaders: function() {
+            if (!STORED_EVENTS[this.selectedEvent]) {
+                return {};
+            }
+            return {
+                'X-Event': this.selectedEvent,
+                'X-Auth': STORED_EVENTS[this.selectedEvent].auth,
+                'X-Secret': STORED_EVENTS[this.selectedEvent].secret,
+            };
         },
         authInputType: function() {
             return this.addEventUI.showAuth ? 'text' : 'password';
@@ -581,22 +592,26 @@ const app = new Vue({
             }
             return true;
         },
-        purgeAdvSelectedMatch: function() {
+        purgeAdvSelectedMatch: async function() {
             if (!this._checkAdvSelectedMatch() || !confirmPurge()) {
                 return;
             }
             this.inMatchRequest = true;
             this.advMatchError = '';
-            sendApiRequest('/api/matches/purge?level=' + this.matchLevel, this.selectedEvent, [this.advSelectedMatch])
-            .always(function() {
-                this.inMatchRequest = false;
-            }.bind(this))
-            .then(function() {
+            try {
+                await api.postJson({
+                    url: '/api/matches/purge?level=' + this.matchLevel,
+                    headers: this.eventRequestHeaders,
+                    body: [this.advSelectedMatch],
+                });
                 this.fetchMatches(false);
-            }.bind(this))
-            .fail(function(res) {
-                this.advMatchError = res.responseText;
-            }.bind(this));
+            }
+            catch (error) {
+                this.advMatchError = error;
+            }
+            finally {
+                this.inMatchRequest = false;
+            }
         },
         markAdvSelectedMatchUploaded: function() {
             if (!this._checkAdvSelectedMatch()) {

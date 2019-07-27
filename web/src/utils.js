@@ -16,6 +16,13 @@ export default Object.freeze({
         return res || {};
     },
 
+    parseErrorText(res) {
+        if (res.responseText) {
+            return res.responseText;
+        }
+        return res;
+    },
+
     parseErrorJSON(res) {
         if (res.responseJSON) {
             if (Array.isArray(res.responseJSON.Errors)) {
