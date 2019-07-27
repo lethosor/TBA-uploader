@@ -472,7 +472,7 @@ const app = new Vue({
                         red: formatScoreSummary(match, match.score_breakdown, 'red'),
                     },
                     classes: classes,
-                }
+                };
             });
         },
         cleanMatches: function(matches) {
@@ -837,7 +837,7 @@ const app = new Vue({
             }.bind(this))
             .fail(function(error) {
                 this.awardStatus = utils.parseErrorJSON(error);
-            }.bind(this))
+            }.bind(this));
         },
         saveAwards: function() {
             if (typeof this.awards != 'object' || Array.isArray(this.awards)) {
