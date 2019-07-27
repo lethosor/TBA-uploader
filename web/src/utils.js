@@ -14,5 +14,30 @@ export default Object.freeze({
             // ignore
         }
         return res || {};
-    }
+    },
+
+    parseErrorJSON(res) {
+        if (res.responseJSON) {
+            if (Array.isArray(res.responseJSON.Errors)) {
+                return res.responseJSON.Errors.map(function(err) {
+                    return Object.values(err).join('\n');
+                }).join('\n');
+            }
+            else if (typeof res.responseJSON.Error == 'string') {
+                return res.responseJSON.Error;
+            }
+        }
+        else {
+            return res;
+        }
+    },
+
+    cleanYoutubeUrl(url) {
+        var match = url.match(/(youtu.be\/|\/video\/|[?&]v=)([A-Za-z0-9_-]+)/);
+        if (match) {
+            url = match[2];
+        }
+        return url;
+    },
+
 });

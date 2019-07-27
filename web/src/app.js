@@ -1,5 +1,6 @@
 import Schedule from 'src/schedule.js';
-import utils from 'src/utils.js'
+import tba from 'src/tba.js';
+import utils from 'src/utils.js';
 
 import Dropzone from 'components/Dropzone.vue';
 
@@ -35,22 +36,6 @@ function tbaApiEventRequest(event, route) {
     });
 }
 
-function parseTbaError(error) {
-    if (error.responseJSON) {
-        if (Array.isArray(error.responseJSON.Errors)) {
-            return error.responseJSON.Errors.map(function(err) {
-                return Object.values(err).join('\n');
-            }).join('\n');
-        }
-        else if (typeof error.responseJSON.Error == 'string') {
-            return error.responseJSON.Error;
-        }
-    }
-    else {
-        return error;
-    }
-}
-
 function confirmPurge() {
     return confirm('Are you sure? This may replace old match results and re-send notifications when these match(es) are uploaded again.');
 }
@@ -64,14 +49,6 @@ function makeAddEventUI() {
     };
 }
 
-function cleanVideoUrl(url) {
-    var match = url.match(/(youtu.be\/|\/video\/|[?&]v=)([A-Za-z0-9_-]+)/);
-    if (match) {
-        url = match[2];
-    }
-    return url;
-}
-
 function makeAward(data) {
     return $.extend({}, {
         name: '',
@@ -79,64 +56,6 @@ function makeAward(data) {
         person: '',
     }, data || {});
 }
-
-function isValidEventCode(event) {
-    return event && Boolean(event.match(/^\d+/));
-}
-
-function isValidYear(year) {
-    year = parseInt(year);
-    return year >= 2018 && year <= 2019;
-}
-
-const convertToTBARankings = {
-    common: function(r) {
-        return {
-            team_key: 'frc' + r.team,
-            rank: r.rank,
-            played: r.played,
-            dqs: r.dq,
-            "Record (W-L-T)": r.wins + '-' + r.losses + '-' + r.ties,
-        };
-    },
-    2018: function(r) {
-        return Object.assign(convertToTBARankings.common(r), {
-            "Ranking Score": r.sort1,
-            "End Game": r.sort2,
-            "Auto": r.sort3,
-            "Ownership": r.sort4,
-            "Vault": r.sort5,
-        });
-    },
-    2019: function(r) {
-        return Object.assign(convertToTBARankings.common(r), {
-            "Ranking Score": r.sort1,
-            "Cargo": r.sort2,
-            "Hatch Panel": r.sort3,
-            "HAB Climb": r.sort4,
-            "Sandstorm Bonus": r.sort5,
-        });
-    },
-};
-
-const TBARankingNames = {
-    2018: [
-        "Ranking Score",
-        "End Game",
-        "Auto",
-        "Ownership",
-        "Vault",
-        "Record (W-L-T)",
-    ],
-    2019: [
-        "Ranking Score",
-        "Cargo",
-        "Hatch Panel",
-        "HAB Climb",
-        "Sandstorm Bonus",
-        "Record (W-L-T)",
-    ],
-};
 
 const EXTRA_FIELDS = {
     2018: {
@@ -215,16 +134,16 @@ const app = new Vue({
         },
         canAddEvent: function() {
             return this.addEventUI.event && this.addEventUI.auth && this.addEventUI.secret &&
-                isValidYear(this.addEventUI.event);
+                tba.isValidYear(this.addEventUI.event);
         },
         addEventIsValidYear: function() {
-            return isValidYear(this.addEventUI.event);
+            return tba.isValidYear(this.addEventUI.event);
         },
         authInputType: function() {
             return this.addEventUI.showAuth ? 'text' : 'password';
         },
         isEventSelected: function() {
-            return isValidEventCode(this.selectedEvent);
+            return tba.isValidEventCode(this.selectedEvent);
         },
         eventYear: function() {
             var year = parseInt(this.selectedEvent);
@@ -324,7 +243,7 @@ const app = new Vue({
         fetchEventData: function() {
             this.tbaReadError = '';
             this.$set(this, 'tbaEventData', {});
-            if (!isValidEventCode(this.selectedEvent)) {
+            if (!tba.isValidEventCode(this.selectedEvent)) {
                 return;
             }
             if (!this.readApiKey) {
@@ -335,11 +254,11 @@ const app = new Vue({
                 this.$set(this, 'tbaEventData', data);
             }.bind(this))
             .fail(function(error) {
-                this.tbaReadError = parseTbaError(error);
+                this.tbaReadError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         initEvent: function(event) {
-            if (!isValidEventCode(event)) {
+            if (!tba.isValidEventCode(event)) {
                 return;
             }
 
@@ -391,7 +310,7 @@ const app = new Vue({
             sendApiRequest('/api/info/upload', this.selectedEvent, {
                 remap_teams: remapMap,
             }).fail(function(error) {
-                this.remapError = parseTbaError(error);
+                this.remapError = utils.parseErrorJSON(error);
             }.bind(this));
         },
 
@@ -454,7 +373,7 @@ const app = new Vue({
                     return newLevels.indexOf(match.comp_level) >= 0;
                 });
             }.bind(this)).fail(function(error) {
-                this.scheduleError = parseTbaError(error);
+                this.scheduleError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         postSchedule: function() {
@@ -742,7 +661,7 @@ const app = new Vue({
             this.rankingsError = '';
             this.inUploadRankings = true;
             $.getJSON('/api/rankings/fetch', function(data) {
-                var rankings = ((data && data.qualRanks) || []).map(convertToTBARankings[this.eventYear]);
+                var rankings = ((data && data.qualRanks) || []).map(tba.convertToTBARankings[this.eventYear]);
                 if (!rankings || !rankings.length) {
                     this.rankingsError = 'No rankings available from FMS';
                     this.inUploadRankings = false;
@@ -750,7 +669,7 @@ const app = new Vue({
                 }
 
                 sendApiRequest('/api/rankings/upload', this.selectedEvent, {
-                    breakdowns: TBARankingNames[this.eventYear],
+                    breakdowns: tba.RANKING_NAMES[this.eventYear],
                     rankings: rankings,
                 }).fail(function(res) {
                     this.rankingsError = res.responseText;
@@ -787,7 +706,7 @@ const app = new Vue({
                 }.bind(this));
             }.bind(this))
             .fail(function(error) {
-                this.videoError = parseTbaError(error);
+                this.videoError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         uploadVideos: function() {
@@ -819,7 +738,7 @@ const app = new Vue({
                 this.fetchVideos();
             }.bind(this))
             .fail(function(error) {
-                this.videoError = parseTbaError(error);
+                this.videoError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         getSortedVideos: function() {
@@ -832,7 +751,7 @@ const app = new Vue({
         getChangedVideos: function() {
             var videos = {};
             Object.entries(this.videos).forEach(function(v) {
-                if (v[1].current && cleanVideoUrl(v[1].current) != cleanVideoUrl(v[1].tba)) {
+                if (v[1].current && utils.cleanYoutubeUrl(v[1].current) != utils.cleanYoutubeUrl(v[1].tba)) {
                     videos[v[0]] = v[1].current;
                 }
             });
@@ -840,7 +759,7 @@ const app = new Vue({
         },
         cleanVideoUrls: function() {
             Object.values(this.videos).forEach(function(v) {
-                v.current = cleanVideoUrl(v.current);
+                v.current = utils.cleanYoutubeUrl(v.current);
             });
         },
 
@@ -915,14 +834,14 @@ const app = new Vue({
                 this.saveAwards();
             }.bind(this))
             .fail(function(error) {
-                this.awardStatus = parseTbaError(error);
+                this.awardStatus = utils.parseErrorJSON(error);
             }.bind(this))
         },
         saveAwards: function() {
             if (typeof this.awards != 'object' || Array.isArray(this.awards)) {
                 throw new TypeError('awards is not a map');
             }
-            if (isValidEventCode(this.selectedEvent) && !Array.isArray(this.awards[this.selectedEvent])) {
+            if (tba.isValidEventCode(this.selectedEvent) && !Array.isArray(this.awards[this.selectedEvent])) {
                 throw new TypeError('awards[' + this.selectedEvent + '] is not an array');
             }
             localStorage.setItem('awards', JSON.stringify(this.awards));
