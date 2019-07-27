@@ -51,7 +51,7 @@
 
 <script>
 export default {
-    name: 'dropzone',
+    name: 'Dropzone',
     props: {
         title: {
             type: String,

@@ -2,6 +2,7 @@ import Schedule from 'src/schedule.js';
 import tba from 'src/tba.js';
 import utils from 'src/utils.js';
 
+import Alert from 'components/Alert.vue';
 import Dropzone from 'components/Dropzone.vue';
 
 const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
@@ -70,6 +71,7 @@ const EXTRA_FIELDS = {
 const app = new Vue({
     el: '#main',
     components: {
+        Alert,
         Dropzone,
     },
     data: {
@@ -931,3 +933,5 @@ const app = new Vue({
         this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
     },
 });
+
+window.app = app;
