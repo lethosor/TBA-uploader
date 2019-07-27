@@ -1,9 +1,17 @@
 <template>
-    <div v-if="value" :class="{alert: true, ['alert-' + type]: true}">
-        <button @click="$emit('input', '')" type="button" class="close" aria-label="Close">
+    <div
+        v-if="value"
+        :class="{alert: true, ['alert-' + type]: true}"
+    >
+        <button
+            type="button"
+            class="close"
+            aria-label="Close"
+            @click="$emit('input', '')"
+        >
             <span aria-hidden="true">&times;</span>
         </button>
-        <span class="raw-message">{{text}}</span>
+        <span class="raw-message">{{ text }}</span>
     </div>
 </template>
 
@@ -11,9 +19,18 @@
 export default {
     name: 'Alert',
     props: {
-        type: String,
-        value: String,
-        prefix: String,
+        type: {
+            type: String,
+            required: true,
+        },
+        value: {
+            type: String,
+            required: true,
+        },
+        prefix: {
+            type: String,
+            default: '',
+        },
     },
     computed: {
         text() {

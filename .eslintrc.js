@@ -1,5 +1,8 @@
 module.exports = {
-    "extends": "eslint:recommended",
+    "extends": [
+        "eslint:recommended",
+        "plugin:vue/recommended",
+    ],
     "parserOptions": {
         "ecmaVersion": 6,
         "sourceType": "module",
@@ -25,5 +28,11 @@ module.exports = {
         "no-console": "error",
         "comma-dangle": ["error", "always-multiline"],
         "semi": "error",
+
+        "vue/html-indent": [
+            "error",
+            4,
+        ],
+        "vue/singleline-html-element-content-newline": "off",
     },
 };

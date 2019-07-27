@@ -1,15 +1,22 @@
 <template>
-    <div :class="{dropzone: true, active: active, blocked: blocked}"
+    <div
+        :class="{dropzone: true, active: active, blocked: blocked}"
         @click="onClick"
         @drop.prevent="onDrop"
         @dragenter.prevent="onDragEnter"
         @dragover.prevent="onDragEnter"
         @dragexit.prevent="onDragLeave"
-        @dragleave.prevent="onDragLeave">
-        <input type="file" ref="file" :accept="accept" @change="onFileChange">
-        <p class="title">{{title}}</p>
-        <p>{{filename || "(no file selected)"}}</p>
-        <p>{{message}}</p>
+        @dragleave.prevent="onDragLeave"
+    >
+        <input
+            ref="file"
+            type="file"
+            :accept="accept"
+            @change="onFileChange"
+        >
+        <p class="title">{{ title }}</p>
+        <p>{{ filename || "(no file selected)" }}</p>
+        <p>{{ message }}</p>
     </div>
 </template>
 

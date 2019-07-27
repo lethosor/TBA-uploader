@@ -185,6 +185,64 @@ const app = new Vue({
             });
         },
     },
+    watch: {
+        readApiKey: function(key) {
+            localStorage.setItem('readApiKey', key);
+        },
+        selectedEvent: function(event) {
+            localStorage.setItem('selectedEvent', event);
+            this.initEvent(event);
+            this.fetchEventData();
+            this.scheduleReset(false);
+        },
+        matchLevel: function() {
+            localStorage.setItem('matchLevel', this.matchLevel);
+        },
+        uiOptions: {
+            handler: function() {
+                localStorage.setItem('uiOptions', JSON.stringify(this.uiOptions));
+            },
+            deep: true,
+        },
+        eventExtras: {
+            handler: function() {
+                localStorage.setItem('eventExtras', JSON.stringify(this.eventExtras));
+            },
+            deep: true,
+        },
+    },
+    mounted: function() {
+        var event = localStorage.getItem('selectedEvent') || '';
+        if (event) {
+            this.initEvent(event);
+        }
+        this.selectedEvent = event;
+        this.matchLevel = localStorage.getItem('matchLevel') || this.matchLevel;
+        $.get('/README.md', function(readme) {
+            // remove first line (header)
+            readme = readme.substr(readme.indexOf('\n'));
+            this.helpHTML = new showdown.Converter().makeHtml(readme);
+        }.bind(this));
+
+        $(this.$refs.mainTabs).on('shown.bs.tab', 'a', function() {
+            localStorage.setItem('lastTab', this.id);
+        });
+
+        $(function() {
+            $(this.$el).removeClass('hidden');
+            var lastTab = localStorage.getItem('lastTab');
+            if (lastTab) {
+                var tab = document.getElementById(lastTab);
+                if (tab) {
+                    tab.click();
+                    $('.tab-pane').removeClass('show active');
+                    $('.tab-pane[aria-labelledby=' + lastTab + ']').addClass('show active');
+                }
+            }
+        }.bind(this));
+
+        this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
+    },
     methods: {
         saveFMSConfig: function() {
             this.fmsConfigError = '';
@@ -873,64 +931,6 @@ const app = new Vue({
                 this.awardStatus = 'Error: ' + res.responseText;
             }.bind(this));
         },
-    },
-    watch: {
-        readApiKey: function(key) {
-            localStorage.setItem('readApiKey', key);
-        },
-        selectedEvent: function(event) {
-            localStorage.setItem('selectedEvent', event);
-            this.initEvent(event);
-            this.fetchEventData();
-            this.scheduleReset(false);
-        },
-        matchLevel: function() {
-            localStorage.setItem('matchLevel', this.matchLevel);
-        },
-        uiOptions: {
-            handler: function() {
-                localStorage.setItem('uiOptions', JSON.stringify(this.uiOptions));
-            },
-            deep: true,
-        },
-        eventExtras: {
-            handler: function() {
-                localStorage.setItem('eventExtras', JSON.stringify(this.eventExtras));
-            },
-            deep: true,
-        },
-    },
-    mounted: function() {
-        var event = localStorage.getItem('selectedEvent') || '';
-        if (event) {
-            this.initEvent(event);
-        }
-        this.selectedEvent = event;
-        this.matchLevel = localStorage.getItem('matchLevel') || this.matchLevel;
-        $.get('/README.md', function(readme) {
-            // remove first line (header)
-            readme = readme.substr(readme.indexOf('\n'));
-            this.helpHTML = new showdown.Converter().makeHtml(readme);
-        }.bind(this));
-
-        $(this.$refs.mainTabs).on('shown.bs.tab', 'a', function() {
-            localStorage.setItem('lastTab', this.id);
-        });
-
-        $(function() {
-            $(this.$el).removeClass('hidden');
-            var lastTab = localStorage.getItem('lastTab');
-            if (lastTab) {
-                var tab = document.getElementById(lastTab);
-                if (tab) {
-                    tab.click();
-                    $('.tab-pane').removeClass('show active');
-                    $('.tab-pane[aria-labelledby=' + lastTab + ']').addClass('show active');
-                }
-            }
-        }.bind(this));
-
-        this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
     },
 });
 
