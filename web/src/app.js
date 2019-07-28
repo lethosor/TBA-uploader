@@ -7,6 +7,7 @@ import utils from 'src/utils.js';
 
 import Alert from 'components/Alert.vue';
 import Dropzone from 'components/Dropzone.vue';
+import ScoreSummary from 'components/ScoreSummary.vue';
 
 const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
 const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
@@ -76,6 +77,7 @@ const app = new Vue({
     components: {
         Alert,
         Dropzone,
+        ScoreSummary,
     },
     data: {
         version: window.VERSION || 'missing version',

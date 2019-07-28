@@ -224,26 +224,12 @@
               One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted first). If the scores are correct, click "Post scores".
             </div>
             <div class="row">
-              <div v-for="match in matchSummaries" class="col-md-6 col-lg-4">
-                <table class="table table-sm score" @click="showEditMatch(match)">
-                  <tbody>
-                    <tr>
-                      <td>{{match.id}}</td>
-                      <td :class="match.classes[match.teams.red[0]]"><span>{{match.teams.red[0]}}</span></td>
-                      <td :class="match.classes[match.teams.red[1]]"><span>{{match.teams.red[1]}}</span></td>
-                      <td :class="match.classes[match.teams.red[2]]"><span>{{match.teams.red[2]}}</span></td>
-                      <td class="red score">{{match.score_summary.red}}</td>
-                    </tr>
-                    <tr>
-                      <td>{{match.code}}</td>
-                      <td :class="match.classes[match.teams.blue[0]]"><span>{{match.teams.blue[0]}}</span></td>
-                      <td :class="match.classes[match.teams.blue[1]]"><span>{{match.teams.blue[1]}}</span></td>
-                      <td :class="match.classes[match.teams.blue[2]]"><span>{{match.teams.blue[2]}}</span></td>
-                      <td class="blue score">{{match.score_summary.blue}}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div> <!-- col -->
+              <score-summary
+                v-for="match in matchSummaries"
+                :match="match"
+                :key="match.id"
+                @click="showEditMatch(match)"
+              ></score-summary>
             </div> <!-- row -->
           </div>
         </div>
