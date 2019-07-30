@@ -1,4 +1,4 @@
-Schedule = {};
+const Schedule = {};
 
 Schedule.getTBAPlayoffCode = function(match_id) {
     if (match_id <= 12) {
@@ -6,21 +6,21 @@ Schedule.getTBAPlayoffCode = function(match_id) {
             comp_level: "qf",
             set_number: ((match_id - 1) % 4) + 1,
             match_number: Math.floor((match_id - 1) / 4) + 1,
-        }
+        };
     }
     else if (match_id <= 18) {
         return {
             comp_level: "sf",
             set_number: ((match_id - 1) % 2) + 1,
             match_number: Math.floor((match_id - 1) / 2) - 5,
-        }
+        };
     }
     else {
         return {
             comp_level: "f",
             set_number: 1,
             match_number: match_id - 18,
-        }
+        };
     }
 };
 
@@ -129,3 +129,5 @@ Schedule.findAllCompLevels = function(matches) {
     });
     return levels;
 };
+
+export default Object.freeze(Schedule);

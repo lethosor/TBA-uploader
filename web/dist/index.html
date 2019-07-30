@@ -54,12 +54,7 @@
           <div v-if="!inAddEvent">
             <div v-if="tbaEventData.name">Event name: {{tbaEventData.name}} ({{tbaEventData.year}})</div>
             <hr>
-            <div v-if="tbaReadError" class="alert alert-danger">
-              <button @click="tbaReadError=''" type="button" class="close" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-              <span class="raw-message">{{tbaReadError}}</span>
-            </div>
+            <alert type="danger" v-model="tbaReadError"></alert>
             <label class="row col">
               Read API key (<a href="https://www.thebluealliance.com/account" target="_blank">create a key</a>&nbsp;if needed)
               <input class="form-control" :type="authInputType" v-model="readApiKey">
@@ -105,13 +100,7 @@
 
             <div>
               <h3>Team remappings</h3>
-
-              <div class="alert alert-danger" v-if="remapError">
-                <button @click="remapError=''" type="button" class="close" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-                <span class="raw-message">{{remapError}}</span>
-              </div>
+              <alert type="danger" v-model="remapError"></alert>
 
               <ul>
                 <li v-for="(remap, i) in eventExtras[selectedEvent].remap_teams">
@@ -134,12 +123,7 @@
         </div>
 
         <div class="tab-pane fade" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
-          <div class="alert alert-danger" v-if="scheduleError">
-            <button @click="scheduleError=''" type="button" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <span class="raw-message">{{scheduleError}}</span>
-          </div>
+          <alert type="danger" v-model="scheduleError"></alert>
           <div class="alert alert-success" v-if="scheduleUploaded">
             <button @click="scheduleUploaded=false" type="button" class="close" aria-label="Close">
               <span aria-hidden="true">&times;</span>
@@ -189,12 +173,7 @@
           </div>
           <div v-if="scheduleVerified">
             <h3>3. Upload to TBA ({{selectedEvent}})</h3>
-            <div class="alert alert-danger" v-if="scheduleError">
-              <button @click="scheduleError=''" type="button" class="close" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-              <span class="raw-message">{{scheduleError}}</span>
-            </div>
+            <alert type="danger" v-model="scheduleError"></alert>
             <p>
               <span class="warning">Warning:</span> this will overwrite any match data on TBA for these matches.
               Double-check the event page if you have any doubt that these matches have not already been uploaded.
@@ -218,12 +197,7 @@
           <p>
             <span class="warning">Warning:</span> only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS, and never while a match is running.
           </p>
-          <div class="alert alert-danger" v-if="rankingsError">
-            <button @click="rankingsError=''" type="button" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            Rankings: <span class="raw-message">{{rankingsError}}</span>
-          </div>
+          <alert type="danger" v-model="rankingsError" prefix="Rankings:"></alert>
           <div v-if="inMatchAdvanced">
             <hr>
             <h3>Advanced options <button class="btn btn-outline-danger btn-sm" @click.prevent="inMatchAdvanced = false">Close</button></h3>
@@ -250,26 +224,12 @@
               One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted first). If the scores are correct, click "Post scores".
             </div>
             <div class="row">
-              <div v-for="match in matchSummaries" class="col-md-6 col-lg-4">
-                <table class="table table-sm score" @click="showEditMatch(match)">
-                  <tbody>
-                    <tr>
-                      <td>{{match.id}}</td>
-                      <td :class="match.classes[match.teams.red[0]]"><span>{{match.teams.red[0]}}</span></td>
-                      <td :class="match.classes[match.teams.red[1]]"><span>{{match.teams.red[1]}}</span></td>
-                      <td :class="match.classes[match.teams.red[2]]"><span>{{match.teams.red[2]}}</span></td>
-                      <td class="red score">{{match.score_summary.red}}</td>
-                    </tr>
-                    <tr>
-                      <td>{{match.code}}</td>
-                      <td :class="match.classes[match.teams.blue[0]]"><span>{{match.teams.blue[0]}}</span></td>
-                      <td :class="match.classes[match.teams.blue[1]]"><span>{{match.teams.blue[1]}}</span></td>
-                      <td :class="match.classes[match.teams.blue[2]]"><span>{{match.teams.blue[2]}}</span></td>
-                      <td class="blue score">{{match.score_summary.blue}}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div> <!-- col -->
+              <score-summary
+                v-for="match in matchSummaries"
+                :match="match"
+                :key="match.id"
+                @click="showEditMatch(match)"
+              ></score-summary>
             </div> <!-- row -->
           </div>
         </div>
@@ -283,12 +243,7 @@
             <li><span class="warning">Warning:</span> Anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</li>
             <li>Videos cannot be removed from TBA once they are uploaded.</li>
           </ul>
-          <div class="alert alert-danger" v-if="videoError">
-            <button @click="videoError=''" type="button" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <span class="raw-message">{{videoError}}</span>
-          </div>
+          <alert type="danger" v-model="videoError"></alert>
 
           <label>
             <input type="checkbox" v-model="showExistingVideos">
@@ -347,7 +302,7 @@
           <h2>UI options</h2>
           <p>All options in this section are saved automatically.</p>
           <div class="row">
-            <div class="col-sm-12 col-md-6">
+            <div class="col-sm-12">
               <label>
                 <input type="checkbox" v-model="uiOptions.showAllLevels">
                 Show hidden tournament levels (Practice/Test)
@@ -498,8 +453,6 @@
     <script type="text/javascript" src="/js/consts.js"></script>
     <script type="text/javascript" src="/js/version.js"></script>
     <script type="text/javascript" src="/js/fms_config.js"></script>
-    <script type="text/javascript" src="components.js"></script>
-    <script type="text/javascript" src="schedule.js"></script>
-    <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="bundle.js"></script>
   </body>
 </html>

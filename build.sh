@@ -1,18 +1,8 @@
 #!/bin/sh
-set -e
 
-if [ "$(uname)" = "Darwin" ]; then
-    # need to use system compiler
-    unset CC
-    unset CXX
-fi
-
-run_cmd() {
-    echo "=> $@"
-    "$@"
-}
+. common.inc.sh
 
 cd $(dirname "$0")
-run_cmd cp README.md web/
-run_cmd go-bindata-assetfs web/... -o bindata_assetfs.go
+run_cmd cp README.md web/dist/
+run_cmd go-bindata -fs -prefix web/dist/ -o bindata_assetfs.go web/dist/...
 run_cmd go build -o bin/TBA-uploader

@@ -1,27 +1,16 @@
-function safeParseLocalStorageObject(key, allow_array) {
-    var res;
-    try {
-        res = JSON.parse(localStorage.getItem(key));
-        if (typeof res != 'object') {
-            throw new TypeError();
-        }
-        if (!allow_array && Array.isArray(res)) {
-            throw new TypeError();
-        }
-    }
-    catch (e) { }
-    return res || {};
-}
+import 'regenerator-runtime';
 
-STORED_EVENTS = safeParseLocalStorageObject('storedEvents');
-STORED_AWARDS = safeParseLocalStorageObject('awards');
+import api from 'src/api.js';
+import Schedule from 'src/schedule.js';
+import tba from 'src/tba.js';
+import utils from 'src/utils.js';
 
-if (Array.isArray(STORED_AWARDS)) {
-    // move old awards from array to object
-    var new_awards = {};
-    new_awards[localStorage.getItem('selectedEvent') || '?'] = STORED_AWARDS;
-    STORED_AWARDS = new_awards;
-}
+import Alert from 'components/Alert.vue';
+import Dropzone from 'components/Dropzone.vue';
+import ScoreSummary from 'components/ScoreSummary.vue';
+
+const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
+const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
 
 function sendApiRequest(url, event, body) {
     return $.ajax({
@@ -52,22 +41,6 @@ function tbaApiEventRequest(event, route) {
     });
 }
 
-function parseTbaError(error) {
-    if (error.responseJSON) {
-        if (Array.isArray(error.responseJSON.Errors)) {
-            return error.responseJSON.Errors.map(function(err) {
-                return Object.values(err).join('\n');
-            }).join('\n');
-        }
-        else if (typeof error.responseJSON.Error == 'string') {
-            return error.responseJSON.Error;
-        }
-    }
-    else {
-        return error;
-    }
-}
-
 function confirmPurge() {
     return confirm('Are you sure? This may replace old match results and re-send notifications when these match(es) are uploaded again.');
 }
@@ -81,14 +54,6 @@ function makeAddEventUI() {
     };
 }
 
-function cleanVideoUrl(url) {
-    var match = url.match(/(youtu.be\/|\/video\/|[?&]v=)([A-Za-z0-9_-]+)/);
-    if (match) {
-        url = match[2];
-    }
-    return url;
-}
-
 function makeAward(data) {
     return $.extend({}, {
         name: '',
@@ -97,65 +62,7 @@ function makeAward(data) {
     }, data || {});
 }
 
-function isValidEventCode(event) {
-    return event && Boolean(event.match(/^\d+/));
-}
-
-function isValidYear(year) {
-    year = parseInt(year);
-    return year >= 2018 && year <= 2019;
-}
-
-convertToTBARankings = {
-    common: function(r) {
-        return {
-            team_key: 'frc' + r.team,
-            rank: r.rank,
-            played: r.played,
-            dqs: r.dq,
-            "Record (W-L-T)": r.wins + '-' + r.losses + '-' + r.ties,
-        };
-    },
-    2018: function(r) {
-        return Object.assign(convertToTBARankings.common(r), {
-            "Ranking Score": r.sort1,
-            "End Game": r.sort2,
-            "Auto": r.sort3,
-            "Ownership": r.sort4,
-            "Vault": r.sort5,
-        });
-    },
-    2019: function(r) {
-        return Object.assign(convertToTBARankings.common(r), {
-            "Ranking Score": r.sort1,
-            "Cargo": r.sort2,
-            "Hatch Panel": r.sort3,
-            "HAB Climb": r.sort4,
-            "Sandstorm Bonus": r.sort5,
-        });
-    },
-};
-
-TBARankingNames = {
-    2018: [
-        "Ranking Score",
-        "End Game",
-        "Auto",
-        "Ownership",
-        "Vault",
-        "Record (W-L-T)",
-    ],
-    2019: [
-        "Ranking Score",
-        "Cargo",
-        "Hatch Panel",
-        "HAB Climb",
-        "Sandstorm Bonus",
-        "Record (W-L-T)",
-    ],
-};
-
-EXTRA_FIELDS = {
+const EXTRA_FIELDS = {
     2018: {
         invert_auto: false,
     },
@@ -165,8 +72,13 @@ EXTRA_FIELDS = {
     },
 };
 
-app = new Vue({
+const app = new Vue({
     el: '#main',
+    components: {
+        Alert,
+        Dropzone,
+        ScoreSummary,
+    },
     data: {
         version: window.VERSION || 'missing version',
         helpHTML: '',
@@ -181,8 +93,8 @@ app = new Vue({
 
         uiOptions: $.extend({
             showAllLevels: false,
-        }, safeParseLocalStorageObject('uiOptions')),
-        eventExtras: safeParseLocalStorageObject('eventExtras'),
+        }, utils.safeParseLocalStorageObject('uiOptions')),
+        eventExtras: utils.safeParseLocalStorageObject('eventExtras'),
         remapError: '',
 
         inScheduleRequest: false,
@@ -229,16 +141,26 @@ app = new Vue({
         },
         canAddEvent: function() {
             return this.addEventUI.event && this.addEventUI.auth && this.addEventUI.secret &&
-                isValidYear(this.addEventUI.event);
+                tba.isValidYear(this.addEventUI.event);
         },
         addEventIsValidYear: function() {
-            return isValidYear(this.addEventUI.event);
+            return tba.isValidYear(this.addEventUI.event);
+        },
+        eventRequestHeaders: function() {
+            if (!STORED_EVENTS[this.selectedEvent]) {
+                return {};
+            }
+            return {
+                'X-Event': this.selectedEvent,
+                'X-Auth': STORED_EVENTS[this.selectedEvent].auth,
+                'X-Secret': STORED_EVENTS[this.selectedEvent].secret,
+            };
         },
         authInputType: function() {
             return this.addEventUI.showAuth ? 'text' : 'password';
         },
         isEventSelected: function() {
-            return isValidEventCode(this.selectedEvent);
+            return tba.isValidEventCode(this.selectedEvent);
         },
         eventYear: function() {
             var year = parseInt(this.selectedEvent);
@@ -277,6 +199,64 @@ app = new Vue({
                 return cells;
             });
         },
+    },
+    watch: {
+        readApiKey: function(key) {
+            localStorage.setItem('readApiKey', key);
+        },
+        selectedEvent: function(event) {
+            localStorage.setItem('selectedEvent', event);
+            this.initEvent(event);
+            this.fetchEventData();
+            this.scheduleReset(false);
+        },
+        matchLevel: function() {
+            localStorage.setItem('matchLevel', this.matchLevel);
+        },
+        uiOptions: {
+            handler: function() {
+                localStorage.setItem('uiOptions', JSON.stringify(this.uiOptions));
+            },
+            deep: true,
+        },
+        eventExtras: {
+            handler: function() {
+                localStorage.setItem('eventExtras', JSON.stringify(this.eventExtras));
+            },
+            deep: true,
+        },
+    },
+    mounted: function() {
+        var event = localStorage.getItem('selectedEvent') || '';
+        if (event) {
+            this.initEvent(event);
+        }
+        this.selectedEvent = event;
+        this.matchLevel = localStorage.getItem('matchLevel') || this.matchLevel;
+        $.get('/README.md', function(readme) {
+            // remove first line (header)
+            readme = readme.substr(readme.indexOf('\n'));
+            this.helpHTML = new showdown.Converter().makeHtml(readme);
+        }.bind(this));
+
+        $(this.$refs.mainTabs).on('shown.bs.tab', 'a', function() {
+            localStorage.setItem('lastTab', this.id);
+        });
+
+        $(function() {
+            $(this.$el).removeClass('hidden');
+            var lastTab = localStorage.getItem('lastTab');
+            if (lastTab) {
+                var tab = document.getElementById(lastTab);
+                if (tab) {
+                    tab.click();
+                    $('.tab-pane').removeClass('show active');
+                    $('.tab-pane[aria-labelledby=' + lastTab + ']').addClass('show active');
+                }
+            }
+        }.bind(this));
+
+        this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
     },
     methods: {
         saveFMSConfig: function() {
@@ -338,7 +318,7 @@ app = new Vue({
         fetchEventData: function() {
             this.tbaReadError = '';
             this.$set(this, 'tbaEventData', {});
-            if (!isValidEventCode(this.selectedEvent)) {
+            if (!tba.isValidEventCode(this.selectedEvent)) {
                 return;
             }
             if (!this.readApiKey) {
@@ -349,11 +329,11 @@ app = new Vue({
                 this.$set(this, 'tbaEventData', data);
             }.bind(this))
             .fail(function(error) {
-                this.tbaReadError = parseTbaError(error);
+                this.tbaReadError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         initEvent: function(event) {
-            if (!isValidEventCode(event)) {
+            if (!tba.isValidEventCode(event)) {
                 return;
             }
 
@@ -405,7 +385,7 @@ app = new Vue({
             sendApiRequest('/api/info/upload', this.selectedEvent, {
                 remap_teams: remapMap,
             }).fail(function(error) {
-                this.remapError = parseTbaError(error);
+                this.remapError = utils.parseErrorJSON(error);
             }.bind(this));
         },
 
@@ -468,7 +448,7 @@ app = new Vue({
                     return newLevels.indexOf(match.comp_level) >= 0;
                 });
             }.bind(this)).fail(function(error) {
-                this.scheduleError = parseTbaError(error);
+                this.scheduleError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         postSchedule: function() {
@@ -546,7 +526,7 @@ app = new Vue({
             };
 
             return matches.map(function(match) {
-                classes = {};
+                var classes = {};
                 match.alliances.blue.teams.forEach(function(team_key) {
                     classes[rmFRC(team_key)] = genClasses(match, team_key, 'blue');
                 });
@@ -565,12 +545,12 @@ app = new Vue({
                         red: formatScoreSummary(match, match.score_breakdown, 'red'),
                     },
                     classes: classes,
-                }
+                };
             });
         },
         cleanMatches: function(matches) {
             return matches.map(function(match) {
-                var match = Object.assign({}, match);
+                match = Object.assign({}, match);
                 delete match._fms_id;
                 return match;
             });
@@ -588,7 +568,7 @@ app = new Vue({
                 this.pendingMatches = [];
                 this.matchSummaries = [];
                 sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
-                                this.selectedEvent, match_ids
+                    this.selectedEvent, match_ids
                 ).fail(function(res) {
                     this.matchError += '\nReceipt generation failed: ' + res.responseText;
                 }.bind(this));
@@ -602,34 +582,38 @@ app = new Vue({
             }).length > 0;
         },
         _checkAdvSelectedMatch: function() {
-            parts = this.advSelectedMatch.split('-');
+            var parts = this.advSelectedMatch.split('-');
             if (parts.length == 1) {
                 parts.push('1');
             }
             this.advSelectedMatch = parts.join('-');
             this.advMatchError = '';
-            if (!this.advSelectedMatch.match(/^\d+\-\d+$/)) {
+            if (!this.advSelectedMatch.match(/^\d+-\d+$/)) {
                 this.advMatchError = 'Invalid match ID format';
                 return false;
             }
             return true;
         },
-        purgeAdvSelectedMatch: function() {
+        purgeAdvSelectedMatch: async function() {
             if (!this._checkAdvSelectedMatch() || !confirmPurge()) {
                 return;
             }
             this.inMatchRequest = true;
             this.advMatchError = '';
-            sendApiRequest('/api/matches/purge?level=' + this.matchLevel, this.selectedEvent, [this.advSelectedMatch])
-            .always(function() {
-                this.inMatchRequest = false;
-            }.bind(this))
-            .then(function() {
+            try {
+                await api.postJson({
+                    url: '/api/matches/purge?level=' + this.matchLevel,
+                    headers: this.eventRequestHeaders,
+                    body: [this.advSelectedMatch],
+                });
                 this.fetchMatches(false);
-            }.bind(this))
-            .fail(function(res) {
-                this.advMatchError = res.responseText;
-            }.bind(this));
+            }
+            catch (error) {
+                this.advMatchError = error;
+            }
+            finally {
+                this.inMatchRequest = false;
+            }
         },
         markAdvSelectedMatchUploaded: function() {
             if (!this._checkAdvSelectedMatch()) {
@@ -638,7 +622,7 @@ app = new Vue({
             this.inMatchRequest = true;
             this.advMatchError = '';
             sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
-                            this.selectedEvent, [this.advSelectedMatch])
+                this.selectedEvent, [this.advSelectedMatch])
             .always(function() {
                 this.inMatchRequest = false;
             }.bind(this))
@@ -689,8 +673,8 @@ app = new Vue({
                         if (this.eventYear == 2018) {
                             this.matchEditData.text[color] = {
                                 auto_rp: score_breakdown[color].autoQuestRankingPoint ^ data[color].invert_auto ?
-                                         'missed (FMS returned scored)' :
-                                         'scored (FMS returned missed)',
+                                    'missed (FMS returned scored)' :
+                                    'scored (FMS returned missed)',
                             };
                         }
                     }
@@ -723,10 +707,10 @@ app = new Vue({
                 if (this.isPlayoff) {
                     return Object.assign({
                         dqs: this.matchEditData.flags[color].dq ?
-                             this.matchEditData.teams[color].map(function(t) {
+                            this.matchEditData.teams[color].map(function(t) {
                                 return 'frc' + t.team;
-                             }) :
-                             [],
+                            }) :
+                            [],
                         surrogates: [],
                     }, EXTRA_FIELDS[this.eventYear]);
                 }
@@ -741,7 +725,7 @@ app = new Vue({
             };
 
             sendApiRequest('/api/matches/extra/save?id=' + this.matchEditing.id + '&level=' + this.matchLevel,
-                           this.selectedEvent, data)
+                this.selectedEvent, data)
             .always(function() {
                 this.inMatchRequest = false;
             }.bind(this))
@@ -756,7 +740,7 @@ app = new Vue({
             this.rankingsError = '';
             this.inUploadRankings = true;
             $.getJSON('/api/rankings/fetch', function(data) {
-                var rankings = ((data && data.qualRanks) || []).map(convertToTBARankings[this.eventYear]);
+                var rankings = ((data && data.qualRanks) || []).map(tba.convertToTBARankings[this.eventYear]);
                 if (!rankings || !rankings.length) {
                     this.rankingsError = 'No rankings available from FMS';
                     this.inUploadRankings = false;
@@ -764,7 +748,7 @@ app = new Vue({
                 }
 
                 sendApiRequest('/api/rankings/upload', this.selectedEvent, {
-                    breakdowns: TBARankingNames[this.eventYear],
+                    breakdowns: tba.RANKING_NAMES[this.eventYear],
                     rankings: rankings,
                 }).fail(function(res) {
                     this.rankingsError = res.responseText;
@@ -801,7 +785,7 @@ app = new Vue({
                 }.bind(this));
             }.bind(this))
             .fail(function(error) {
-                this.videoError = parseTbaError(error);
+                this.videoError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         uploadVideos: function() {
@@ -833,7 +817,7 @@ app = new Vue({
                 this.fetchVideos();
             }.bind(this))
             .fail(function(error) {
-                this.videoError = parseTbaError(error);
+                this.videoError = utils.parseErrorJSON(error);
             }.bind(this));
         },
         getSortedVideos: function() {
@@ -846,7 +830,7 @@ app = new Vue({
         getChangedVideos: function() {
             var videos = {};
             Object.entries(this.videos).forEach(function(v) {
-                if (v[1].current && cleanVideoUrl(v[1].current) != cleanVideoUrl(v[1].tba)) {
+                if (v[1].current && utils.cleanYoutubeUrl(v[1].current) != utils.cleanYoutubeUrl(v[1].tba)) {
                     videos[v[0]] = v[1].current;
                 }
             });
@@ -854,7 +838,7 @@ app = new Vue({
         },
         cleanVideoUrls: function() {
             Object.values(this.videos).forEach(function(v) {
-                v.current = cleanVideoUrl(v.current);
+                v.current = utils.cleanYoutubeUrl(v.current);
             });
         },
 
@@ -929,14 +913,14 @@ app = new Vue({
                 this.saveAwards();
             }.bind(this))
             .fail(function(error) {
-                this.awardStatus = parseTbaError(error);
-            }.bind(this))
+                this.awardStatus = utils.parseErrorJSON(error);
+            }.bind(this));
         },
         saveAwards: function() {
             if (typeof this.awards != 'object' || Array.isArray(this.awards)) {
                 throw new TypeError('awards is not a map');
             }
-            if (isValidEventCode(this.selectedEvent) && !Array.isArray(this.awards[this.selectedEvent])) {
+            if (tba.isValidEventCode(this.selectedEvent) && !Array.isArray(this.awards[this.selectedEvent])) {
                 throw new TypeError('awards[' + this.selectedEvent + '] is not an array');
             }
             localStorage.setItem('awards', JSON.stringify(this.awards));
@@ -967,62 +951,6 @@ app = new Vue({
             }.bind(this));
         },
     },
-    watch: {
-        readApiKey: function(key) {
-            localStorage.setItem('readApiKey', key);
-        },
-        selectedEvent: function(event) {
-            localStorage.setItem('selectedEvent', event);
-            this.initEvent(event);
-            this.fetchEventData();
-            this.scheduleReset(false);
-        },
-        matchLevel: function() {
-            localStorage.setItem('matchLevel', this.matchLevel);
-        },
-        uiOptions: {
-            handler: function() {
-                localStorage.setItem('uiOptions', JSON.stringify(this.uiOptions));
-            },
-            deep: true,
-        },
-        eventExtras: {
-            handler: function() {
-                localStorage.setItem('eventExtras', JSON.stringify(this.eventExtras));
-            },
-            deep: true,
-        },
-    },
-    mounted: function() {
-        var event = localStorage.getItem('selectedEvent') || '';
-        if (event) {
-            this.initEvent(event);
-        }
-        this.selectedEvent = event;
-        this.matchLevel = localStorage.getItem('matchLevel') || this.matchLevel;
-        $.get('/README.md', function(readme) {
-            // remove first line (header)
-            readme = readme.substr(readme.indexOf('\n'));
-            this.helpHTML = new showdown.Converter().makeHtml(readme);
-        }.bind(this));
-
-        $(this.$refs.mainTabs).on('shown.bs.tab', 'a', function() {
-            localStorage.setItem('lastTab', this.id);
-        });
-
-        $(function() {
-            $(this.$el).removeClass('hidden');
-            var lastTab = localStorage.getItem('lastTab');
-            if (lastTab) {
-                var tab = document.getElementById(lastTab);
-                if (tab) {
-                    tab.click();
-                    $('.tab-pane').removeClass('show active');
-                    $('.tab-pane[aria-labelledby=' + lastTab + ']').addClass('show active');
-                }
-            }
-        }.bind(this));
-
-        this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
-    },
 });
+
+window.app = app;

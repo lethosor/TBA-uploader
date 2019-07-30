@@ -395,7 +395,7 @@ func RunWebServer(port int, web_folder string) {
     if web_folder != "" {
         fs = http.Dir(web_folder)
     } else {
-        fs = assetFS()
+        fs = AssetFile()
     }
     handleFuncWrapper(r, "/js/consts.js", jsConsts)
     handleFuncWrapper(r, "/js/version.js", jsVersion)
