@@ -25,6 +25,7 @@ function sendApiRequest(url, event, body) {
         },
     });
 }
+window.sendApiRequest = sendApiRequest;
 
 function tbaApiEventRequest(event, route) {
     var url = 'https://www.thebluealliance.com/api/v3/event/' + event;
@@ -40,6 +41,7 @@ function tbaApiEventRequest(event, route) {
         cache: false,
     });
 }
+window.tbaApiEventRequest = tbaApiEventRequest;
 
 function confirmPurge() {
     return confirm('Are you sure? This may replace old match results and re-send notifications when these match(es) are uploaded again.');
