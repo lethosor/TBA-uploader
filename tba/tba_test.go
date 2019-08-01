@@ -32,16 +32,16 @@ var playoff_codes = map[int]MatchCode {
 }
 
 func TestPlayoffCodes(t *testing.T) {
-    for i := 1; i <= 21; i++ {
+    for i, expected_code := range playoff_codes {
         code := GetPlayoffCode(i)
-        if code.Level != playoff_codes[i].Level {
-            t.Errorf("playoff %d: got level=%s, expected %s", i, code.Level, playoff_codes[i].Level)
+        if code.Level != expected_code.Level {
+            t.Errorf("playoff %d: got level=%s, expected %s", i, code.Level, expected_code.Level)
         }
-        if code.Set != playoff_codes[i].Set {
-            t.Errorf("playoff %d: got set=%d, expected %d", i, code.Set, playoff_codes[i].Set)
+        if code.Set != expected_code.Set {
+            t.Errorf("playoff %d: got set=%d, expected %d", i, code.Set, expected_code.Set)
         }
-        if code.Match != playoff_codes[i].Match {
-            t.Errorf("playoff %d: got match=%d, expected %d", i, code.Match, playoff_codes[i].Match)
+        if code.Match != expected_code.Match {
+            t.Errorf("playoff %d: got match=%d, expected %d", i, code.Match, expected_code.Match)
         }
     }
 }
