@@ -339,12 +339,30 @@
         <div class="modal-dialog" role="document">
           <div class="modal-content" v-if="inEditMatch">
             <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">Edit match: {{matchEditing.code}} ({{matchEditing.id}})</h5>
+              <h5 class="modal-title" id="exampleModalLabel">Edit match: {{matchEditing.key}} ({{matchEditing.id}})</h5>
               <button type="button" class="close" @click="hideEditMatch" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <div class="modal-body">
+              <div>
+                <label>
+                  <input v-model="matchEditOverrideCode" type="checkbox">
+                  Match code override:
+                </label>
+              </div>
+              <div v-if="matchEditOverrideCode" class="form-inline mb-2">
+                <select v-model="matchEditing.code.comp_level" class="form-control">
+                  <option>qm</option>
+                  <option>ef</option>
+                  <option>qf</option>
+                  <option>sf</option>
+                  <option>f</option>
+                </select>
+                <input v-model="matchEditing.code.set_number" v-if="matchEditing.code.comp_level != 'qm'" class="form-control" type="number" min="1" max="999" step="1">
+                match
+                <input v-model="matchEditing.code.match_number" class="form-control" type="number" min="1" max="999" step="1">
+              </div>
               <div class="alert alert-danger raw-message" v-if="matchEditError">{{matchEditError}}</div>
               <table class="table match-edit">
                 <thead>

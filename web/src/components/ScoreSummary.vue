@@ -13,7 +13,7 @@
                     <td class="red score">{{ match.score_summary.red }}</td>
                 </tr>
                 <tr>
-                    <td>{{ match.code }}</td>
+                    <td>{{ match.key }}</td>
                     <td :class="match.classes[match.teams.blue[0]]"><span>{{ match.teams.blue[0] }}</span></td>
                     <td :class="match.classes[match.teams.blue[1]]"><span>{{ match.teams.blue[1] }}</span></td>
                     <td :class="match.classes[match.teams.blue[2]]"><span>{{ match.teams.blue[2] }}</span></td>

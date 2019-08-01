@@ -14,9 +14,9 @@ type EventParams struct {
 }
 
 type MatchCode struct {
-    Level string
-    Set int
-    Match int
+    Level string `json:"comp_level"`
+    Set int `json:"set_number"`
+    Match int `json:"match_number"`
 }
 
 func GetPlayoffCode(match_id int) MatchCode {

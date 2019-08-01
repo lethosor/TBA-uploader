@@ -207,7 +207,21 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 apiPanicInternal("failed to parse %s: %s", fname, err)
             }
 
-            if (level == MATCH_LEVEL_PLAYOFF) {
+            match_extra_path := path.Join(folder, replaceExtension(fname, "extrajson"))
+            var extra_info fms_parser.ExtraMatchInfo
+            if (isFile(match_extra_path)) {
+                raw, _ := ioutil.ReadFile(match_extra_path)
+                err := json.Unmarshal(raw, &extra_info)
+                if err != nil {
+                    apiPanicInternal("failed to parse %s: %v", match_extra_path, err)
+                }
+            }
+
+            if (extra_info.MatchCodeOverride != nil) {
+                match_info["comp_level"] = extra_info.MatchCodeOverride.Level
+                match_info["set_number"] = extra_info.MatchCodeOverride.Set
+                match_info["match_number"] = extra_info.MatchCodeOverride.Match
+            } else if (level == MATCH_LEVEL_PLAYOFF) {
                 // playoffs
                 code := tba.GetPlayoffCode(match_number)
                 match_info["comp_level"] = code.Level

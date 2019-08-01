@@ -121,6 +121,7 @@ const app = new Vue({
         matchEditing: null,
         matchEditData: null,
         matchEditError: '',
+        matchEditOverrideCode: false,
 
         inUploadRankings: false,
         rankingsError: '',
@@ -537,7 +538,12 @@ const app = new Vue({
                 });
                 return {
                     id: match._fms_id,
-                    code: Schedule.getTBAMatchKey(match),
+                    key: Schedule.getTBAMatchKey(match),
+                    code: {
+                        comp_level: match.comp_level,
+                        set_number: match.set_number,
+                        match_number: match.match_number,
+                    },
                     teams: {
                         blue: match.alliances.blue.teams.map(rmFRC),
                         red: match.alliances.red.teams.map(rmFRC),
@@ -653,6 +659,7 @@ const app = new Vue({
                     flags: {},
                     text: {},
                 };
+                this.matchEditOverrideCode = Boolean(data.match_code_override);
                 ['blue', 'red'].forEach(function(color) {
                     this.matchEditData.teams[color] = this.matchEditing.teams[color].map(function(team) {
                         return {
@@ -725,6 +732,9 @@ const app = new Vue({
                 blue: genExtraData('blue'),
                 red: genExtraData('red'),
             };
+            if (this.matchEditOverrideCode) {
+                data.match_code_override = this.matchEditing.code;
+            }
 
             sendApiRequest('/api/matches/extra/save?id=' + this.matchEditing.id + '&level=' + this.matchLevel,
                 this.selectedEvent, data)
