@@ -15,6 +15,7 @@ import (
     "github.com/gorilla/mux"
 
     "./fms_parser"
+    "./tba"
 )
 
 type APIError struct {
@@ -38,18 +39,18 @@ func apiPanicInternal(message string, args ...interface{}) {
     apiPanicCode(http.StatusInternalServerError, message, args...)
 }
 
-func getRequestEventParams(r *http.Request) (*eventParams, bool) {
+func getRequestEventParams(r *http.Request) (*tba.EventParams, bool) {
     if len(r.Header.Get("X-Event")) > 0 && len(r.Header.Get("X-Auth")) > 0 && len(r.Header.Get("X-Secret")) > 0 {
-        return &eventParams{
-            event: r.Header.Get("X-Event"),
-            auth: r.Header.Get("X-Auth"),
-            secret: r.Header.Get("X-Secret"),
+        return &tba.EventParams{
+            Event: r.Header.Get("X-Event"),
+            Auth: r.Header.Get("X-Auth"),
+            Secret: r.Header.Get("X-Secret"),
         }, true
     }
     return nil, false
 }
 
-func checkRequestEventParams(r *http.Request) *eventParams {
+func checkRequestEventParams(r *http.Request) *tba.EventParams {
     params, ok := getRequestEventParams(r)
     if params == nil || !ok {
         apiPanicBadRequest("missing event/auth parameters")
@@ -97,7 +98,7 @@ func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
         apiPanicInternal("read failed: %s", err)
     }
 
-    res, err := sendTBARequest(path, body, params)
+    res, err := tba.SendRequest(path, body, params)
     if err != nil {
         apiPanicInternal("TBA request failed: %s", err)
     }
@@ -208,10 +209,10 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 
             if (level == MATCH_LEVEL_PLAYOFF) {
                 // playoffs
-                code := getTBAPlayoffCode(match_number)
-                match_info["comp_level"] = code.level
-                match_info["set_number"] = code.set
-                match_info["match_number"] = code.match
+                code := tba.GetPlayoffCode(match_number)
+                match_info["comp_level"] = code.Level
+                match_info["set_number"] = code.Set
+                match_info["match_number"] = code.Match
             } else {
                 match_info["comp_level"] = "qm"
                 match_info["set_number"] = 1
@@ -268,7 +269,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 func apiMarkMatchesUploaded(w http.ResponseWriter, r *http.Request) {
     params := checkRequestEventParams(r)
     level := checkRequestLevel(r)
-    var match_folder = getMatchDownloadPath(level, params.event)
+    var match_folder = getMatchDownloadPath(level, params.Event)
     match_ids := make([]string, 0)
     body, err := ioutil.ReadAll(r.Body)
     err = json.Unmarshal(body, &match_ids)
@@ -283,7 +284,7 @@ func apiMarkMatchesUploaded(w http.ResponseWriter, r *http.Request) {
 func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
     params := checkRequestEventParams(r)
     level := checkRequestLevel(r)
-    match_folder := getMatchDownloadPath(level, params.event)
+    match_folder := getMatchDownloadPath(level, params.Event)
     all := (r.URL.Query().Get("all") != "")
     match_ids := make(map[string]bool)
     if !all {
@@ -317,11 +318,11 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
 
 func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
     params := checkRequestEventParams(r)
-    event_year := parseEventYear(params.event)
+    event_year := parseEventYear(params.Event)
     level := checkRequestLevel(r)
     id := checkRequestQueryParam(r, "id")
 
-    extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
+    extra_filename := path.Join(getMatchDownloadPath(level, params.Event), id + ".extrajson")
     extra_json, err := ioutil.ReadFile(extra_filename)
     if err != nil {
         tmp := map[string]fms_parser.ExtraMatchInfo{
@@ -338,7 +339,7 @@ func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
     level := checkRequestLevel(r)
     id := checkRequestQueryParam(r, "id")
 
-    extra_filename := path.Join(getMatchDownloadPath(level, params.event), id + ".extrajson")
+    extra_filename := path.Join(getMatchDownloadPath(level, params.Event), id + ".extrajson")
     var tmp map[string]fms_parser.ExtraMatchInfo
     body, _ := ioutil.ReadAll(r.Body)
     if json.Unmarshal(body, &tmp) != nil {
