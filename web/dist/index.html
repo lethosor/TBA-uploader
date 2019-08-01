@@ -359,9 +359,9 @@
                   <option>sf</option>
                   <option>f</option>
                 </select>
-                <input v-model="matchEditing.code.set_number" v-if="matchEditing.code.comp_level != 'qm'" class="form-control" type="number" min="1" max="999" step="1">
+                <input v-model.number="matchEditing.code.set_number" v-if="matchEditing.code.comp_level != 'qm'" class="form-control" type="number" min="1" max="999" step="1">
                 match
-                <input v-model="matchEditing.code.match_number" class="form-control" type="number" min="1" max="999" step="1">
+                <input v-model.number="matchEditing.code.match_number" class="form-control" type="number" min="1" max="999" step="1">
               </div>
               <div class="alert alert-danger raw-message" v-if="matchEditError">{{matchEditError}}</div>
               <table class="table match-edit">
