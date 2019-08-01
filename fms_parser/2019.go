@@ -34,21 +34,21 @@ func makeFmsScoreInfo2019() fmsScoreInfo2019 {
 	}
 }
 
-type extraMatchInfo2019 struct {
+type extraMatchAllianceInfo2019 struct {
 	Dqs []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
 	AddRpRocket bool `json:"add_rp_rocket"`
 	AddRpHabClimb bool `json:"add_rp_hab_climb"`
 }
 
-func makeExtraMatchInfo2019() extraMatchInfo2019 {
-	return extraMatchInfo2019{
+func makeExtraMatchAllianceInfo2019() extraMatchAllianceInfo2019 {
+	return extraMatchAllianceInfo2019{
 		Dqs: make([]string, 0),
 		Surrogates: make([]string, 0),
 	}
 }
 
-func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, extra extraMatchInfo2019, playoff bool) {
+func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, extra extraMatchAllianceInfo2019, playoff bool) {
 	rp := info.baseRP
 	// adjust should be negative when total = 0
 	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
@@ -145,9 +145,9 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 
 	all_json := make(map[string]interface{})
 
-	extra_info := make(map[string]extraMatchInfo2019)
-	extra_info["blue"] = makeExtraMatchInfo2019()
-	extra_info["red"] = makeExtraMatchInfo2019()
+	extra_info := make(map[string]extraMatchAllianceInfo2019)
+	extra_info["blue"] = makeExtraMatchAllianceInfo2019()
+	extra_info["red"] = makeExtraMatchAllianceInfo2019()
 	extra_filename := filename[0:len(filename) - len(path.Ext(filename))] + ".extrajson"
 	extra_raw, err := ioutil.ReadFile(extra_filename)
 	if err == nil {

@@ -325,9 +325,9 @@ func apiMatchLoadExtra(w http.ResponseWriter, r *http.Request) {
     extra_filename := path.Join(getMatchDownloadPath(level, params.Event), id + ".extrajson")
     extra_json, err := ioutil.ReadFile(extra_filename)
     if err != nil {
-        tmp := map[string]fms_parser.ExtraMatchInfo{
-            "blue": fms_parser.MakeExtraMatchInfo(event_year),
-            "red": fms_parser.MakeExtraMatchInfo(event_year),
+        tmp, err := fms_parser.MakeExtraMatchInfo(event_year)
+        if err != nil {
+            apiPanicInternal("MakeExtraMatchInfo: %v", err)
         }
         extra_json, _ = json.Marshal(tmp)
     }
@@ -340,7 +340,7 @@ func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
     id := checkRequestQueryParam(r, "id")
 
     extra_filename := path.Join(getMatchDownloadPath(level, params.Event), id + ".extrajson")
-    var tmp map[string]fms_parser.ExtraMatchInfo
+    var tmp fms_parser.ExtraMatchInfo
     body, _ := ioutil.ReadAll(r.Body)
     if json.Unmarshal(body, &tmp) != nil {
         apiPanicBadRequest("invalid json")

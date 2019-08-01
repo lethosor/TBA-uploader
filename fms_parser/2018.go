@@ -24,14 +24,14 @@ type fmsScoreInfo2018 struct {
 	baseRP int64  // win-loss-tie RP only
 }
 
-type extraMatchInfo2018 struct {
+type extraMatchAllianceInfo2018 struct {
 	Dqs []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
 	InvertAuto bool `json:"invert_auto"`
 }
 
-func makeExtraMatchInfo2018() extraMatchInfo2018 {
-	return extraMatchInfo2018{
+func makeExtraMatchAllianceInfo2018() extraMatchAllianceInfo2018 {
+	return extraMatchAllianceInfo2018{
 		Dqs: make([]string, 0),
 		Surrogates: make([]string, 0),
 		InvertAuto: false,
@@ -89,9 +89,9 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 
 	all_json := make(map[string]interface{})
 
-	extra_info := make(map[string]extraMatchInfo2018)
-	extra_info["blue"] = makeExtraMatchInfo2018()
-	extra_info["red"] = makeExtraMatchInfo2018()
+	extra_info := make(map[string]extraMatchAllianceInfo2018)
+	extra_info["blue"] = makeExtraMatchAllianceInfo2018()
+	extra_info["red"] = makeExtraMatchAllianceInfo2018()
 	extra_filename := filename[0:len(filename) - len(path.Ext(filename))] + ".extrajson"
 	extra_raw, err := ioutil.ReadFile(extra_filename)
 	if err == nil {

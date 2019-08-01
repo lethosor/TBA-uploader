@@ -3,6 +3,8 @@ package fms_parser
 import (
 	"fmt"
 	"strings"
+
+	"../tba"
 )
 
 func split_and_strip(text string, separator string) ([]string) {
@@ -26,14 +28,31 @@ func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interf
 	}
 }
 
-type ExtraMatchInfo interface {}
+type ExtraMatchInfo struct {
+	MatchCodeOverride *tba.MatchCode `json:"match_code_override"`
+	Red ExtraMatchAllianceInfo `json:"red"`
+	Blue ExtraMatchAllianceInfo `json:"blue"`
+}
 
-func MakeExtraMatchInfo(year int) ExtraMatchInfo {
-	if (year == 2018) {
-		return makeExtraMatchInfo2018()
-	} else if (year == 2019) {
-		return makeExtraMatchInfo2019()
+type ExtraMatchAllianceInfo interface {}
+
+var extraAllianceInfoCtors = map[int]func() ExtraMatchAllianceInfo {
+	2018: func() ExtraMatchAllianceInfo {
+		return makeExtraMatchAllianceInfo2018()
+	},
+	2019: func() ExtraMatchAllianceInfo {
+		return makeExtraMatchAllianceInfo2019()
+	},
+}
+
+func MakeExtraMatchInfo(year int) (ExtraMatchInfo, error) {
+	if ctor, ok := extraAllianceInfoCtors[year]; ok {
+		return ExtraMatchInfo{
+			MatchCodeOverride: nil,
+			Red: ctor(),
+			Blue: ctor(),
+		}, nil
 	} else {
-		return nil
+		return ExtraMatchInfo{}, fmt.Errorf("unsupported year: %d", year)
 	}
 }
