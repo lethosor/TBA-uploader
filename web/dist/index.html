@@ -190,9 +190,9 @@
               <option value="2">Qualification</option>
               <option value="3">Playoff</option>
             </select>
-            <button class="btn btn-success" @click="fetchMatches(false)" :disabled="inMatchRequest">Fetch new match(es)</button>
-            <button class="btn btn-danger" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</button>
-            <button class="btn btn-info ml-auto" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</button>
+            <button class="btn btn-success" data-accesskey="f" @click="fetchMatches(false)" :disabled="inMatchRequest">Fetch new matches</button>
+            <button class="btn btn-danger" data-accesskey="a" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</button>
+            <button class="btn btn-info ml-auto" data-accesskey="r" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</button>
           </div>
           <p>
             <span class="warning">Warning:</span> only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS, and never while a match is running.
@@ -218,8 +218,8 @@
           <alert type="danger" v-model="matchError"></alert>
           <div v-if="matchSummaries.length">
             <h3>Matches to upload ({{matchSummaries.length}})</h3>
-            <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</button>
-            <button class="btn btn-warning mb-2" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</button>
+            <button class="btn btn-success mb-2" data-accesskey="u" accesskey="u" title="[u]" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</button>
+            <button class="btn btn-warning mb-2" data-accesskey="e" accesskey="e" title="[e]" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</button>
             <div class="alert alert-danger" v-if="fetchedScorelessMatches">
               One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted from FMS first). If the scores below are correct, click "Upload scores".
             </div>

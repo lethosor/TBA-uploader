@@ -244,6 +244,16 @@ const app = new Vue({
 
         $(this.$refs.mainTabs).on('shown.bs.tab', 'a', function() {
             localStorage.setItem('lastTab', this.id);
+            $('[data-accesskey]').each(function(_, e) {
+                e = $(e);
+                if (e.is(':visible')) {
+                    e.attr('accesskey', e.attr('data-accesskey'));
+                }
+                else {
+                    e.removeAttr('accesskey');
+                }
+                e.attr('title', '[' + e.attr('accesskey') + ']');
+            });
         });
 
         $(function() {
