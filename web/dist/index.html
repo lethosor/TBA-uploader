@@ -221,7 +221,15 @@
             <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</button>
             <button class="btn btn-warning mb-2" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</button>
             <div class="alert alert-danger" v-if="fetchedScorelessMatches">
-              One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted first). If the scores are correct, click "Post scores".
+              One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted from FMS first). If the scores below are correct, click "Upload scores".
+            </div>
+            <div>
+              Click "Upload scores" to upload these scores to TBA. If a match needs to be edited, click on it below. Reasons for this include:
+              <ul>
+                <li>Any extra rankings points awarded by the head referee (this accompanies score changes in FMS)</li>
+                <li>Red cards</li>
+                <li>Surrogate teams</li>
+              </ul>
             </div>
             <div class="row">
               <score-summary
