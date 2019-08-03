@@ -760,6 +760,11 @@ const app = new Vue({
                 this.matchEditError = res.responseText;
             });
         },
+        editMatchMarkUploaded: function() {
+            this.advSelectedMatch = this.matchEditing.id;
+            this.markAdvSelectedMatchUploaded();
+            this.hideEditMatch();
+        },
 
         uploadRankings: function() {
             this.rankingsError = '';
