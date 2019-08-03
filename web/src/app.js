@@ -585,6 +585,9 @@ const app = new Vue({
             }.bind(this)).then(function() {
                 this.pendingMatches = [];
                 this.matchSummaries = [];
+                if (this.isQual) {
+                    this.uploadRankings();
+                }
                 sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
                     this.selectedEvent, match_ids
                 ).fail(function(res) {

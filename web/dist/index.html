@@ -195,7 +195,9 @@
             <button class="btn btn-info ml-auto" data-accesskey="r" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</button>
           </div>
           <p>
-            <span class="warning">Warning:</span> only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS, and never while a match is running.
+            <span class="warning">Warning:</span> do not click any buttons on this page while a match is running.
+            Be sure to only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS.
+            <span v-if="isQual">Rankings can be updated at any time if necessary, but will also be updated after posting scores.</span>
           </p>
           <alert type="danger" v-model="rankingsError" prefix="Rankings:"></alert>
           <div v-if="inMatchAdvanced">
@@ -224,7 +226,7 @@
               One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted from FMS first). If the scores below are correct, click "Upload scores".
             </div>
             <div>
-              Click "Upload scores" to upload these scores to TBA. If a match needs to be edited, click on it below. Reasons for this include:
+              Click "Upload scores" to upload these scores to TBA<span v-if="isQual"> and update rankings</span>. If a match needs to be edited, click on it below. Reasons for this include:
               <ul>
                 <li>Any extra rankings points awarded by the head referee (this accompanies score changes in FMS)</li>
                 <li>Red cards</li>
