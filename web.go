@@ -18,6 +18,9 @@ import (
     "./tba"
 )
 
+// @todo hack
+var keys_json []byte
+
 type APIError struct {
     code int
     message string
@@ -161,6 +164,18 @@ func apiSetFMSConfig(w http.ResponseWriter, r *http.Request) {
     w.Write(out)
     if err != nil {
         log.Printf("apiSetFMSConfig: Marshal failed: %s\n", err)
+    }
+}
+
+func apiKeysFetch(w http.ResponseWriter, r *http.Request) {
+    w.Write(keys_json)
+}
+
+func apiKeysUpdate(w http.ResponseWriter, r *http.Request) {
+    var err error
+    keys_json, err = ioutil.ReadAll(r.Body)
+    if err != nil {
+        apiPanicBadRequest("failed to read body: %v", err)
     }
 }
 
@@ -417,6 +432,8 @@ func RunWebServer(port int, web_folder string) {
     handleFuncWrapper(r, "/js/fms_config.js", jsFMSConfig)
     handleFuncWrapper(r, "/api/fms_config/get", apiGetFMSConfig)
     handleFuncWrapper(r, "/api/fms_config/set", apiSetFMSConfig)
+    handleFuncWrapper(r, "/api/keys/fetch", apiKeysFetch)
+    handleFuncWrapper(r, "/api/keys/update", apiKeysUpdate)
     handleFuncWrapper(r, "/api/info/upload", apiUploadEventInfo)
     handleFuncWrapper(r, "/api/awards/upload", apiUploadAwards)
     handleFuncWrapper(r, "/api/matches/fetch", apiFetchMatches)

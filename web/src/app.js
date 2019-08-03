@@ -306,6 +306,7 @@ const app = new Vue({
             }
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
             this.addEventUI = makeAddEventUI();
+            this.syncEvents();
         },
         cancelAddEvent: function() {
             this.selectedEvent = '';
@@ -358,6 +359,26 @@ const app = new Vue({
                 this.$set(this.awards, event, [makeAward()]);
                 this.saveAwards();
             }
+        },
+        syncEvents: async function() {
+            var events = await api.postJson({url: '/api/keys/fetch'});
+            try {
+                events = JSON.parse(events);
+            }
+            catch (e) {
+                events = {};
+            }
+            for (const k of Object.keys(events)) {
+                if (!STORED_EVENTS[k]) {
+                    STORED_EVENTS[k] = events[k];
+                    this.events.push(k);
+                }
+            }
+            localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
+            await api.postJson({
+                url: '/api/keys/update',
+                body: STORED_EVENTS,
+            });
         },
 
         addTeamRemap: function() {
