@@ -215,7 +215,7 @@
             </div>
             <hr>
           </div>
-          <div class="alert alert-danger raw-message" v-if="matchError">{{matchError}}</div>
+          <alert type="danger" v-model="matchError"></alert>
           <div v-if="matchSummaries.length">
             <h3>Matches to upload ({{matchSummaries.length}})</h3>
             <button class="btn btn-success mb-2" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</button>
