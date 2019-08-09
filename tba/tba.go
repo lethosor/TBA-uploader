@@ -5,6 +5,7 @@ import (
     "crypto/md5"
     "fmt"
     "net/http"
+    "time"
 )
 
 type EventParams struct {
@@ -52,6 +53,6 @@ func SendRequest(url string, body []byte, params *EventParams) (*http.Response, 
     }
     request.Header.Add("X-TBA-Auth-Id", params.Auth);
     request.Header.Add("X-TBA-Auth-Sig", sig);
-    client := http.Client{}
+    client := http.Client{Timeout: 5 * time.Second}
     return client.Do(request)
 }
