@@ -226,6 +226,9 @@
             <div class="alert alert-danger" v-if="fetchedScorelessMatches">
               One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted from FMS first). If the scores below are correct, click "Upload scores".
             </div>
+            <div class="alert alert-danger" v-if="unhandledBreakdowns.length">
+              Some breakdowns were not handled: {{ unhandledBreakdowns.join(", ") }}. Any affected matches will need to be manually edited.
+            </div>
             <div>
               Click "Upload scores" to upload these scores to TBA<span v-if="isQual"> and update rankings</span>. If a match needs to be edited, click on it below. Reasons for this include:
               <ul>

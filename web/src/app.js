@@ -113,6 +113,7 @@ const app = new Vue({
         // pendingMatches: [], // not set yet to avoid Vue binding to this
         matchSummaries: [],
         fetchedScorelessMatches: false,
+        unhandledBreakdowns: [],
         inMatchAdvanced: false,
         advSelectedMatch: '',
         advMatchError: '',
@@ -518,6 +519,7 @@ const app = new Vue({
                 });
                 this.matchSummaries = this.generateMatchSummaries(this.pendingMatches);
                 this.fetchedScorelessMatches = this.checkScorelessMatches(this.pendingMatches);
+                this.unhandledBreakdowns = this.findUnhandledBreakdowns(this.pendingMatches);
             }.bind(this)).fail(function(res) {
                 this.matchError = res.responseText;
             }.bind(this));
@@ -622,6 +624,19 @@ const app = new Vue({
             return matches.filter(function(match) {
                 return match.alliances.blue.score == -1 || match.alliances.blue.teams[0] == '';
             }).length > 0;
+        },
+        findUnhandledBreakdowns: function(matches) {
+            var unhandled = new Set();
+            for (const match of matches) {
+                for (const breakdown of Object.values(match.score_breakdown)) {
+                    for (const field of Object.keys(breakdown)) {
+                        if (field.startsWith('!')) {
+                            unhandled.add(field.replace(/!/g, ''));
+                        }
+                    }
+                }
+            }
+            return [...unhandled];
         },
         _checkAdvSelectedMatch: function() {
             var parts = this.advSelectedMatch.split('-');
