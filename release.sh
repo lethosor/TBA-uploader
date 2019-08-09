@@ -20,7 +20,7 @@ mkdir -p "$rel_dir"
 echo "Build folder: $rel_dir"
 
 echo "Generating assets..."
-yarn run build
+yarn run --silent build --display errors-only
 cp README.md web/dist/
 go-bindata -fs -prefix web/dist/ -o bindata_assetfs.go web/dist/...
 
