@@ -100,7 +100,6 @@ const app = new Vue({
         remapError: '',
 
         inScheduleRequest: false,
-        scheduleVerified: false,
         scheduleUploaded: false,
         scheduleError: '',
         scheduleStats: [],
@@ -426,7 +425,6 @@ const app = new Vue({
 
         scheduleReset: function(keepFile) {
             this.inScheduleRequest = false;
-            this.scheduleVerified = false;
             this.scheduleUploaded = false;
             this.scheduleError = '';
             this.scheduleStats = [];
@@ -462,13 +460,13 @@ const app = new Vue({
             this.inScheduleRequest = true;
             tbaApiEventRequest(this.selectedEvent, 'matches').always(function() {
                 this.inScheduleRequest = false;
+                this.scheduleStats.pop();
             }.bind(this)).then(function(tbaMatches) {
                 if (!tbaMatches) {
                     tbaMatches = [];
                 }
                 var newLevels = Schedule.findAllCompLevels(schedule);
                 var tbaLevels = Schedule.findAllCompLevels(tbaMatches);
-                this.scheduleStats.pop();
                 this.scheduleStats.push('TBA has level(s): ' + tbaLevels.join(', '));
                 this.scheduleStats.push('The FMS report has level(s): ' + newLevels.join(', '));
                 newLevels = newLevels.filter(function(level) {
