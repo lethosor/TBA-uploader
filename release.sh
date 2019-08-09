@@ -20,6 +20,7 @@ mkdir -p "$rel_dir"
 echo "Build folder: $rel_dir"
 
 echo "Generating assets..."
+node consts-gen.js consts.json --output-go consts.go --output-js web/src/consts.js
 yarn run --silent build --display errors-only
 cp README.md web/dist/
 go-bindata -fs -prefix web/dist/ -o bindata_assetfs.go web/dist/...

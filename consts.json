@@ -1,0 +1,8 @@
+{
+    "MATCH_LEVEL": {
+        "TEST": 0,
+        "PRACTICE": 1,
+        "QUAL": 2,
+        "PLAYOFF": 3
+    }
+}

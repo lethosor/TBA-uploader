@@ -7,3 +7,4 @@ node_modules/
 yarn*.log
 package-lock.json
 bundle.js
+consts.go

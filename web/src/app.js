@@ -1,6 +1,7 @@
 import 'regenerator-runtime';
 
 import api from 'src/api.js';
+import {MATCH_LEVEL} from 'src/consts.js';
 import Schedule from 'src/schedule.js';
 import tba from 'src/tba.js';
 import utils from 'src/utils.js';
@@ -105,7 +106,7 @@ const app = new Vue({
         scheduleStats: [],
         schedulePendingMatches: [],
 
-        matchLevel: MATCH_LEVEL_QUAL,
+        matchLevel: MATCH_LEVEL.QUAL,
         showAllLevels: false,
         inMatchRequest: false,
         matchError: '',
@@ -173,10 +174,10 @@ const app = new Vue({
             return year;
         },
         isQual: function() {
-            return this.matchLevel == MATCH_LEVEL_QUAL;
+            return this.matchLevel == MATCH_LEVEL.QUAL;
         },
         isPlayoff: function() {
-            return this.matchLevel == MATCH_LEVEL_PLAYOFF;
+            return this.matchLevel == MATCH_LEVEL.PLAYOFF;
         },
         schedulePendingMatchCells: function() {
             var addTeamCell = function(cells, match, color, i) {

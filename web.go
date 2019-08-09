@@ -124,12 +124,6 @@ func marshalFMSConfig(w http.ResponseWriter) ([]byte, error) {
     return out, nil
 }
 
-func jsConsts(w http.ResponseWriter, r *http.Request) {
-    for name, value := range getConstsMap() {
-        w.Write([]byte(fmt.Sprintf("window.%s = %v;\n", name, value)))
-    }
-}
-
 func jsVersion(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte(fmt.Sprintf("window.VERSION=\"%s\";", Version)))
 }
@@ -427,7 +421,6 @@ func RunWebServer(port int, web_folder string) {
     } else {
         fs = AssetFile()
     }
-    handleFuncWrapper(r, "/js/consts.js", jsConsts)
     handleFuncWrapper(r, "/js/version.js", jsVersion)
     handleFuncWrapper(r, "/js/fms_config.js", jsFMSConfig)
     handleFuncWrapper(r, "/api/fms_config/get", apiGetFMSConfig)

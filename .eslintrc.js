@@ -14,8 +14,6 @@ module.exports = {
     "globals": {
         "Vue": "readonly",
         "showdown": "readonly",
-        "MATCH_LEVEL_QUAL": "readonly",
-        "MATCH_LEVEL_PLAYOFF": "readonly",
     },
     "rules": {
         "indent": [
