@@ -50,8 +50,10 @@ func makeExtraMatchAllianceInfo2019() extraMatchAllianceInfo2019 {
 
 func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019, extra extraMatchAllianceInfo2019, playoff bool) {
 	rp := info.baseRP
-	// adjust should be negative when total = 0
-	breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
+	if _, ok := breakdown["adjustPoints"]; !ok {
+		// adjust should be negative when total = 0
+		breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
+	}
 
 	rocket_rp := info.rocketRP || extra.AddRpRocket
 	breakdown["completeRocketRankingPoint"] = rocket_rp
@@ -86,6 +88,7 @@ var simpleFields2019 = map[string]string {
 	"HAB Climb Points": "habClimbPoints",
 	"Hatch Panel Points": "hatchPanelPoints",
 	"Sandstorm Bonus Points": "sandStormBonusPoints",
+	"Adjustments": "adjustPoints",
 }
 
 const (
