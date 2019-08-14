@@ -3,6 +3,28 @@
         "TEST": 0,
         "PRACTICE": 1,
         "QUAL": 2,
-        "PLAYOFF": 3
-    }
+        "PLAYOFF": 3,
+    },
+    "BRACKET_TYPE": {
+        "BRACKET_8_TEAM": 0,
+        "BRACKET_16_TEAM": 1,
+        "BRACKET_4_TEAM": 2,
+        "AVG_SCORE_8_TEAM": 3,
+        "ROUND_ROBIN_6_TEAM": 4,
+        "DOUBLE_ELIM_8_TEAM": 5,
+        "BO5_FINALS": 6,
+        "BO3_FINALS": 7,
+        "CUSTOM": 8,
+    },
+    "BRACKET_NAME": {
+        "BRACKET_8_TEAM": "Elimination Bracket (8 Alliances)",
+        "BRACKET_4_TEAM": "Elimination Bracket (4 Alliances)",
+        "BRACKET_16_TEAM": "Elimination Bracket (16 Alliances)",
+        "AVG_SCORE_8_TEAM": "Average Score (8 Alliances)",
+        "ROUND_ROBIN_6_TEAM": "Round Robin (6 Alliances)",
+        "DOUBLE_ELIM_8_TEAM": "Double Elimination Bracket (8 Alliances)",
+        "BO3_FINALS": "Best of 3 Finals",
+        "BO5_FINALS": "Best of 5 Finals",
+        "CUSTOM": "Custom",
+    },
 }

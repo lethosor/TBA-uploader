@@ -1,7 +1,11 @@
 import 'regenerator-runtime';
 
 import api from 'src/api.js';
-import {MATCH_LEVEL} from 'src/consts.js';
+import {
+    BRACKET_NAME,
+    BRACKET_TYPE,
+    MATCH_LEVEL,
+} from 'src/consts.js';
 import Schedule from 'src/schedule.js';
 import tba from 'src/tba.js';
 import utils from 'src/utils.js';
@@ -137,6 +141,11 @@ const app = new Vue({
         inAwardRequest: false,
     },
     computed: {
+        BRACKET_TYPES: function() {
+            return Object.fromEntries(Object.keys(BRACKET_TYPE).map((key) => [
+                BRACKET_TYPE[key], BRACKET_NAME[key],
+            ]));
+        },
         eventSelected: function() {
             return !!this.selectedEvent && !this.inAddEvent;
         },
@@ -342,6 +351,7 @@ const app = new Vue({
             }
             tbaApiEventRequest(this.selectedEvent).then(function(data) {
                 this.$set(this, 'tbaEventData', data);
+                this.eventExtras[this.selectedEvent].playoff_type = data.playoff_type;
             }.bind(this))
             .fail(function(error) {
                 this.tbaReadError = utils.parseErrorJSON(error);
@@ -420,7 +430,15 @@ const app = new Vue({
             sendApiRequest('/api/info/upload', this.selectedEvent, {
                 remap_teams: remapMap,
             }).fail(function(error) {
-                this.remapError = utils.parseErrorJSON(error);
+                this.remapError = utils.parseErrorText(error);
+            }.bind(this));
+        },
+
+        updatePlayoffType: function() {
+            sendApiRequest('/api/info/upload', this.selectedEvent, {
+                playoff_type: this.eventExtras[this.selectedEvent].playoff_type,
+            }).fail(function(error) {
+                this.remapError = utils.parseErrorText(error);
             }.bind(this));
         },
 

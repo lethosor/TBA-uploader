@@ -100,7 +100,8 @@
             <hr>
 
             <div>
-              <h3>Team remappings</h3>
+              <div>Note: any changes below may not be reflected quickly in data that is already uploaded to TBA (e.g. match schedules) unless they are uploaded again.</div>
+              <h3 class="mt-2">Team remappings</h3>
               <alert type="danger" v-model="remapError"></alert>
 
               <ul>
@@ -118,7 +119,16 @@
               <button class="btn btn-success" @click="addTeamRemap">Add</button>
               <button class="btn btn-success" @click="uploadTeamRemap" v-if="eventExtras[selectedEvent].remap_teams.length">Upload</button>
               <button v-else class="btn btn-warning" @click="uploadTeamRemap">Remove all remappings from TBA</button>
-              <div>Note: any changes here may not be reflected quickly in data that is already uploaded to TBA (e.g. match schedules) unless they are uploaded again.</div>
+
+              <h3 class="mt-2">Playoff type</h3>
+              <div class="input-group">
+                <select class="form-control col-md-4 col-sm-6" v-model.number="eventExtras[selectedEvent].playoff_type" :disabled="eventExtras[selectedEvent].playoff_type === undefined">
+                  <option v-for="[type, name] in Object.entries(BRACKET_TYPES)" :value="type">{{ name }}</option>
+                </select>
+                <button class="btn btn-danger ml-2" @click="updatePlayoffType" :disabled="eventExtras[selectedEvent].playoff_type === undefined || eventExtras[selectedEvent].playoff_type === tbaEventData.playoff_type">
+                  Change playoff type
+                </button>
+              </div>
             </div>
           </div>
         </div>
