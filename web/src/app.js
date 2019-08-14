@@ -435,9 +435,12 @@ const app = new Vue({
         },
 
         updatePlayoffType: function() {
+            const playoff_type = this.eventExtras[this.selectedEvent].playoff_type;
             sendApiRequest('/api/info/upload', this.selectedEvent, {
-                playoff_type: this.eventExtras[this.selectedEvent].playoff_type,
-            }).fail(function(error) {
+                playoff_type,
+            }).then(function() {
+                this.tbaEventData.playoff_type = playoff_type;
+            }.bind(this)).fail(function(error) {
                 this.remapError = utils.parseErrorText(error);
             }.bind(this));
         },
