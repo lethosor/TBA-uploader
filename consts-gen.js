@@ -1,13 +1,14 @@
 const fs = require('fs');
 
 const commandLineArgs = require('command-line-args');
+const JSON5 = require('json5');
 
 function generateGo(consts) {
     return 'package main\n\n' + Object.entries(consts).map(([type, values]) =>
         'const (\n' + Object.entries(values).map(([key, value]) =>
             `\t${type}_${key} = ${JSON.stringify(value)}\n`
         ).join('') + ')\n\n'
-    );
+    ).join('');
 }
 
 function generateJs(consts) {
@@ -27,7 +28,7 @@ function main() {
         throw new Error('Missing input file');
     }
 
-    const inJson = JSON.parse(fs.readFileSync(args['input-file']));
+    const inJson = JSON5.parse(fs.readFileSync(args['input-file']));
     if (args['output-go']) {
         fs.writeFileSync(args['output-go'], generateGo(inJson));
     }
