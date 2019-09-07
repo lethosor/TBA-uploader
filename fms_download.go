@@ -5,7 +5,6 @@ import (
     "fmt"
     "io"
     "io/ioutil"
-    "log"
     "net/http"
     "os"
     "path"
@@ -22,13 +21,13 @@ var FMSConfig struct {
 
 func checkFMSConnection() {
     // make sure the FMS server is running
-    log.Printf("Looking for FMS at %s...\n", FMSConfig.Server)
+    logger.Printf("Looking for FMS at %s...\n", FMSConfig.Server)
     client := http.Client{Timeout: 5 * time.Second}
     _, err := client.Get(FMSConfig.Server)
     if err != nil {
-        log.Println("Failed to connect to FMS!")
+        logger.Println("Failed to connect to FMS!")
     } else {
-        log.Println("Found FMS")
+        logger.Println("Found FMS")
     }
 }
 
@@ -39,7 +38,7 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
     //      err: if the file was not downloaded
     err = os.MkdirAll(folder, os.ModePerm)
     if err != nil {
-        log.Printf("Failed to create folder: %s: %s\n", folder, err)
+        logger.Printf("Failed to create folder: %s: %s\n", folder, err)
     }
     filepath = path.Join(folder, filename)
     ok = false
@@ -100,7 +99,7 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
     dom.Find("tbody tr").Each(func(i int, row *goquery.Selection) {
         match_url, ok := row.Find("a").First().Attr("href")
         if !ok {
-            log.Printf("Couldn't find link in row %d\n", i)
+            logger.Printf("Couldn't find link in row %d\n", i)
             return
         }
         match_url = FMSConfig.Server + match_url
@@ -109,7 +108,7 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
         button_text = strings.Replace(button_text, "/", "-", -1)
         filename, ok, err := downloadFile(path.Join(folder, "matches"), button_text + ".html", match_url, !new_only)
         if !ok {
-            log.Printf("Failed to download %s: %s\n", button_text, err)
+            logger.Printf("Failed to download %s: %s\n", button_text, err)
         } else if err == nil {
             files = append(files, filename)
         }

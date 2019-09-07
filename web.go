@@ -4,7 +4,6 @@ import (
     "encoding/json"
     "fmt"
     "io/ioutil"
-    "log"
     "net/http"
     "os"
     "path"
@@ -27,7 +26,7 @@ type APIError struct {
 }
 
 func apiPanicCode(code int, message string, args ...interface{}) {
-    log.Printf("API Error %d: " + message, append([]interface{}{code}, args...)...)
+    logger.Printf("API Error %d: " + message, append([]interface{}{code}, args...)...)
     panic(APIError{
         code: code,
         message: fmt.Sprintf(message, args...),
@@ -118,7 +117,7 @@ func marshalFMSConfig(w http.ResponseWriter) ([]byte, error) {
     out, err := json.Marshal(FMSConfig)
     if err != nil {
         w.WriteHeader(http.StatusInternalServerError)
-        log.Printf("JSON.Marshal(FMSConfig): %s\n", err)
+        logger.Printf("JSON.Marshal(FMSConfig): %s\n", err)
         return nil, err
     }
     return out, nil
@@ -147,7 +146,7 @@ func apiGetFMSConfig(w http.ResponseWriter, r *http.Request) {
 func apiSetFMSConfig(w http.ResponseWriter, r *http.Request) {
     body, _ := ioutil.ReadAll(r.Body)
     err := json.Unmarshal(body, &FMSConfig)
-    log.Printf("Changed FMS Config: Server = \"%s\", Data Folder = \"%s\"\n", FMSConfig.Server, FMSConfig.DataFolder)
+    logger.Printf("Changed FMS Config: Server = \"%s\", Data Folder = \"%s\"\n", FMSConfig.Server, FMSConfig.DataFolder)
     resp := make(map[string]interface{})
     resp["ok"] = (err == nil)
     if err != nil {
@@ -157,7 +156,7 @@ func apiSetFMSConfig(w http.ResponseWriter, r *http.Request) {
     out, err := json.Marshal(resp)
     w.Write(out)
     if err != nil {
-        log.Printf("apiSetFMSConfig: Marshal failed: %s\n", err)
+        logger.Printf("apiSetFMSConfig: Marshal failed: %s\n", err)
     }
 }
 
@@ -203,7 +202,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 
     if files != nil {
         for i := 0; i < len(files); i++ {
-            log.Printf("Downloaded %s\n", files[i])
+            logger.Printf("Downloaded %s\n", files[i])
             fname := filepath.Base(files[i])
             match_number, err := strconv.Atoi(strings.Split(fname, "-")[0])
             if err != nil {
@@ -332,7 +331,7 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
             if ext == ".html" || ext == ".json" || ext == ".receipt" {
                 err := os.Remove(path.Join(match_folder, file.Name()))
                 if err != nil {
-                    log.Printf("purge: failed to delete %s: %v\n", file.Name(), err)
+                    logger.Printf("purge: failed to delete %s: %v\n", file.Name(), err)
                 }
             }
         }
@@ -442,9 +441,9 @@ func RunWebServer(port int, web_folder string) {
     handleFuncWrapper(r, "/api/media/upload", apiUploadMedia)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
-    log.Printf("Serving on %s\n", addr)
+    logger.Printf("Serving on %s\n", addr)
     err := http.ListenAndServe(addr, r)
     if err != nil {
-        log.Fatalf("Could not start server: %s\n", err)
+        logger.Fatalf("Could not start server: %s\n", err)
     }
 }
