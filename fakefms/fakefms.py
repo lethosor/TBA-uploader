@@ -31,7 +31,7 @@ def build_level_index(level):
         list_html = f.read()
     link_matches = re.findall(r'<a.*?href=([\'"]).*?matchId=(.*?)\1', list_html)
     button_matches = re.findall(r'<button.*?btn-success.*?<b>(.*?)</b>', list_html)
-    button_matches = map(lambda s: s.replace(' ', '').replace('/', '-'), button_matches)
+    button_matches = [s.replace(' ', '').replace('/', '-') for s in button_matches]
     if len(link_matches) != len(button_matches):
         raise ValueError('')
     for i in range(len((link_matches))):
