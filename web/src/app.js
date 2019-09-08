@@ -13,6 +13,8 @@ import utils from 'src/utils.js';
 import Alert from 'components/Alert.vue';
 import Dropzone from 'components/Dropzone.vue';
 import ScoreSummary from 'components/ScoreSummary.vue';
+import Tab from 'components/Tab.vue';
+import TabGroup from 'components/TabGroup.vue';
 
 const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
 const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
@@ -85,6 +87,8 @@ const app = new Vue({
         Alert,
         Dropzone,
         ScoreSummary,
+        Tab,
+        TabGroup,
     },
     data: {
         version: window.VERSION || 'missing version',
