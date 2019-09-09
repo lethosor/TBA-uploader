@@ -42,6 +42,7 @@ module.exports = {
         alias: {
             src: path.join(__dirname, 'web', 'src'),
             components: path.join(__dirname, 'web', 'src', 'components'),
+            'vue$': 'vue/dist/vue.esm.js',  // todo: remove once all templates are compiled at build time
         },
     },
 };

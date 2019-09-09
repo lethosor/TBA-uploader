@@ -1,4 +1,5 @@
 import 'regenerator-runtime';
+import Vue from 'vue';
 
 import api from 'src/api.js';
 import {
