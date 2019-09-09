@@ -1,4 +1,8 @@
-import {BButton} from 'bootstrap-vue';
+import {
+    BButton,
+    BTab,
+    BTabs,
+} from 'bootstrap-vue';
 import 'regenerator-runtime';
 import Vue from 'vue';
 
@@ -86,6 +90,8 @@ const app = new Vue({
     components: {
         Alert,
         BButton,
+        BTab,
+        BTabs,
         Dropzone,
         ScoreSummary,
     },
@@ -276,13 +282,11 @@ const app = new Vue({
                 var tab = document.getElementById(lastTab);
                 if (tab) {
                     tab.click();
-                    $('.tab-pane').removeClass('show active');
+                    // $('.tab-pane').removeClass('show active');
                     $('.tab-pane[aria-labelledby=' + lastTab + ']').addClass('show active');
                 }
             }
         }.bind(this));
-
-        this.$refs.scheduleUpload.$on('upload', this.onScheduleUpload);
     },
     methods: {
         saveFMSConfig: function() {
@@ -455,7 +459,7 @@ const app = new Vue({
             this.scheduleStats = [];
             this.schedulePendingMatches = [];
 
-            if (!keepFile) {
+            if (!keepFile && this.$refs.scheduleUpload) {
                 this.$refs.scheduleUpload.reset();
             }
         },
