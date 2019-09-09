@@ -1,7 +1,7 @@
 <template>
     <b-alert
         :variant="type"
-        :show="text.length"
+        :show="text.length > 0"
         dismissible
         @dismissed="$emit('input', '')"
     >
