@@ -1,3 +1,4 @@
+import {BButton} from 'bootstrap-vue';
 import 'regenerator-runtime';
 import Vue from 'vue';
 
@@ -84,6 +85,7 @@ const app = new Vue({
     el: '#main',
     components: {
         Alert,
+        BButton,
         Dropzone,
         ScoreSummary,
     },

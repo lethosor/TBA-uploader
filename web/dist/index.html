@@ -46,10 +46,10 @@
                 <option v-for="event in events" :value="event">{{event}}</option>
                 <option value="_add">Add an event...</option>
               </select>
-              <button class="btn btn-success ml-auto" @click="selectedEvent='_add'">Add an event</button>
-              <button class="btn btn-info ml-auto" :disabled="!eventSelected" @click="editSelectedEvent">Edit this event</button>
-              <button class="btn btn-danger ml-auto" :disabled="!eventSelected" @click="deleteSelectedEvent">Delete this event</button>
-              <button class="btn btn-info ml-auto" @click="syncEvents">Sync</button>
+              <b-button variant="success" class="ml-auto" @click="selectedEvent='_add'">Add an event</b-button>
+              <b-button variant="info" class="ml-auto" :disabled="!eventSelected" @click="editSelectedEvent">Edit this event</b-button>
+              <b-button variant="danger" class="ml-auto" :disabled="!eventSelected" @click="deleteSelectedEvent">Delete this event</b-button>
+              <b-button variant="info" class="ml-auto" @click="syncEvents">Sync</b-button>
             </label>
           </div>
           <div v-if="!inAddEvent">
@@ -67,7 +67,7 @@
               </label>
             </div>
             <div>
-              <button class="btn btn-success" @click="fetchEventData">Fetch event data from TBA</button>
+              <b-button variant="success" @click="fetchEventData">Fetch event data from TBA</b-button>
             </div>
           </div>
           <div v-if="inAddEvent">
@@ -92,8 +92,8 @@
               </label>
             </div>
             <div>
-              <button class="btn btn-danger" @click="cancelAddEvent">Cancel</button>
-              <button class="btn btn-success" @click="addEvent" :disabled="!canAddEvent">Add</button>
+              <b-button variant="danger" @click="cancelAddEvent">Cancel</b-button>
+              <b-button variant="success" @click="addEvent" :disabled="!canAddEvent">Add</b-button>
             </div>
           </div>
           <div v-if="isEventSelected">
@@ -116,18 +116,18 @@
                 </li>
               </ul>
 
-              <button class="btn btn-success" @click="addTeamRemap">Add</button>
-              <button class="btn btn-success" @click="uploadTeamRemap" v-if="eventExtras[selectedEvent].remap_teams.length">Upload</button>
-              <button v-else class="btn btn-warning" @click="uploadTeamRemap">Remove all remappings from TBA</button>
+              <b-button variant="success" @click="addTeamRemap">Add</b-button>
+              <b-button v-if="eventExtras[selectedEvent].remap_teams.length" variant="success" @click="uploadTeamRemap">Upload</b-button>
+              <b-button v-else variant="warning" @click="uploadTeamRemap">Remove all remappings from TBA</b-button>
 
               <h3 class="mt-2">Playoff type</h3>
               <div class="input-group">
                 <select class="form-control col-md-4 col-sm-6" v-model.number="eventExtras[selectedEvent].playoff_type" :disabled="eventExtras[selectedEvent].playoff_type === undefined">
                   <option v-for="[type, name] in Object.entries(BRACKET_TYPES)" :value="type">{{ name }}</option>
                 </select>
-                <button class="btn btn-danger ml-2" @click="updatePlayoffType" :disabled="eventExtras[selectedEvent].playoff_type === undefined || eventExtras[selectedEvent].playoff_type === tbaEventData.playoff_type">
+                <b-button variant="danger" class="ml-2" @click="updatePlayoffType" :disabled="eventExtras[selectedEvent].playoff_type === undefined || eventExtras[selectedEvent].playoff_type === tbaEventData.playoff_type">
                   Change playoff type
-                </button>
+                </b-button>
               </div>
             </div>
           </div>
@@ -146,7 +146,7 @@
           <dropzone ref="scheduleUpload" title="Upload a schedule" accept="text/csv"></dropzone>
           <div v-if="scheduleStats.length">
             <div class="mb-4">
-              <button class="btn btn-danger" @click="scheduleReset(false)">Reset</button>
+              <b-button variant="danger" @click="scheduleReset(false)">Reset</b-button>
             </div>
             <h3>2. Verify and upload to TBA</h3>
             <p>Verify that the following information is correct:</p>
@@ -178,7 +178,7 @@
                 <span class="warning">Warning:</span> this will overwrite any match data on TBA for these matches.
                 Double-check the event page if you have any doubt that these matches have not already been uploaded.
               </p>
-              <button class="btn btn-success" :disabled="inScheduleRequest || !schedulePendingMatches.length" @click="postSchedule">Upload these matches to TBA</button>
+              <b-button variant="success" :disabled="inScheduleRequest || !schedulePendingMatches.length" @click="postSchedule">Upload these matches to TBA</b-button>
             </div>
             <div v-else-if="!inScheduleRequest" class="alert alert-warning">
               No new competition levels detected; nothing to upload.
@@ -194,9 +194,9 @@
               <option value="2">Qualification</option>
               <option value="3">Playoff</option>
             </select>
-            <button class="btn btn-success" data-accesskey="f" @click="fetchMatches(false)" :disabled="inMatchRequest">Fetch new matches</button>
-            <button class="btn btn-danger" data-accesskey="a" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</button>
-            <button class="btn btn-info ml-auto" data-accesskey="r" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</button>
+            <b-button variant="success" data-accesskey="f" @click="fetchMatches(false)" :disabled="inMatchRequest">Fetch new matches</b-button>
+            <b-button variant="danger" data-accesskey="a" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</b-button>
+            <b-button variant="info" class="ml-auto" data-accesskey="r" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</b-button>
           </div>
           <p>
             <span class="warning">Warning:</span> do not click any buttons on this page while a match is running.
@@ -206,26 +206,26 @@
           <alert type="danger" v-model="rankingsError" prefix="Rankings:"></alert>
           <div v-if="inMatchAdvanced">
             <hr>
-            <h3>Advanced options <button class="btn btn-outline-danger btn-sm" @click.prevent="inMatchAdvanced = false">Close</button></h3>
+            <h3>Advanced options <b-button variant="outline-danger" size="sm" @click.prevent="inMatchAdvanced = false">Close</b-button></h3>
             <div class="form-inline mb-2">
               <label>
                 Match ID (Match-Play):
                 <input class="form-control" v-model="advSelectedMatch" placeholder="M-P" size="5">
               </label>
-              <button class="btn btn-warning" @click="purgeAdvSelectedMatch" :disabled="inMatchRequest">Purge</button>
-              <button class="btn btn-warning" @click="markAdvSelectedMatchUploaded" :disabled="inMatchRequest">Mark as uploaded</button>
+              <b-button variant="warning" @click="purgeAdvSelectedMatch" :disabled="inMatchRequest">Purge</b-button>
+              <b-button variant="warning" @click="markAdvSelectedMatchUploaded" :disabled="inMatchRequest">Mark as uploaded</b-button>
               <span class="warning">{{advMatchError}}</span>
             </div>
             <div>
-              <button class="btn btn-danger" @click="fetchMatches(true)" :disabled="inMatchRequest">Purge and re-fetch all matches</button>
+              <b-button variant="danger" @click="fetchMatches(true)" :disabled="inMatchRequest">Purge and re-fetch all matches</b-button>
             </div>
             <hr>
           </div>
           <alert type="danger" v-model="matchError"></alert>
           <div v-if="matchSummaries.length">
             <h3>Matches to upload ({{matchSummaries.length}})</h3>
-            <button class="btn btn-success mb-2" data-accesskey="u" accesskey="u" title="[u]" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</button>
-            <button class="btn btn-warning mb-2" data-accesskey="e" accesskey="e" title="[e]" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</button>
+            <b-button variant="success" class="mb-2" data-accesskey="u" accesskey="u" title="[u]" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</b-button>
+            <b-button variant="warning" class="mb-2" data-accesskey="e" accesskey="e" title="[e]" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</b-button>
             <div class="alert alert-danger" v-if="fetchedScorelessMatches">
               One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted from FMS first). If the scores below are correct, click "Upload scores".
             </div>
@@ -253,8 +253,8 @@
 
         <div class="tab-pane fade" id="match-videos" role="tabpanel" aria-labelledby="match-videos-tab">
           <div>
-            <button class="btn btn-success" @click="fetchVideos" :disabled="inVideoRequest">Fetch data from TBA</button>
-            <button class="btn btn-success" @click="uploadVideos" :disabled="inVideoRequest">Upload data to TBA</button>
+            <b-button variant="success" @click="fetchVideos" :disabled="inVideoRequest">Fetch data from TBA</b-button>
+            <b-button variant="success" @click="uploadVideos" :disabled="inVideoRequest">Upload data to TBA</b-button>
           </div>
           <ul>
             <li><span class="warning">Warning:</span> Anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</li>
@@ -301,17 +301,17 @@
                   <input class="form-control" title="Person" placeholder="Person" v-model="award.person" @blur="saveAwards">
                 </td>
                 <td>
-                  <button class="btn btn-info" @click="duplicateAward(award)" title="Create a new award with the same name">Duplicate</button>
-                  <button class="btn btn-danger" @click="clearAward(award)">Clear</button>
-                  <button class="btn btn-danger" @click="deleteAward(award)">Delete</button>
+                  <b-button variant="info" @click="duplicateAward(award)" title="Create a new award with the same name">Duplicate</b-button>
+                  <b-button variant="danger" @click="clearAward(award)">Clear</b-button>
+                  <b-button variant="danger" @click="deleteAward(award)">Delete</b-button>
                 </td>
               </tr>
             </tbody>
           </table>
-          <button class="btn btn-success" @click="addAward">Add award</button>
-          <button class="btn btn-success" @click="fetchAutomaticAwards">Auto-detect winners/finalists</button>
+          <b-button variant="success" @click="addAward">Add award</b-button>
+          <b-button variant="success" @click="fetchAutomaticAwards">Auto-detect winners/finalists</b-button>
           <hr>
-          <button class="btn btn-success" @click="uploadAwards" :disabled="inAwardRequest">Upload all awards</button>
+          <b-button variant="success" @click="uploadAwards" :disabled="inAwardRequest">Upload all awards</b-button>
           <span>{{awardStatus}}</span>
         </div>
 
@@ -339,8 +339,8 @@
               <input class="form-control" v-model="fmsConfig.data_folder">
             </label>
             <div class="col-sm-12">
-              <button class="btn btn-success" @click="saveFMSConfig">Save</button>
-              <button class="btn btn-danger" @click="resetFMSConfig">Reset</button>
+              <b-button variant="success" @click="saveFMSConfig">Save</b-button>
+              <b-button variant="danger" @click="resetFMSConfig">Reset</b-button>
             </div>
           </div>
           <div class="alert alert-danger raw-message" v-if="fmsConfigError">{{fmsConfigError}}</div>
@@ -472,11 +472,11 @@
               </table>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="hideEditMatch">Cancel</button>
-              <button type="button" class="btn btn-primary" @click="saveEditMatch">Save changes</button>
+              <b-button variant="secondary" @click="hideEditMatch">Cancel</b-button>
+              <b-button variant="primary" @click="saveEditMatch">Save changes</b-button>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-warning" @click="editMatchMarkUploaded">Mark this match as uploaded</button>
+              <b-button variant="warning" @click="editMatchMarkUploaded">Mark this match as uploaded</b-button>
             </div>
           </div>
         </div>
