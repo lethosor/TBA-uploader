@@ -16,6 +16,14 @@ export default Object.freeze({
         return res || {};
     },
 
+    safeParseLocalStorageInteger(key, defaultValue) {
+        var res = parseInt(localStorage.getItem(key));
+        if (isNaN(res)) {
+            return defaultValue;
+        }
+        return res;
+    },
+
     parseErrorText(res) {
         if (res.responseText) {
             return res.responseText;

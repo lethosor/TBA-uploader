@@ -100,8 +100,9 @@ const app = new Vue({
         helpHTML: '',
         fmsConfig: window.FMS_CONFIG || {},
         fmsConfigError: '',
+        selectedTab: utils.safeParseLocalStorageInteger('lastTab', 0),
         events: Object.keys(STORED_EVENTS).sort(),
-        selectedEvent: '',
+        selectedEvent: localStorage.getItem('selectedEvent') || '',
         addEventUI: makeAddEventUI(),
         readApiKey: localStorage.getItem('readApiKey') || '',
         tbaEventData: {},
@@ -119,7 +120,7 @@ const app = new Vue({
         scheduleStats: [],
         schedulePendingMatches: [],
 
-        matchLevel: MATCH_LEVEL.QUAL,
+        matchLevel: utils.safeParseLocalStorageInteger('matchLevel', MATCH_LEVEL.QUAL),
         showAllLevels: false,
         inMatchRequest: false,
         matchError: '',
@@ -223,6 +224,9 @@ const app = new Vue({
         },
     },
     watch: {
+        selectedTab: function(tab) {
+            localStorage.setItem('lastTab', tab);
+        },
         readApiKey: function(key) {
             localStorage.setItem('readApiKey', key);
         },
@@ -249,43 +253,19 @@ const app = new Vue({
         },
     },
     mounted: function() {
-        var event = localStorage.getItem('selectedEvent') || '';
-        if (event) {
-            this.initEvent(event);
+        if (this.selectedEvent) {
+            this.initEvent(this.selectedEvent);
+            this.fetchEventData();
         }
-        this.selectedEvent = event;
-        this.matchLevel = localStorage.getItem('matchLevel') || this.matchLevel;
+
         $.get('/README.md', function(readme) {
             // remove first line (header)
             readme = readme.substr(readme.indexOf('\n'));
             this.helpHTML = new showdown.Converter().makeHtml(readme);
         }.bind(this));
 
-        $(this.$refs.mainTabs).on('shown.bs.tab', 'a', function() {
-            localStorage.setItem('lastTab', this.id);
-            $('[data-accesskey]').each(function(_, e) {
-                e = $(e);
-                if (e.is(':visible')) {
-                    e.attr('accesskey', e.attr('data-accesskey'));
-                }
-                else {
-                    e.removeAttr('accesskey');
-                }
-                e.attr('title', '[' + e.attr('accesskey') + ']');
-            });
-        });
-
         $(function() {
             $(this.$el).removeClass('hidden');
-            var lastTab = localStorage.getItem('lastTab');
-            if (lastTab) {
-                var tab = document.getElementById(lastTab);
-                if (tab) {
-                    tab.click();
-                    // $('.tab-pane').removeClass('show active');
-                    $('.tab-pane[aria-labelledby=' + lastTab + ']').addClass('show active');
-                }
-            }
         }.bind(this));
     },
     methods: {

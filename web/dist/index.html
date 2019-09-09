@@ -13,8 +13,8 @@
         <a :href="'https://www.thebluealliance.com/event/' + selectedEvent" target="_blank">{{selectedEvent}}</a>
       </span></h2>
 
-      <b-tabs>
-        <b-tab title="Event setup" active>
+      <b-tabs v-model="selectedTab">
+        <b-tab title="Event setup">
           <div class="form-inline" v-if="!inAddEvent">
             <label>
               Event:
