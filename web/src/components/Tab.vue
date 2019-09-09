@@ -6,8 +6,14 @@ export default {
     functional: true,
     components: {TabContent,TabLink},
     props: {
-        name: String,
-        selected: Boolean,
+        name: {
+            type: String,
+            required: true,
+        },
+        selected: {
+            type: Boolean,
+            default: false,
+        },
     },
     render: function(createElement, context) {
         const cleanedName = context.props.name.toLowerCase().replace(/\W/g, '-');

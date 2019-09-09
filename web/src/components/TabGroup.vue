@@ -7,7 +7,10 @@ export default {
     render: (createElement, context) => {
         const linkElements = context.children.filter((c) => c.tag && c.tag.includes('TabLink'));
         const contentElements = context.children.filter((c) => c.tag && c.tag.includes('TabContent'));
-        return [createElement(TabLinkGroup, linkElements), createElement(TabContentGroup, contentElements)];
+        return [
+            createElement(TabLinkGroup, linkElements),
+            createElement(TabContentGroup, contentElements),
+        ];
     },
 };
 </script>
