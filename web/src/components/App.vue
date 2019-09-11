@@ -688,10 +688,11 @@
                 </div>
             </b-tab>
 
-            <b-tab title="Help">
-                <!-- eslint-disable-next-line vue/no-v-html -->
-                <div v-html="helpHTML" />
-            </b-tab>
+            <!-- eslint-disable vue/no-v-html -->
+            <b-tab
+                title="Help"
+                v-html="helpHTML"
+            />
         </b-tabs>
 
         <b-modal
