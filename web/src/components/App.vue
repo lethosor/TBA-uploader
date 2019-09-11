@@ -34,29 +34,33 @@
                             >{{ event }}</option>
                             <option value="_add">Add an event...</option>
                         </b-form-select>
-                        <b-button
-                            variant="success"
-                            class="ml-auto"
-                            @click="selectedEvent='_add'"
-                        >Add an event</b-button>
-                        <b-button
-                            variant="info"
-                            class="ml-auto"
-                            :disabled="!eventSelected"
-                            @click="editSelectedEvent"
-                        >Edit this event</b-button>
-                        <b-button
-                            variant="danger"
-                            class="ml-auto"
-                            :disabled="!eventSelected"
-                            @click="deleteSelectedEvent"
-                        >Delete this event</b-button>
-                        <b-button
-                            variant="info"
-                            class="ml-auto"
-                            @click="syncEvents"
-                        >Sync</b-button>
                     </label>
+                    <b-button
+                        variant="success"
+                        @click="selectedEvent='_add'"
+                    >
+                        Add an event
+                    </b-button>
+                    <b-button
+                        variant="info"
+                        :disabled="!eventSelected"
+                        @click="editSelectedEvent"
+                    >
+                        Edit this event
+                    </b-button>
+                    <b-button
+                        variant="danger"
+                        :disabled="!eventSelected"
+                        @click="deleteSelectedEvent"
+                    >
+                        Delete this event
+                    </b-button>
+                    <b-button
+                        variant="info"
+                        @click="syncEvents"
+                    >
+                        Sync
+                    </b-button>
                 </div>
                 <div v-if="!inAddEvent">
                     <div v-if="tbaEventData.name">Event name: {{ tbaEventData.name }} ({{ tbaEventData.year }})</div>
