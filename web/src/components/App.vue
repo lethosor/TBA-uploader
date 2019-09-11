@@ -70,11 +70,10 @@
                             href="https://www.thebluealliance.com/account"
                             target="_blank"
                         >create a key</a>&nbsp;if needed)
-                        <input
+                        <b-form-input
                             v-model="readApiKey"
-                            class="form-control"
                             :type="authInputType"
-                        >
+                        />
                     </label>
                     <div>
                         <b-form-checkbox v-model="addEventUI.showAuth">
@@ -94,11 +93,7 @@
                     <h3>Add event</h3>
                     <label>
                         Event code:
-                        <input
-                            v-model="addEventUI.event"
-                            class="form-control"
-                            type="text"
-                        >
+                        <b-form-input v-model="addEventUI.event" />
                         <span
                             v-if="addEventUI.event.length >= 4 && !addEventIsValidYear"
                             class="text-danger"
@@ -106,19 +101,17 @@
                     </label>
                     <label class="row col">
                         Auth ID:
-                        <input
+                        <b-form-input
                             v-model="addEventUI.auth"
-                            class="form-control"
                             :type="authInputType"
-                        >
+                        />
                     </label>
                     <label class="row col">
                         Auth secret:
-                        <input
+                        <b-form-input
                             v-model="addEventUI.secret"
-                            class="form-control"
                             :type="authInputType"
-                        >
+                        />
                     </label>
                     <div>
                         <b-form-checkbox v-model="addEventUI.showAuth">
@@ -158,14 +151,9 @@
                                 :key="i"
                             >
                                 <form class="form-inline">
-                                    <input
-                                        v-model="remap.fms"
-                                        class="form-control"
-                                    > &rarr;
-                                    <input
-                                        v-model="remap.tba"
-                                        class="form-control"
-                                    >
+                                    <b-form-input v-model="remap.fms" />
+                                    &rarr;
+                                    <b-form-input v-model="remap.tba" />
                                     <button
                                         type="button"
                                         class="close"
@@ -396,12 +384,11 @@
                     <div class="form-inline mb-2">
                         <label>
                             Match ID (Match-Play):
-                            <input
+                            <b-form-input
                                 v-model="advSelectedMatch"
-                                class="form-control"
                                 placeholder="M-P"
-                                size="5"
-                            >
+                                style="width: 5em;"
+                            />
                         </label>
                         <b-button
                             variant="warning"
@@ -530,11 +517,10 @@
                         <div class="form-inline">
                             <label>
                                 {{ key }}:
-                                <input
+                                <b-form-input
                                     v-model="video.current"
-                                    class="form-control"
                                     @blur="cleanVideoUrls"
-                                >
+                                />
                             </label>
                         </div>
                     </li>
@@ -560,32 +546,29 @@
                             :key="award.id"
                         >
                             <td>
-                                <input
+                                <b-form-input
                                     v-model="award.name"
-                                    class="form-control"
                                     title="Award Name"
                                     placeholder="Award Name"
                                     @blur="saveAwards"
-                                >
+                                />
                             </td>
                             <td>
-                                <input
+                                <b-form-input
                                     v-model="award.team"
-                                    class="form-control"
                                     type="number"
                                     title="Team"
                                     placeholder="Team"
                                     @blur="saveAwards"
-                                >
+                                />
                             </td>
                             <td>
-                                <input
+                                <b-form-input
                                     v-model="award.person"
-                                    class="form-control"
                                     title="Person"
                                     placeholder="Person"
                                     @blur="saveAwards"
-                                >
+                                />
                             </td>
                             <td>
                                 <b-button
@@ -653,17 +636,11 @@
                 <div class="row mb-2">
                     <label class="col-sm-12 col-md-8">
                         Server (default: <code>http://10.0.100.5</code>):
-                        <input
-                            v-model="fmsConfig.server"
-                            class="form-control"
-                        >
+                        <b-form-input v-model="fmsConfig.server" />
                     </label>
                     <label class="col-sm-12 col-md-8">
                         Data folder:
-                        <input
-                            v-model="fmsConfig.data_folder"
-                            class="form-control"
-                        >
+                        <b-form-input v-model="fmsConfig.data_folder" />
                     </label>
                     <div class="col-sm-12">
                         <b-button
@@ -719,24 +696,22 @@
                         <option>sf</option>
                         <option>f</option>
                     </b-form-select>
-                    <input
+                    <b-form-input
                         v-if="matchEditing.code.comp_level != 'qm'"
                         v-model.number="matchEditing.code.set_number"
-                        class="form-control"
                         type="number"
                         min="1"
                         max="999"
                         step="1"
-                    >
+                    />
                     match
-                    <input
+                    <b-form-input
                         v-model.number="matchEditing.code.match_number"
-                        class="form-control"
                         type="number"
                         min="1"
                         max="999"
                         step="1"
-                    >
+                    />
                 </div>
                 <div
                     v-if="matchEditError"
@@ -855,6 +830,7 @@
 import {
     BButton,
     BFormCheckbox,
+    BFormInput,
     BFormSelect,
     BModal,
     BTab,
@@ -950,6 +926,7 @@ export default {
         Alert,
         BButton,
         BFormCheckbox,
+        BFormInput,
         BFormSelect,
         BModal,
         BTab,
