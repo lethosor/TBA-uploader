@@ -10,7 +10,7 @@ module.exports = {
         new VueLoaderPlugin(),
     ],
     entry: [
-        path.join(__dirname, 'web', 'src', 'app.js'),
+        path.join(__dirname, 'web', 'src', 'main.js'),
     ],
     output: {
         filename: 'bundle.js',
