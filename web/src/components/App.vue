@@ -1628,7 +1628,7 @@ export default {
             .then(this.refetchMatches.bind(this))
             .fail(function(res) {
                 this.matchEditError = res.responseText;
-            });
+            }.bind(this));
         },
         editMatchMarkUploaded: function() {
             this.advSelectedMatch = this.matchEditing.id;
