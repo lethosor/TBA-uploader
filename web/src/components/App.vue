@@ -29,6 +29,7 @@
                             >Select an event</option>
                             <option
                                 v-for="event in events"
+                                :key="event"
                                 :value="event"
                             >{{ event }}</option>
                             <option value="_add">Add an event...</option>
@@ -160,7 +161,10 @@
                         />
 
                         <ul>
-                            <li v-for="(remap, i) in eventExtras[selectedEvent].remap_teams">
+                            <li
+                                v-for="(remap, i) in eventExtras[selectedEvent].remap_teams"
+                                :key="i"
+                            >
                                 <form class="form-inline">
                                     <input
                                         v-model="remap.fms"
@@ -212,6 +216,7 @@
                             >
                                 <option
                                     v-for="[type, name] in Object.entries(BRACKET_TYPES)"
+                                    :key="type"
                                     :value="type"
                                 >
                                     {{ name }}
@@ -272,7 +277,12 @@
                     <h3>2. Verify and upload to TBA</h3>
                     <p>Verify that the following information is correct:</p>
                     <ul>
-                        <li v-for="s in scheduleStats">{{ s }}</li>
+                        <li
+                            v-for="(s, i) in scheduleStats"
+                            :key="i"
+                        >
+                            {{ s }}
+                        </li>
                     </ul>
                     <div v-if="schedulePendingMatches.length">
                         <p>If this schedule looks right, <strong>click "Upload" below</strong>.</p>
@@ -290,9 +300,13 @@
                                     <th>Blue 3</th>
                                 </tr>
                             </thead>
-                            <tr v-for="match in schedulePendingMatchCells">
+                            <tr
+                                v-for="(match, i) in schedulePendingMatchCells"
+                                :key="i"
+                            >
                                 <td
-                                    v-for="cell in match"
+                                    v-for="(cell, j) in match"
+                                    :key="j"
                                     :class="cell.cls"
                                 >
                                     <span :class="cell.cls">{{ cell.text }}</span>
@@ -529,7 +543,10 @@
                 </label>
 
                 <ul>
-                    <li v-for="[key, video] in getSortedVideos()">
+                    <li
+                        v-for="[key, video] in getSortedVideos()"
+                        :key="key"
+                    >
                         <div class="form-inline">
                             <label>
                                 {{ key }}:
@@ -762,7 +779,10 @@
                         </tr>
                     </thead>
                     <tbody v-if="!isPlayoff">
-                        <tr v-for="i in 3">
+                        <tr
+                            v-for="i in 3"
+                            :key="i"
+                        >
                             <td class="red">
                                 <h6>{{ matchEditData.teams.red[i-1].team }}</h6>
                                 <div class="form-check">
