@@ -77,13 +77,9 @@
                         >
                     </label>
                     <div>
-                        <label>
-                            <input
-                                v-model="addEventUI.showAuth"
-                                type="checkbox"
-                            >
+                        <b-form-checkbox v-model="addEventUI.showAuth">
                             Show key
-                        </label>
+                        </b-form-checkbox>
                     </div>
                     <div>
                         <b-button
@@ -125,13 +121,9 @@
                         >
                     </label>
                     <div>
-                        <label>
-                            <input
-                                v-model="addEventUI.showAuth"
-                                type="checkbox"
-                            >
+                        <b-form-checkbox v-model="addEventUI.showAuth">
                             Show auth parameters
-                        </label>
+                        </b-form-checkbox>
                     </div>
                     <div>
                         <b-button
@@ -526,13 +518,9 @@
                     type="danger"
                 />
 
-                <label>
-                    <input
-                        v-model="showExistingVideos"
-                        type="checkbox"
-                    >
+                <b-form-checkbox v-model="showExistingVideos">
                     Show matches that already have videos
-                </label>
+                </b-form-checkbox>
 
                 <ul>
                     <li
@@ -654,13 +642,9 @@
                 <p>All options in this section are saved automatically.</p>
                 <div class="row">
                     <div class="col-sm-12">
-                        <label>
-                            <input
-                                v-model="uiOptions.showAllLevels"
-                                type="checkbox"
-                            >
+                        <b-form-checkbox v-model="uiOptions.showAllLevels">
                             Show hidden tournament levels (Practice/Test)
-                        </label>
+                        </b-form-checkbox>
                     </div>
                 </div>
                 <hr>
@@ -717,13 +701,9 @@
         >
             <div v-if="inEditMatch">
                 <div>
-                    <label>
-                        <input
-                            v-model="matchEditOverrideCode"
-                            type="checkbox"
-                        >
+                    <b-form-checkbox v-model="matchEditOverrideCode">
                         Match code override:
-                    </label>
+                    </b-form-checkbox>
                 </div>
                 <div
                     v-if="matchEditOverrideCode"
@@ -777,103 +757,51 @@
                         >
                             <td class="red">
                                 <h6>{{ matchEditData.teams.red[i-1].team }}</h6>
-                                <div class="form-check">
-                                    <label class="form-check-label">
-                                        <input
-                                            v-model="matchEditData.teams.red[i-1].dq"
-                                            type="checkbox"
-                                            class="form-check-input"
-                                        >
-                                        DQ (Red Card)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <label class="form-check-label">
-                                        <input
-                                            v-model="matchEditData.teams.red[i-1].surrogate"
-                                            type="checkbox"
-                                            class="form-check-input"
-                                        >
-                                        Surrogate
-                                    </label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.teams.red[i-1].dq">
+                                    DQ (Red Card)
+                                </b-form-checkbox>
+                                <b-form-checkbox v-model="matchEditData.teams.red[i-1].surrogate">
+                                    Surrogate
+                                </b-form-checkbox>
                             </td>
                             <td class="blue">
                                 <h6>{{ matchEditData.teams.blue[i-1].team }}</h6>
-                                <div class="form-check">
-                                    <label class="form-check-label">
-                                        <input
-                                            v-model="matchEditData.teams.blue[i-1].dq"
-                                            type="checkbox"
-                                            class="form-check-input"
-                                        >
-                                        DQ (Red Card)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <label class="form-check-label">
-                                        <input
-                                            v-model="matchEditData.teams.blue[i-1].surrogate"
-                                            type="checkbox"
-                                            class="form-check-input"
-                                        >
-                                        Surrogate
-                                    </label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.teams.blue[i-1].dq">
+                                    DQ (Red Card)
+                                </b-form-checkbox>
+                                <b-form-checkbox v-model="matchEditData.teams.blue[i-1].surrogate">
+                                    Surrogate
+                                </b-form-checkbox>
                             </td>
                         </tr>
                         <tr v-if="eventYear == 2018">
                             <td class="red">
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.red.invert_auto"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >Force auto RP {{ matchEditData.text.red.auto_rp }}</label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.flags.red.invert_auto">
+                                    Force auto RP {{ matchEditData.text.red.auto_rp }}
+                                </b-form-checkbox>
                             </td>
                             <td class="blue">
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.blue.invert_auto"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >Force auto RP {{ matchEditData.text.blue.auto_rp }}</label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.flags.blue.invert_auto">
+                                    Force auto RP {{ matchEditData.text.blue.auto_rp }}
+                                </b-form-checkbox>
                             </td>
                         </tr>
                         <tr v-if="eventYear == 2019">
                             <td class="red">
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.red.add_rp_rocket"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >Give rocket RP</label>
-                                </div>
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.red.add_rp_hab_climb"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >Give HAB climb RP</label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.flags.red.add_rp_rocket">
+                                    Give rocket RP
+                                </b-form-checkbox>
+                                <b-form-checkbox v-model="matchEditData.flags.red.add_rp_hab_climb">
+                                    Give HAB climb RP
+                                </b-form-checkbox>
                             </td>
                             <td class="blue">
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.blue.add_rp_rocket"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >Give rocket RP</label>
-                                </div>
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.blue.add_rp_hab_climb"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >Give HAB climb RP</label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.flags.blue.add_rp_rocket">
+                                    Give rocket RP
+                                </b-form-checkbox>
+                                <b-form-checkbox v-model="matchEditData.flags.blue.add_rp_hab_climb">
+                                    Give HAB climb RP
+                                </b-form-checkbox>
                             </td>
                         </tr>
                     </tbody>
@@ -882,23 +810,15 @@
                         <tr>
                             <td class="red">
                                 <h6>{{ matchEditData.teams.red[0].team }} &bull; {{ matchEditData.teams.red[1].team }} &bull; {{ matchEditData.teams.red[2].team }}</h6>
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.red.dq"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >DQ (Red Card)</label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.flags.red.dq">
+                                    DQ (Red Card)
+                                </b-form-checkbox>
                             </td>
                             <td class="blue">
                                 <h6>{{ matchEditData.teams.blue[0].team }} &bull; {{ matchEditData.teams.blue[1].team }} &bull; {{ matchEditData.teams.blue[2].team }}</h6>
-                                <div class="form-check">
-                                    <label><input
-                                        v-model="matchEditData.flags.blue.dq"
-                                        type="checkbox"
-                                        class="form-check-input"
-                                    >DQ (Red Card)</label>
-                                </div>
+                                <b-form-checkbox v-model="matchEditData.flags.blue.dq">
+                                    DQ (Red Card)
+                                </b-form-checkbox>
                             </td>
                         </tr>
                     </tbody>
@@ -933,6 +853,7 @@
 <script>
 import {
     BButton,
+    BFormCheckbox,
     BFormSelect,
     BModal,
     BTab,
@@ -1027,6 +948,7 @@ export default {
     components: {
         Alert,
         BButton,
+        BFormCheckbox,
         BFormSelect,
         BModal,
         BTab,
