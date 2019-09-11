@@ -713,6 +713,7 @@
             </b-tab>
 
             <b-tab title="Help">
+                <!-- eslint-disable-next-line vue/no-v-html -->
                 <div v-html="helpHTML" />
             </b-tab>
         </b-tabs>
@@ -1648,7 +1649,7 @@ export default {
                 return;
             this.inMatchRequest = true;
             this.matchEditing = match;
-            var score_breakdown = app.pendingMatches.filter(function(m) {
+            var score_breakdown = this.pendingMatches.filter(function(m) {
                 return m._fms_id == match.id;
             })[0].score_breakdown;
             sendApiRequest('/api/matches/extra?id=' + this.matchEditing.id + '&level=' + this.matchLevel, this.selectedEvent)
