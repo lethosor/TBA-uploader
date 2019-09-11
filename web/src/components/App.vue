@@ -154,14 +154,7 @@
                                     <b-form-input v-model="remap.fms" />
                                     &rarr;
                                     <b-form-input v-model="remap.tba" />
-                                    <button
-                                        type="button"
-                                        class="close"
-                                        aria-label="Close"
-                                        @click="removeTeamRemap(i)"
-                                    >
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
+                                    <b-button-close @click="removeTeamRemap(i)" />
                                 </form>
                             </li>
                         </ul>
@@ -829,6 +822,7 @@
 <script>
 import {
     BButton,
+    BButtonClose,
     BFormCheckbox,
     BFormInput,
     BFormSelect,
@@ -926,6 +920,7 @@ export default {
     components: {
         Alert,
         BButton,
+        BButtonClose,
         BFormCheckbox,
         BFormInput,
         BFormSelect,
