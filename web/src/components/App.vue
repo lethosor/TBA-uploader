@@ -18,9 +18,9 @@
                 >
                     <label>
                         Event:
-                        <select
+                        <b-form-select
                             v-model="selectedEvent"
-                            class="form-control"
+                            class="ml-2"
                         >
                             <option
                                 value=""
@@ -33,7 +33,7 @@
                                 :value="event"
                             >{{ event }}</option>
                             <option value="_add">Add an event...</option>
-                        </select>
+                        </b-form-select>
                         <b-button
                             variant="success"
                             class="ml-auto"
@@ -209,19 +209,12 @@
 
                         <h3 class="mt-2">Playoff type</h3>
                         <div class="input-group">
-                            <select
+                            <b-form-select
                                 v-model.number="eventExtras[selectedEvent].playoff_type"
-                                class="form-control col-md-4 col-sm-6"
+                                class="col-md-4 col-sm-6"
+                                :options="BRACKET_TYPES"
                                 :disabled="eventExtras[selectedEvent].playoff_type === undefined"
-                            >
-                                <option
-                                    v-for="[type, name] in Object.entries(BRACKET_TYPES)"
-                                    :key="type"
-                                    :value="type"
-                                >
-                                    {{ name }}
-                                </option>
-                            </select>
+                            />
                             <b-button
                                 variant="danger"
                                 class="ml-2"
@@ -343,9 +336,8 @@
                 title="Match play"
             >
                 <div class="form-inline">
-                    <select
+                    <b-form-select
                         v-model="matchLevel"
-                        class="form-control"
                     >
                         <option
                             v-if="uiOptions.showAllLevels"
@@ -361,7 +353,7 @@
                         </option>
                         <option value="2">Qualification</option>
                         <option value="3">Playoff</option>
-                    </select>
+                    </b-form-select>
                     <b-button
                         variant="success"
                         data-accesskey="f"
@@ -737,16 +729,15 @@
                     v-if="matchEditOverrideCode"
                     class="form-inline mb-2"
                 >
-                    <select
+                    <b-form-select
                         v-model="matchEditing.code.comp_level"
-                        class="form-control"
                     >
                         <option>qm</option>
                         <option>ef</option>
                         <option>qf</option>
                         <option>sf</option>
                         <option>f</option>
-                    </select>
+                    </b-form-select>
                     <input
                         v-if="matchEditing.code.comp_level != 'qm'"
                         v-model.number="matchEditing.code.set_number"
@@ -942,6 +933,7 @@
 <script>
 import {
     BButton,
+    BFormSelect,
     BModal,
     BTab,
     BTabs,
@@ -1035,6 +1027,7 @@ export default {
     components: {
         Alert,
         BButton,
+        BFormSelect,
         BModal,
         BTab,
         BTabs,

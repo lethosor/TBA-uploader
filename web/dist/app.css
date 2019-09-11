@@ -23,6 +23,10 @@ body {
     white-space: pre-wrap;
 }
 
+select.custom-select {
+    margin-right: 0.5rem;
+}
+
 td.red {
     background-color: #fdd;
 }
