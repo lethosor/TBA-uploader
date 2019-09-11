@@ -855,6 +855,7 @@ import ScoreSummary from 'components/ScoreSummary.vue';
 
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
+import 'src/app.css';
 
 const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
 const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
