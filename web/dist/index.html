@@ -3,7 +3,6 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TBA uploader</title>
-    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="app.css">
   </head>
   <body>
@@ -329,143 +328,138 @@
 
       </b-tabs>
 
-      <div class="modal fade" id="match-edit-modal" tabindex="-1" role="dialog" aria-labelledby="match-edit-modal" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-          <div class="modal-content" v-if="inEditMatch">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">Edit match: {{matchEditing.key}} ({{matchEditing.id}})</h5>
-              <button type="button" class="close" @click="hideEditMatch" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <div>
-                <label>
-                  <input v-model="matchEditOverrideCode" type="checkbox">
-                  Match code override:
-                </label>
-              </div>
-              <div v-if="matchEditOverrideCode" class="form-inline mb-2">
-                <select v-model="matchEditing.code.comp_level" class="form-control">
-                  <option>qm</option>
-                  <option>ef</option>
-                  <option>qf</option>
-                  <option>sf</option>
-                  <option>f</option>
-                </select>
-                <input v-model.number="matchEditing.code.set_number" v-if="matchEditing.code.comp_level != 'qm'" class="form-control" type="number" min="1" max="999" step="1">
-                match
-                <input v-model.number="matchEditing.code.match_number" class="form-control" type="number" min="1" max="999" step="1">
-              </div>
-              <div class="alert alert-danger raw-message" v-if="matchEditError">{{matchEditError}}</div>
-              <table class="table match-edit">
-                <thead>
-                  <tr>
-                    <th>Red</th>
-                    <th>Blue</th>
-                  </tr>
-                </thead>
-                <tbody v-if="!isPlayoff">
-                  <tr v-for="i in 3">
-                    <td class="red">
-                      <h6>{{matchEditData.teams.red[i-1].team}}</h6>
-                      <div class="form-check">
-                        <label class="form-check-label">
-                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].dq">
-                          DQ (Red Card)
-                        </label>
-                      </div>
-                      <div class="form-check">
-                        <label class="form-check-label">
-                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].surrogate">
-                          Surrogate
-                        </label>
-                      </div>
-                    </td>
-                    <td class="blue">
-                      <h6>{{matchEditData.teams.blue[i-1].team}}</h6>
-                      <div class="form-check">
-                        <label class="form-check-label">
-                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].dq">
-                          DQ (Red Card)
-                        </label>
-                      </div>
-                      <div class="form-check">
-                        <label class="form-check-label">
-                          <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].surrogate">
-                          Surrogate
-                        </label>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="eventYear == 2018">
-                    <td class="red">
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.invert_auto">Force auto RP {{matchEditData.text.red.auto_rp}}</label>
-                      </div>
-                    </td>
-                    <td class="blue">
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.invert_auto">Force auto RP {{matchEditData.text.blue.auto_rp}}</label>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="eventYear == 2019">
-                    <td class="red">
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_rocket">Give rocket RP</label>
-                      </div>
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_hab_climb">Give HAB climb RP</label>
-                      </div>
-                    </td>
-                    <td class="blue">
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_rocket">Give rocket RP</label>
-                      </div>
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_hab_climb">Give HAB climb RP</label>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-
-                <tbody v-if="isPlayoff">
-                  <tr>
-                    <td class="red">
-                      <h6>{{matchEditData.teams.red[0].team}} &bull; {{matchEditData.teams.red[1].team}} &bull; {{matchEditData.teams.red[2].team}}</h6>
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.dq">DQ (Red Card)</label>
-                      </div>
-                    </td>
-                    <td class="blue">
-                      <h6>{{matchEditData.teams.blue[0].team}} &bull; {{matchEditData.teams.blue[1].team}} &bull; {{matchEditData.teams.blue[2].team}}</h6>
-                      <div class="form-check">
-                        <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.dq">DQ (Red Card)</label>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="modal-footer">
-              <b-button variant="secondary" @click="hideEditMatch">Cancel</b-button>
-              <b-button variant="primary" @click="saveEditMatch">Save changes</b-button>
-            </div>
-            <div class="modal-footer">
-              <b-button variant="warning" @click="editMatchMarkUploaded">Mark this match as uploaded</b-button>
-            </div>
+      <b-modal
+        ref="matchEditModal"
+        :title="matchEditing && `Edit match: ${matchEditing.key} (${matchEditing.id})`"
+        return-focus="body"
+      >
+        <div v-if="inEditMatch">
+          <div>
+            <label>
+              <input v-model="matchEditOverrideCode" type="checkbox">
+              Match code override:
+            </label>
           </div>
+          <div v-if="matchEditOverrideCode" class="form-inline mb-2">
+            <select v-model="matchEditing.code.comp_level" class="form-control">
+              <option>qm</option>
+              <option>ef</option>
+              <option>qf</option>
+              <option>sf</option>
+              <option>f</option>
+            </select>
+            <input v-model.number="matchEditing.code.set_number" v-if="matchEditing.code.comp_level != 'qm'" class="form-control" type="number" min="1" max="999" step="1">
+            match
+            <input v-model.number="matchEditing.code.match_number" class="form-control" type="number" min="1" max="999" step="1">
+          </div>
+          <div class="alert alert-danger raw-message" v-if="matchEditError">{{matchEditError}}</div>
+          <table class="table match-edit">
+            <thead>
+              <tr>
+                <th>Red</th>
+                <th>Blue</th>
+              </tr>
+            </thead>
+            <tbody v-if="!isPlayoff">
+              <tr v-for="i in 3">
+                <td class="red">
+                  <h6>{{matchEditData.teams.red[i-1].team}}</h6>
+                  <div class="form-check">
+                    <label class="form-check-label">
+                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].dq">
+                      DQ (Red Card)
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <label class="form-check-label">
+                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].surrogate">
+                      Surrogate
+                    </label>
+                  </div>
+                </td>
+                <td class="blue">
+                  <h6>{{matchEditData.teams.blue[i-1].team}}</h6>
+                  <div class="form-check">
+                    <label class="form-check-label">
+                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].dq">
+                      DQ (Red Card)
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <label class="form-check-label">
+                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].surrogate">
+                      Surrogate
+                    </label>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="eventYear == 2018">
+                <td class="red">
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.invert_auto">Force auto RP {{matchEditData.text.red.auto_rp}}</label>
+                  </div>
+                </td>
+                <td class="blue">
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.invert_auto">Force auto RP {{matchEditData.text.blue.auto_rp}}</label>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="eventYear == 2019">
+                <td class="red">
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_rocket">Give rocket RP</label>
+                  </div>
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_hab_climb">Give HAB climb RP</label>
+                  </div>
+                </td>
+                <td class="blue">
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_rocket">Give rocket RP</label>
+                  </div>
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_hab_climb">Give HAB climb RP</label>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+
+            <tbody v-if="isPlayoff">
+              <tr>
+                <td class="red">
+                  <h6>{{matchEditData.teams.red[0].team}} &bull; {{matchEditData.teams.red[1].team}} &bull; {{matchEditData.teams.red[2].team}}</h6>
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.dq">DQ (Red Card)</label>
+                  </div>
+                </td>
+                <td class="blue">
+                  <h6>{{matchEditData.teams.blue[0].team}} &bull; {{matchEditData.teams.blue[1].team}} &bull; {{matchEditData.teams.blue[2].team}}</h6>
+                  <div class="form-check">
+                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.dq">DQ (Red Card)</label>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
+
+        <b-button variant="warning" @click="editMatchMarkUploaded">Mark this match as uploaded</b-button>
+
+        <template v-slot:modal-footer>
+          <b-button variant="secondary" @click="hideEditMatch">Cancel</b-button>
+          <b-button variant="primary" @click="saveEditMatch">Save changes</b-button>
+        </template>
+      </b-modal>
 
     </div>
 
     <script type="text/javascript" src="jquery.min.js"></script>
-    <script type="text/javascript" src="bootstrap.min.js"></script>
     <script type="text/javascript" src="showdown.min.js"></script>
     <script type="text/javascript" src="/js/version.js"></script>
     <script type="text/javascript" src="/js/fms_config.js"></script>
     <script type="text/javascript" src="bundle.js"></script>
+    <link rel="stylesheet" type="text/css" href="app.css">
+
   </body>
 </html>

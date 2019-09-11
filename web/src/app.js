@@ -1,5 +1,6 @@
 import {
     BButton,
+    BModal,
     BTab,
     BTabs,
 } from 'bootstrap-vue';
@@ -19,6 +20,9 @@ import utils from 'src/utils.js';
 import Alert from 'components/Alert.vue';
 import Dropzone from 'components/Dropzone.vue';
 import ScoreSummary from 'components/ScoreSummary.vue';
+
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap-vue/dist/bootstrap-vue.css';
 
 const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
 const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
@@ -90,6 +94,7 @@ const app = new Vue({
     components: {
         Alert,
         BButton,
+        BModal,
         BTab,
         BTabs,
         Dropzone,
@@ -744,7 +749,7 @@ const app = new Vue({
                         }
                     }
                 }.bind(this));
-                $('#match-edit-modal').modal('show');
+                this.$refs.matchEditModal.show();
             }.bind(this))
             .always(function() {
                 this.inMatchRequest = false;
@@ -753,7 +758,7 @@ const app = new Vue({
         hideEditMatch: function() {
             this.inEditMatch = false;
             this.matchEditing = null;
-            $('#match-edit-modal').modal('hide');
+            this.$refs.matchEditModal.hide();
         },
         saveEditMatch: function() {
             if (this.inMatchRequest)
