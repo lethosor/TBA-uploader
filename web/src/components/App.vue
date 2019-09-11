@@ -1,450 +1,921 @@
 <template>
     <div>
-    <div class="float-right">{{version}}</div>
-      <h2>TBA uploader<span v-if="eventSelected"> -
-        <a :href="'https://www.thebluealliance.com/event/' + selectedEvent" target="_blank">{{selectedEvent}}</a>
-      </span></h2>
+        <div class="float-right">{{ version }}</div>
+        <h2>
+            TBA uploader<span v-if="eventSelected"> -
+                <a
+                    :href="'https://www.thebluealliance.com/event/' + selectedEvent"
+                    target="_blank"
+                >{{ selectedEvent }}</a>
+            </span>
+        </h2>
 
-      <b-tabs v-model="selectedTab">
-        <b-tab title="Event setup">
-          <div class="form-inline" v-if="!inAddEvent">
-            <label>
-              Event:
-              <select class="form-control" v-model="selectedEvent">
-                <option value="" disabled selected>Select an event</option>
-                <option v-for="event in events" :value="event">{{event}}</option>
-                <option value="_add">Add an event...</option>
-              </select>
-              <b-button variant="success" class="ml-auto" @click="selectedEvent='_add'">Add an event</b-button>
-              <b-button variant="info" class="ml-auto" :disabled="!eventSelected" @click="editSelectedEvent">Edit this event</b-button>
-              <b-button variant="danger" class="ml-auto" :disabled="!eventSelected" @click="deleteSelectedEvent">Delete this event</b-button>
-              <b-button variant="info" class="ml-auto" @click="syncEvents">Sync</b-button>
-            </label>
-          </div>
-          <div v-if="!inAddEvent">
-            <div v-if="tbaEventData.name">Event name: {{tbaEventData.name}} ({{tbaEventData.year}})</div>
-            <hr>
-            <alert type="danger" v-model="tbaReadError"></alert>
-            <label class="row col">
-              Read API key (<a href="https://www.thebluealliance.com/account" target="_blank">create a key</a>&nbsp;if needed)
-              <input class="form-control" :type="authInputType" v-model="readApiKey">
-            </label>
-            <div>
-              <label>
-                <input type="checkbox" v-model="addEventUI.showAuth">
-                Show key
-              </label>
-            </div>
-            <div>
-              <b-button variant="success" @click="fetchEventData">Fetch event data from TBA</b-button>
-            </div>
-          </div>
-          <div v-if="inAddEvent">
-            <h3>Add event</h3>
-            <label>
-              Event code:
-              <input class="form-control" type="text" v-model="addEventUI.event">
-              <span v-if="addEventUI.event.length >= 4 && !addEventIsValidYear" class="text-danger">Invalid year</span>
-            </label>
-            <label class="row col">
-              Auth ID:
-              <input class="form-control" :type="authInputType" v-model="addEventUI.auth">
-            </label>
-            <label class="row col">
-              Auth secret:
-              <input class="form-control" :type="authInputType" v-model="addEventUI.secret">
-            </label>
-            <div>
-              <label>
-                <input type="checkbox" v-model="addEventUI.showAuth">
-                Show auth parameters
-              </label>
-            </div>
-            <div>
-              <b-button variant="danger" @click="cancelAddEvent">Cancel</b-button>
-              <b-button variant="success" @click="addEvent" :disabled="!canAddEvent">Add</b-button>
-            </div>
-          </div>
-          <div v-if="isEventSelected">
-            <hr>
+        <b-tabs v-model="selectedTab">
+            <b-tab title="Event setup">
+                <div
+                    v-if="!inAddEvent"
+                    class="form-inline"
+                >
+                    <label>
+                        Event:
+                        <select
+                            v-model="selectedEvent"
+                            class="form-control"
+                        >
+                            <option
+                                value=""
+                                disabled
+                                selected
+                            >Select an event</option>
+                            <option
+                                v-for="event in events"
+                                :value="event"
+                            >{{ event }}</option>
+                            <option value="_add">Add an event...</option>
+                        </select>
+                        <b-button
+                            variant="success"
+                            class="ml-auto"
+                            @click="selectedEvent='_add'"
+                        >Add an event</b-button>
+                        <b-button
+                            variant="info"
+                            class="ml-auto"
+                            :disabled="!eventSelected"
+                            @click="editSelectedEvent"
+                        >Edit this event</b-button>
+                        <b-button
+                            variant="danger"
+                            class="ml-auto"
+                            :disabled="!eventSelected"
+                            @click="deleteSelectedEvent"
+                        >Delete this event</b-button>
+                        <b-button
+                            variant="info"
+                            class="ml-auto"
+                            @click="syncEvents"
+                        >Sync</b-button>
+                    </label>
+                </div>
+                <div v-if="!inAddEvent">
+                    <div v-if="tbaEventData.name">Event name: {{ tbaEventData.name }} ({{ tbaEventData.year }})</div>
+                    <hr>
+                    <alert
+                        v-model="tbaReadError"
+                        type="danger"
+                    />
+                    <label class="row col">
+                        Read API key (<a
+                            href="https://www.thebluealliance.com/account"
+                            target="_blank"
+                        >create a key</a>&nbsp;if needed)
+                        <input
+                            v-model="readApiKey"
+                            class="form-control"
+                            :type="authInputType"
+                        >
+                    </label>
+                    <div>
+                        <label>
+                            <input
+                                v-model="addEventUI.showAuth"
+                                type="checkbox"
+                            >
+                            Show key
+                        </label>
+                    </div>
+                    <div>
+                        <b-button
+                            variant="success"
+                            @click="fetchEventData"
+                        >
+                            Fetch event data from TBA
+                        </b-button>
+                    </div>
+                </div>
+                <div v-if="inAddEvent">
+                    <h3>Add event</h3>
+                    <label>
+                        Event code:
+                        <input
+                            v-model="addEventUI.event"
+                            class="form-control"
+                            type="text"
+                        >
+                        <span
+                            v-if="addEventUI.event.length >= 4 && !addEventIsValidYear"
+                            class="text-danger"
+                        >Invalid year</span>
+                    </label>
+                    <label class="row col">
+                        Auth ID:
+                        <input
+                            v-model="addEventUI.auth"
+                            class="form-control"
+                            :type="authInputType"
+                        >
+                    </label>
+                    <label class="row col">
+                        Auth secret:
+                        <input
+                            v-model="addEventUI.secret"
+                            class="form-control"
+                            :type="authInputType"
+                        >
+                    </label>
+                    <div>
+                        <label>
+                            <input
+                                v-model="addEventUI.showAuth"
+                                type="checkbox"
+                            >
+                            Show auth parameters
+                        </label>
+                    </div>
+                    <div>
+                        <b-button
+                            variant="danger"
+                            @click="cancelAddEvent"
+                        >
+                            Cancel
+                        </b-button>
+                        <b-button
+                            variant="success"
+                            :disabled="!canAddEvent"
+                            @click="addEvent"
+                        >
+                            Add
+                        </b-button>
+                    </div>
+                </div>
+                <div v-if="isEventSelected">
+                    <hr>
 
-            <div>
-              <div>Note: any changes below may not be reflected quickly in data that is already uploaded to TBA (e.g. match schedules) unless they are uploaded again.</div>
-              <h3 class="mt-2">Team remappings</h3>
-              <alert type="danger" v-model="remapError"></alert>
+                    <div>
+                        <div>Note: any changes below may not be reflected quickly in data that is already uploaded to TBA (e.g. match schedules) unless they are uploaded again.</div>
+                        <h3 class="mt-2">Team remappings</h3>
+                        <alert
+                            v-model="remapError"
+                            type="danger"
+                        />
 
-              <ul>
-                <li v-for="(remap, i) in eventExtras[selectedEvent].remap_teams">
-                  <form class="form-inline">
-                    <input v-model="remap.fms" class="form-control"> &rarr;
-                    <input v-model="remap.tba" class="form-control">
-                    <button @click="removeTeamRemap(i)" type="button" class="close" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
+                        <ul>
+                            <li v-for="(remap, i) in eventExtras[selectedEvent].remap_teams">
+                                <form class="form-inline">
+                                    <input
+                                        v-model="remap.fms"
+                                        class="form-control"
+                                    > &rarr;
+                                    <input
+                                        v-model="remap.tba"
+                                        class="form-control"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="close"
+                                        aria-label="Close"
+                                        @click="removeTeamRemap(i)"
+                                    >
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+
+                        <b-button
+                            variant="success"
+                            @click="addTeamRemap"
+                        >
+                            Add
+                        </b-button>
+                        <b-button
+                            v-if="eventExtras[selectedEvent].remap_teams.length"
+                            variant="success"
+                            @click="uploadTeamRemap"
+                        >
+                            Upload
+                        </b-button>
+                        <b-button
+                            v-else
+                            variant="warning"
+                            @click="uploadTeamRemap"
+                        >
+                            Remove all remappings from TBA
+                        </b-button>
+
+                        <h3 class="mt-2">Playoff type</h3>
+                        <div class="input-group">
+                            <select
+                                v-model.number="eventExtras[selectedEvent].playoff_type"
+                                class="form-control col-md-4 col-sm-6"
+                                :disabled="eventExtras[selectedEvent].playoff_type === undefined"
+                            >
+                                <option
+                                    v-for="[type, name] in Object.entries(BRACKET_TYPES)"
+                                    :value="type"
+                                >
+                                    {{ name }}
+                                </option>
+                            </select>
+                            <b-button
+                                variant="danger"
+                                class="ml-2"
+                                :disabled="eventExtras[selectedEvent].playoff_type === undefined || eventExtras[selectedEvent].playoff_type === tbaEventData.playoff_type"
+                                @click="updatePlayoffType"
+                            >
+                                Change playoff type
+                            </b-button>
+                        </div>
+                    </div>
+                </div>
+            </b-tab>
+
+            <b-tab
+                v-if="eventSelected"
+                title="Schedule"
+            >
+                <alert
+                    v-model="scheduleError"
+                    type="danger"
+                />
+                <div
+                    v-if="scheduleUploaded"
+                    class="alert alert-success"
+                >
+                    <button
+                        type="button"
+                        class="close"
+                        aria-label="Close"
+                        @click="scheduleUploaded=false"
+                    >
+                        <span aria-hidden="true">&times;</span>
                     </button>
-                  </form>
-                </li>
-              </ul>
+                    <span class="raw-message">The schedule was uploaded successfully.</span>
+                </div>
+                <h3>1. Select a schedule</h3>
+                <p>This needs to be a CSV qualification or playoff <strong>schedule report</strong> generated by FMS.</p>
+                <dropzone
+                    ref="scheduleUpload"
+                    title="Upload a schedule"
+                    accept="text/csv"
+                    @upload="onScheduleUpload"
+                />
+                <div v-if="scheduleStats.length">
+                    <div class="mb-4">
+                        <b-button
+                            variant="danger"
+                            @click="scheduleReset(false)"
+                        >
+                            Reset
+                        </b-button>
+                    </div>
+                    <h3>2. Verify and upload to TBA</h3>
+                    <p>Verify that the following information is correct:</p>
+                    <ul>
+                        <li v-for="s in scheduleStats">{{ s }}</li>
+                    </ul>
+                    <div v-if="schedulePendingMatches.length">
+                        <p>If this schedule looks right, <strong>click "Upload" below</strong>.</p>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Key</th>
+                                    <th>Time</th>
+                                    <th>Red 1</th>
+                                    <th>Red 2</th>
+                                    <th>Red 3</th>
+                                    <th>Blue 1</th>
+                                    <th>Blue 2</th>
+                                    <th>Blue 3</th>
+                                </tr>
+                            </thead>
+                            <tr v-for="match in schedulePendingMatchCells">
+                                <td
+                                    v-for="cell in match"
+                                    :class="cell.cls"
+                                >
+                                    <span :class="cell.cls">{{ cell.text }}</span>
+                                </td>
+                            </tr>
+                        </table>
+                        <alert
+                            v-model="scheduleError"
+                            type="danger"
+                        />
+                        <p>
+                            <span class="warning">Warning:</span> this will overwrite any match data on TBA for these matches.
+                            Double-check the event page if you have any doubt that these matches have not already been uploaded.
+                        </p>
+                        <b-button
+                            variant="success"
+                            :disabled="inScheduleRequest || !schedulePendingMatches.length"
+                            @click="postSchedule"
+                        >
+                            Upload these matches to TBA
+                        </b-button>
+                    </div>
+                    <div
+                        v-else-if="!inScheduleRequest"
+                        class="alert alert-warning"
+                    >
+                        No new competition levels detected; nothing to upload.
+                    </div>
+                </div>
+            </b-tab>
 
-              <b-button variant="success" @click="addTeamRemap">Add</b-button>
-              <b-button v-if="eventExtras[selectedEvent].remap_teams.length" variant="success" @click="uploadTeamRemap">Upload</b-button>
-              <b-button v-else variant="warning" @click="uploadTeamRemap">Remove all remappings from TBA</b-button>
+            <b-tab
+                v-if="eventSelected"
+                title="Match play"
+            >
+                <div class="form-inline">
+                    <select
+                        v-model="matchLevel"
+                        class="form-control"
+                    >
+                        <option
+                            v-if="uiOptions.showAllLevels"
+                            value="0"
+                        >
+                            Test
+                        </option>
+                        <option
+                            v-if="uiOptions.showAllLevels"
+                            value="1"
+                        >
+                            Practice
+                        </option>
+                        <option value="2">Qualification</option>
+                        <option value="3">Playoff</option>
+                    </select>
+                    <b-button
+                        variant="success"
+                        data-accesskey="f"
+                        :disabled="inMatchRequest"
+                        @click="fetchMatches(false)"
+                    >
+                        Fetch new matches
+                    </b-button>
+                    <b-button
+                        variant="danger"
+                        data-accesskey="a"
+                        @click="inMatchAdvanced = !inMatchAdvanced"
+                    >
+                        Advanced options
+                    </b-button>
+                    <b-button
+                        v-if="isQual"
+                        variant="info"
+                        class="ml-auto"
+                        data-accesskey="r"
+                        :disabled="inUploadRankings"
+                        @click="uploadRankings"
+                    >
+                        Upload rankings
+                    </b-button>
+                </div>
+                <p>
+                    <span class="warning">Warning:</span> do not click any buttons on this page while a match is running.
+                    Be sure to only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS.
+                    <span v-if="isQual">Rankings can be updated at any time if necessary, but will also be updated after posting scores.</span>
+                </p>
+                <alert
+                    v-model="rankingsError"
+                    type="danger"
+                    prefix="Rankings:"
+                />
+                <div v-if="inMatchAdvanced">
+                    <hr>
+                    <h3>
+                        Advanced options <b-button
+                            variant="outline-danger"
+                            size="sm"
+                            @click.prevent="inMatchAdvanced = false"
+                        >
+                            Close
+                        </b-button>
+                    </h3>
+                    <div class="form-inline mb-2">
+                        <label>
+                            Match ID (Match-Play):
+                            <input
+                                v-model="advSelectedMatch"
+                                class="form-control"
+                                placeholder="M-P"
+                                size="5"
+                            >
+                        </label>
+                        <b-button
+                            variant="warning"
+                            :disabled="inMatchRequest"
+                            @click="purgeAdvSelectedMatch"
+                        >
+                            Purge
+                        </b-button>
+                        <b-button
+                            variant="warning"
+                            :disabled="inMatchRequest"
+                            @click="markAdvSelectedMatchUploaded"
+                        >
+                            Mark as uploaded
+                        </b-button>
+                        <span class="warning">{{ advMatchError }}</span>
+                    </div>
+                    <div>
+                        <b-button
+                            variant="danger"
+                            :disabled="inMatchRequest"
+                            @click="fetchMatches(true)"
+                        >
+                            Purge and re-fetch all matches
+                        </b-button>
+                    </div>
+                    <hr>
+                </div>
+                <alert
+                    v-model="matchError"
+                    type="danger"
+                />
+                <div v-if="matchSummaries.length">
+                    <h3>Matches to upload ({{ matchSummaries.length }})</h3>
+                    <b-button
+                        variant="success"
+                        class="mb-2"
+                        data-accesskey="u"
+                        accesskey="u"
+                        title="[u]"
+                        :disabled="inMatchRequest"
+                        @click="uploadMatches"
+                    >
+                        Upload scores
+                    </b-button>
+                    <b-button
+                        variant="warning"
+                        class="mb-2"
+                        data-accesskey="e"
+                        accesskey="e"
+                        title="[e]"
+                        :disabled="inMatchRequest"
+                        @click="refetchMatches"
+                    >
+                        Re-fetch scores
+                    </b-button>
+                    <div
+                        v-if="fetchedScorelessMatches"
+                        class="alert alert-danger"
+                    >
+                        One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted from FMS first). If the scores below are correct, click "Upload scores".
+                    </div>
+                    <div
+                        v-if="unhandledBreakdowns.length"
+                        class="alert alert-danger"
+                    >
+                        Some breakdowns were not handled: {{ unhandledBreakdowns.join(", ") }}. Any affected matches will need to be manually edited.
+                    </div>
+                    <div>
+                        Click "Upload scores" to upload these scores to TBA<span v-if="isQual"> and update rankings</span>. If a match needs to be edited, click on it below. Reasons for this include:
+                        <ul>
+                            <li>Any extra rankings points awarded by the head referee (this accompanies score changes in FMS)</li>
+                            <li>Red cards</li>
+                            <li>Surrogate teams</li>
+                        </ul>
+                    </div>
+                    <div class="row">
+                        <score-summary
+                            v-for="match in matchSummaries"
+                            :key="match.id"
+                            :match="match"
+                            @click="showEditMatch(match)"
+                        />
+                    </div> <!-- row -->
+                </div>
+            </b-tab>
 
-              <h3 class="mt-2">Playoff type</h3>
-              <div class="input-group">
-                <select class="form-control col-md-4 col-sm-6" v-model.number="eventExtras[selectedEvent].playoff_type" :disabled="eventExtras[selectedEvent].playoff_type === undefined">
-                  <option v-for="[type, name] in Object.entries(BRACKET_TYPES)" :value="type">{{ name }}</option>
-                </select>
-                <b-button variant="danger" class="ml-2" @click="updatePlayoffType" :disabled="eventExtras[selectedEvent].playoff_type === undefined || eventExtras[selectedEvent].playoff_type === tbaEventData.playoff_type">
-                  Change playoff type
-                </b-button>
-              </div>
-            </div>
-          </div>
-        </b-tab>
+            <b-tab
+                v-if="eventSelected"
+                title="Match videos"
+            >
+                <div>
+                    <b-button
+                        variant="success"
+                        :disabled="inVideoRequest"
+                        @click="fetchVideos"
+                    >
+                        Fetch data from TBA
+                    </b-button>
+                    <b-button
+                        variant="success"
+                        :disabled="inVideoRequest"
+                        @click="uploadVideos"
+                    >
+                        Upload data to TBA
+                    </b-button>
+                </div>
+                <ul>
+                    <li><span class="warning">Warning:</span> Anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</li>
+                    <li>Videos cannot be removed from TBA once they are uploaded.</li>
+                </ul>
+                <alert
+                    v-model="videoError"
+                    type="danger"
+                />
 
-        <b-tab v-if="eventSelected" title="Schedule">
-          <alert type="danger" v-model="scheduleError"></alert>
-          <div class="alert alert-success" v-if="scheduleUploaded">
-            <button @click="scheduleUploaded=false" type="button" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-            <span class="raw-message">The schedule was uploaded successfully.</span>
-          </div>
-          <h3>1. Select a schedule</h3>
-          <p>This needs to be a CSV qualification or playoff <strong>schedule report</strong> generated by FMS.</p>
-          <dropzone ref="scheduleUpload" title="Upload a schedule" accept="text/csv" @upload="onScheduleUpload"></dropzone>
-          <div v-if="scheduleStats.length">
-            <div class="mb-4">
-              <b-button variant="danger" @click="scheduleReset(false)">Reset</b-button>
-            </div>
-            <h3>2. Verify and upload to TBA</h3>
-            <p>Verify that the following information is correct:</p>
-            <ul>
-              <li v-for="s in scheduleStats">{{s}}</li>
-            </ul>
-            <div v-if="schedulePendingMatches.length">
-              <p>If this schedule looks right, <strong>click "Upload" below</strong>.</p>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Key</th>
-                    <th>Time</th>
-                    <th>Red 1</th>
-                    <th>Red 2</th>
-                    <th>Red 3</th>
-                    <th>Blue 1</th>
-                    <th>Blue 2</th>
-                    <th>Blue 3</th>
-                  </tr>
-                </thead>
-                <tr v-for="match in schedulePendingMatchCells">
-                  <td v-for="cell in match" :class="cell.cls"><span :class="cell.cls">{{cell.text}}</span></td>
-                </tr>
-              </table>
-              <alert type="danger" v-model="scheduleError"></alert>
-              <p>
-                <span class="warning">Warning:</span> this will overwrite any match data on TBA for these matches.
-                Double-check the event page if you have any doubt that these matches have not already been uploaded.
-              </p>
-              <b-button variant="success" :disabled="inScheduleRequest || !schedulePendingMatches.length" @click="postSchedule">Upload these matches to TBA</b-button>
-            </div>
-            <div v-else-if="!inScheduleRequest" class="alert alert-warning">
-              No new competition levels detected; nothing to upload.
-            </div>
-          </div>
-        </b-tab>
-
-        <b-tab v-if="eventSelected" title="Match play">
-          <div class="form-inline">
-            <select class="form-control" v-model="matchLevel">
-              <option value="0" v-if="uiOptions.showAllLevels">Test</option>
-              <option value="1" v-if="uiOptions.showAllLevels">Practice</option>
-              <option value="2">Qualification</option>
-              <option value="3">Playoff</option>
-            </select>
-            <b-button variant="success" data-accesskey="f" @click="fetchMatches(false)" :disabled="inMatchRequest">Fetch new matches</b-button>
-            <b-button variant="danger" data-accesskey="a" @click="inMatchAdvanced = !inMatchAdvanced">Advanced options</b-button>
-            <b-button variant="info" class="ml-auto" data-accesskey="r" @click="uploadRankings" :disabled="inUploadRankings" v-if="isQual">Upload rankings</b-button>
-          </div>
-          <p>
-            <span class="warning">Warning:</span> do not click any buttons on this page while a match is running.
-            Be sure to only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS.
-            <span v-if="isQual">Rankings can be updated at any time if necessary, but will also be updated after posting scores.</span>
-          </p>
-          <alert type="danger" v-model="rankingsError" prefix="Rankings:"></alert>
-          <div v-if="inMatchAdvanced">
-            <hr>
-            <h3>Advanced options <b-button variant="outline-danger" size="sm" @click.prevent="inMatchAdvanced = false">Close</b-button></h3>
-            <div class="form-inline mb-2">
-              <label>
-                Match ID (Match-Play):
-                <input class="form-control" v-model="advSelectedMatch" placeholder="M-P" size="5">
-              </label>
-              <b-button variant="warning" @click="purgeAdvSelectedMatch" :disabled="inMatchRequest">Purge</b-button>
-              <b-button variant="warning" @click="markAdvSelectedMatchUploaded" :disabled="inMatchRequest">Mark as uploaded</b-button>
-              <span class="warning">{{advMatchError}}</span>
-            </div>
-            <div>
-              <b-button variant="danger" @click="fetchMatches(true)" :disabled="inMatchRequest">Purge and re-fetch all matches</b-button>
-            </div>
-            <hr>
-          </div>
-          <alert type="danger" v-model="matchError"></alert>
-          <div v-if="matchSummaries.length">
-            <h3>Matches to upload ({{matchSummaries.length}})</h3>
-            <b-button variant="success" class="mb-2" data-accesskey="u" accesskey="u" title="[u]" @click="uploadMatches" :disabled="inMatchRequest">Upload scores</b-button>
-            <b-button variant="warning" class="mb-2" data-accesskey="e" accesskey="e" title="[e]" @click="refetchMatches" :disabled="inMatchRequest">Re-fetch scores</b-button>
-            <div class="alert alert-danger" v-if="fetchedScorelessMatches">
-              One or more matches below appear to have been fetched before scores were posted. Click "Re-fetch scores" to try again (wait for scores to be posted from FMS first). If the scores below are correct, click "Upload scores".
-            </div>
-            <div class="alert alert-danger" v-if="unhandledBreakdowns.length">
-              Some breakdowns were not handled: {{ unhandledBreakdowns.join(", ") }}. Any affected matches will need to be manually edited.
-            </div>
-            <div>
-              Click "Upload scores" to upload these scores to TBA<span v-if="isQual"> and update rankings</span>. If a match needs to be edited, click on it below. Reasons for this include:
-              <ul>
-                <li>Any extra rankings points awarded by the head referee (this accompanies score changes in FMS)</li>
-                <li>Red cards</li>
-                <li>Surrogate teams</li>
-              </ul>
-            </div>
-            <div class="row">
-              <score-summary
-                v-for="match in matchSummaries"
-                :match="match"
-                :key="match.id"
-                @click="showEditMatch(match)"
-              ></score-summary>
-            </div> <!-- row -->
-          </div>
-        </b-tab>
-
-        <b-tab v-if="eventSelected" title="Match videos">
-          <div>
-            <b-button variant="success" @click="fetchVideos" :disabled="inVideoRequest">Fetch data from TBA</b-button>
-            <b-button variant="success" @click="uploadVideos" :disabled="inVideoRequest">Upload data to TBA</b-button>
-          </div>
-          <ul>
-            <li><span class="warning">Warning:</span> Anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</li>
-            <li>Videos cannot be removed from TBA once they are uploaded.</li>
-          </ul>
-          <alert type="danger" v-model="videoError"></alert>
-
-          <label>
-            <input type="checkbox" v-model="showExistingVideos">
-            Show matches that already have videos
-          </label>
-
-          <ul>
-            <li v-for="[key, video] in getSortedVideos()">
-              <div class="form-inline">
                 <label>
-                  {{key}}:
-                  <input class="form-control" v-model="video.current" @blur="cleanVideoUrls">
+                    <input
+                        v-model="showExistingVideos"
+                        type="checkbox"
+                    >
+                    Show matches that already have videos
                 </label>
-              </div>
-            </li>
-          </ul>
-        </b-tab>
 
-        <b-tab v-if="eventSelected" title="Awards">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Award Name</th>
-                <th>Team (recommended)</th>
-                <th>Person (optional)</th>
-                <th>Options</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="award in awards[selectedEvent]" :key="award.id">
-                <td>
-                  <input class="form-control" title="Award Name" placeholder="Award Name" v-model="award.name" @blur="saveAwards">
-                </td>
-                <td>
-                  <input class="form-control" type="number" title="Team" placeholder="Team" v-model="award.team" @blur="saveAwards">
-                </td>
-                <td>
-                  <input class="form-control" title="Person" placeholder="Person" v-model="award.person" @blur="saveAwards">
-                </td>
-                <td>
-                  <b-button variant="info" @click="duplicateAward(award)" title="Create a new award with the same name">Duplicate</b-button>
-                  <b-button variant="danger" @click="clearAward(award)">Clear</b-button>
-                  <b-button variant="danger" @click="deleteAward(award)">Delete</b-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <b-button variant="success" @click="addAward">Add award</b-button>
-          <b-button variant="success" @click="fetchAutomaticAwards">Auto-detect winners/finalists</b-button>
-          <hr>
-          <b-button variant="success" @click="uploadAwards" :disabled="inAwardRequest">Upload all awards</b-button>
-          <span>{{awardStatus}}</span>
-        </b-tab>
+                <ul>
+                    <li v-for="[key, video] in getSortedVideos()">
+                        <div class="form-inline">
+                            <label>
+                                {{ key }}:
+                                <input
+                                    v-model="video.current"
+                                    class="form-control"
+                                    @blur="cleanVideoUrls"
+                                >
+                            </label>
+                        </div>
+                    </li>
+                </ul>
+            </b-tab>
 
-        <b-tab title="Options" title-item-class="ml-auto">
-          <h2>UI options</h2>
-          <p>All options in this section are saved automatically.</p>
-          <div class="row">
-            <div class="col-sm-12">
-              <label>
-                <input type="checkbox" v-model="uiOptions.showAllLevels">
-                Show hidden tournament levels (Practice/Test)
-              </label>
+            <b-tab
+                v-if="eventSelected"
+                title="Awards"
+            >
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Award Name</th>
+                            <th>Team (recommended)</th>
+                            <th>Person (optional)</th>
+                            <th>Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="award in awards[selectedEvent]"
+                            :key="award.id"
+                        >
+                            <td>
+                                <input
+                                    v-model="award.name"
+                                    class="form-control"
+                                    title="Award Name"
+                                    placeholder="Award Name"
+                                    @blur="saveAwards"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    v-model="award.team"
+                                    class="form-control"
+                                    type="number"
+                                    title="Team"
+                                    placeholder="Team"
+                                    @blur="saveAwards"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    v-model="award.person"
+                                    class="form-control"
+                                    title="Person"
+                                    placeholder="Person"
+                                    @blur="saveAwards"
+                                >
+                            </td>
+                            <td>
+                                <b-button
+                                    variant="info"
+                                    title="Create a new award with the same name"
+                                    @click="duplicateAward(award)"
+                                >
+                                    Duplicate
+                                </b-button>
+                                <b-button
+                                    variant="danger"
+                                    @click="clearAward(award)"
+                                >
+                                    Clear
+                                </b-button>
+                                <b-button
+                                    variant="danger"
+                                    @click="deleteAward(award)"
+                                >
+                                    Delete
+                                </b-button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <b-button
+                    variant="success"
+                    @click="addAward"
+                >
+                    Add award
+                </b-button>
+                <b-button
+                    variant="success"
+                    @click="fetchAutomaticAwards"
+                >
+                    Auto-detect winners/finalists
+                </b-button>
+                <hr>
+                <b-button
+                    variant="success"
+                    :disabled="inAwardRequest"
+                    @click="uploadAwards"
+                >
+                    Upload all awards
+                </b-button>
+                <span>{{ awardStatus }}</span>
+            </b-tab>
+
+            <b-tab
+                title="Options"
+                title-item-class="ml-auto"
+            >
+                <h2>UI options</h2>
+                <p>All options in this section are saved automatically.</p>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <label>
+                            <input
+                                v-model="uiOptions.showAllLevels"
+                                type="checkbox"
+                            >
+                            Show hidden tournament levels (Practice/Test)
+                        </label>
+                    </div>
+                </div>
+                <hr>
+                <h2>FMS options</h2>
+                <p>Options in this section need to be saved by clicking "Save" below. Also note that these can be specified on the command line as well, which is more useful for development.</p>
+                <div class="row mb-2">
+                    <label class="col-sm-12 col-md-8">
+                        Server (default: <code>http://10.0.100.5</code>):
+                        <input
+                            v-model="fmsConfig.server"
+                            class="form-control"
+                        >
+                    </label>
+                    <label class="col-sm-12 col-md-8">
+                        Data folder:
+                        <input
+                            v-model="fmsConfig.data_folder"
+                            class="form-control"
+                        >
+                    </label>
+                    <div class="col-sm-12">
+                        <b-button
+                            variant="success"
+                            @click="saveFMSConfig"
+                        >
+                            Save
+                        </b-button>
+                        <b-button
+                            variant="danger"
+                            @click="resetFMSConfig"
+                        >
+                            Reset
+                        </b-button>
+                    </div>
+                </div>
+                <div
+                    v-if="fmsConfigError"
+                    class="alert alert-danger raw-message"
+                >
+                    {{ fmsConfigError }}
+                </div>
+            </b-tab>
+
+            <b-tab title="Help">
+                <div v-html="helpHTML" />
+            </b-tab>
+        </b-tabs>
+
+        <b-modal
+            ref="matchEditModal"
+            :title="matchEditing && `Edit match: ${matchEditing.key} (${matchEditing.id})`"
+            return-focus="body"
+        >
+            <div v-if="inEditMatch">
+                <div>
+                    <label>
+                        <input
+                            v-model="matchEditOverrideCode"
+                            type="checkbox"
+                        >
+                        Match code override:
+                    </label>
+                </div>
+                <div
+                    v-if="matchEditOverrideCode"
+                    class="form-inline mb-2"
+                >
+                    <select
+                        v-model="matchEditing.code.comp_level"
+                        class="form-control"
+                    >
+                        <option>qm</option>
+                        <option>ef</option>
+                        <option>qf</option>
+                        <option>sf</option>
+                        <option>f</option>
+                    </select>
+                    <input
+                        v-if="matchEditing.code.comp_level != 'qm'"
+                        v-model.number="matchEditing.code.set_number"
+                        class="form-control"
+                        type="number"
+                        min="1"
+                        max="999"
+                        step="1"
+                    >
+                    match
+                    <input
+                        v-model.number="matchEditing.code.match_number"
+                        class="form-control"
+                        type="number"
+                        min="1"
+                        max="999"
+                        step="1"
+                    >
+                </div>
+                <div
+                    v-if="matchEditError"
+                    class="alert alert-danger raw-message"
+                >
+                    {{ matchEditError }}
+                </div>
+                <table class="table match-edit">
+                    <thead>
+                        <tr>
+                            <th>Red</th>
+                            <th>Blue</th>
+                        </tr>
+                    </thead>
+                    <tbody v-if="!isPlayoff">
+                        <tr v-for="i in 3">
+                            <td class="red">
+                                <h6>{{ matchEditData.teams.red[i-1].team }}</h6>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input
+                                            v-model="matchEditData.teams.red[i-1].dq"
+                                            type="checkbox"
+                                            class="form-check-input"
+                                        >
+                                        DQ (Red Card)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input
+                                            v-model="matchEditData.teams.red[i-1].surrogate"
+                                            type="checkbox"
+                                            class="form-check-input"
+                                        >
+                                        Surrogate
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="blue">
+                                <h6>{{ matchEditData.teams.blue[i-1].team }}</h6>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input
+                                            v-model="matchEditData.teams.blue[i-1].dq"
+                                            type="checkbox"
+                                            class="form-check-input"
+                                        >
+                                        DQ (Red Card)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input
+                                            v-model="matchEditData.teams.blue[i-1].surrogate"
+                                            type="checkbox"
+                                            class="form-check-input"
+                                        >
+                                        Surrogate
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="eventYear == 2018">
+                            <td class="red">
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.red.invert_auto"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >Force auto RP {{ matchEditData.text.red.auto_rp }}</label>
+                                </div>
+                            </td>
+                            <td class="blue">
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.blue.invert_auto"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >Force auto RP {{ matchEditData.text.blue.auto_rp }}</label>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="eventYear == 2019">
+                            <td class="red">
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.red.add_rp_rocket"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >Give rocket RP</label>
+                                </div>
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.red.add_rp_hab_climb"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >Give HAB climb RP</label>
+                                </div>
+                            </td>
+                            <td class="blue">
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.blue.add_rp_rocket"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >Give rocket RP</label>
+                                </div>
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.blue.add_rp_hab_climb"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >Give HAB climb RP</label>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+
+                    <tbody v-if="isPlayoff">
+                        <tr>
+                            <td class="red">
+                                <h6>{{ matchEditData.teams.red[0].team }} &bull; {{ matchEditData.teams.red[1].team }} &bull; {{ matchEditData.teams.red[2].team }}</h6>
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.red.dq"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >DQ (Red Card)</label>
+                                </div>
+                            </td>
+                            <td class="blue">
+                                <h6>{{ matchEditData.teams.blue[0].team }} &bull; {{ matchEditData.teams.blue[1].team }} &bull; {{ matchEditData.teams.blue[2].team }}</h6>
+                                <div class="form-check">
+                                    <label><input
+                                        v-model="matchEditData.flags.blue.dq"
+                                        type="checkbox"
+                                        class="form-check-input"
+                                    >DQ (Red Card)</label>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-          </div>
-          <hr>
-          <h2>FMS options</h2>
-          <p>Options in this section need to be saved by clicking "Save" below. Also note that these can be specified on the command line as well, which is more useful for development.</p>
-          <div class="row mb-2">
-            <label class="col-sm-12 col-md-8">
-              Server (default: <code>http://10.0.100.5</code>):
-              <input class="form-control" v-model="fmsConfig.server">
-            </label>
-            <label class="col-sm-12 col-md-8">
-              Data folder:
-              <input class="form-control" v-model="fmsConfig.data_folder">
-            </label>
-            <div class="col-sm-12">
-              <b-button variant="success" @click="saveFMSConfig">Save</b-button>
-              <b-button variant="danger" @click="resetFMSConfig">Reset</b-button>
-            </div>
-          </div>
-          <div class="alert alert-danger raw-message" v-if="fmsConfigError">{{fmsConfigError}}</div>
-        </b-tab>
 
-        <b-tab title="Help">
-          <div v-html="helpHTML"></div>
-        </b-tab>
+            <b-button
+                variant="warning"
+                @click="editMatchMarkUploaded"
+            >
+                Mark this match as uploaded
+            </b-button>
 
-      </b-tabs>
-
-      <b-modal
-        ref="matchEditModal"
-        :title="matchEditing && `Edit match: ${matchEditing.key} (${matchEditing.id})`"
-        return-focus="body"
-      >
-        <div v-if="inEditMatch">
-          <div>
-            <label>
-              <input v-model="matchEditOverrideCode" type="checkbox">
-              Match code override:
-            </label>
-          </div>
-          <div v-if="matchEditOverrideCode" class="form-inline mb-2">
-            <select v-model="matchEditing.code.comp_level" class="form-control">
-              <option>qm</option>
-              <option>ef</option>
-              <option>qf</option>
-              <option>sf</option>
-              <option>f</option>
-            </select>
-            <input v-model.number="matchEditing.code.set_number" v-if="matchEditing.code.comp_level != 'qm'" class="form-control" type="number" min="1" max="999" step="1">
-            match
-            <input v-model.number="matchEditing.code.match_number" class="form-control" type="number" min="1" max="999" step="1">
-          </div>
-          <div class="alert alert-danger raw-message" v-if="matchEditError">{{matchEditError}}</div>
-          <table class="table match-edit">
-            <thead>
-              <tr>
-                <th>Red</th>
-                <th>Blue</th>
-              </tr>
-            </thead>
-            <tbody v-if="!isPlayoff">
-              <tr v-for="i in 3">
-                <td class="red">
-                  <h6>{{matchEditData.teams.red[i-1].team}}</h6>
-                  <div class="form-check">
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].dq">
-                      DQ (Red Card)
-                    </label>
-                  </div>
-                  <div class="form-check">
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.red[i-1].surrogate">
-                      Surrogate
-                    </label>
-                  </div>
-                </td>
-                <td class="blue">
-                  <h6>{{matchEditData.teams.blue[i-1].team}}</h6>
-                  <div class="form-check">
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].dq">
-                      DQ (Red Card)
-                    </label>
-                  </div>
-                  <div class="form-check">
-                    <label class="form-check-label">
-                      <input type="checkbox" class="form-check-input" v-model="matchEditData.teams.blue[i-1].surrogate">
-                      Surrogate
-                    </label>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="eventYear == 2018">
-                <td class="red">
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.invert_auto">Force auto RP {{matchEditData.text.red.auto_rp}}</label>
-                  </div>
-                </td>
-                <td class="blue">
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.invert_auto">Force auto RP {{matchEditData.text.blue.auto_rp}}</label>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="eventYear == 2019">
-                <td class="red">
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_rocket">Give rocket RP</label>
-                  </div>
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.add_rp_hab_climb">Give HAB climb RP</label>
-                  </div>
-                </td>
-                <td class="blue">
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_rocket">Give rocket RP</label>
-                  </div>
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.add_rp_hab_climb">Give HAB climb RP</label>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-
-            <tbody v-if="isPlayoff">
-              <tr>
-                <td class="red">
-                  <h6>{{matchEditData.teams.red[0].team}} &bull; {{matchEditData.teams.red[1].team}} &bull; {{matchEditData.teams.red[2].team}}</h6>
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.red.dq">DQ (Red Card)</label>
-                  </div>
-                </td>
-                <td class="blue">
-                  <h6>{{matchEditData.teams.blue[0].team}} &bull; {{matchEditData.teams.blue[1].team}} &bull; {{matchEditData.teams.blue[2].team}}</h6>
-                  <div class="form-check">
-                    <label><input type="checkbox" class="form-check-input" v-model="matchEditData.flags.blue.dq">DQ (Red Card)</label>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <b-button variant="warning" @click="editMatchMarkUploaded">Mark this match as uploaded</b-button>
-
-        <template v-slot:modal-footer>
-          <b-button variant="secondary" @click="hideEditMatch">Cancel</b-button>
-          <b-button variant="primary" @click="saveEditMatch">Save changes</b-button>
-        </template>
-      </b-modal>
-  </div>
+            <template v-slot:modal-footer>
+                <b-button
+                    variant="secondary"
+                    @click="hideEditMatch"
+                >
+                    Cancel
+                </b-button>
+                <b-button
+                    variant="primary"
+                    @click="saveEditMatch"
+                >
+                    Save changes
+                </b-button>
+            </template>
+        </b-modal>
+    </div>
 </template>
 
 <script>
