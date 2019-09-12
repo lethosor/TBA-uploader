@@ -1,23 +1,22 @@
 <template>
-    <div
-        v-if="value"
-        :class="{alert: true, ['alert-' + type]: true}"
+    <b-alert
+        :variant="type"
+        :show="text.length > 0"
+        dismissible
+        @dismissed="$emit('input', '')"
     >
-        <button
-            type="button"
-            class="close"
-            aria-label="Close"
-            @click="$emit('input', '')"
-        >
-            <span aria-hidden="true">&times;</span>
-        </button>
         <span class="raw-message">{{ text }}</span>
-    </div>
+    </b-alert>
 </template>
 
 <script>
+import {BAlert} from 'bootstrap-vue';
+
 export default {
     name: 'Alert',
+    components: {
+        BAlert,
+    },
     props: {
         type: {
             type: String,
