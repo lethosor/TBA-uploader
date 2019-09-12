@@ -1197,8 +1197,11 @@ export default {
             catch (e) {
                 events = {};
             }
+            if (events._read_api_key && !this.readApiKey) {
+                this.readApiKey = events._read_api_key;
+            }
             for (const k of Object.keys(events)) {
-                if (!STORED_EVENTS[k]) {
+                if (!STORED_EVENTS[k] && !k.startsWith('_')) {
                     STORED_EVENTS[k] = events[k];
                     this.events.push(k);
                 }
@@ -1206,7 +1209,10 @@ export default {
             localStorage.setItem('storedEvents', JSON.stringify(STORED_EVENTS));
             await api.postJson({
                 url: '/api/keys/update',
-                body: STORED_EVENTS,
+                body: {
+                    ...STORED_EVENTS,
+                    _read_api_key: events._read_api_key || this.readApiKey,
+                },
             });
         },
 
