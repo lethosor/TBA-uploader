@@ -1,3 +1,10 @@
+function parseGenericResponseError(res) {
+    if (res.readyState === 0 || res.statusText == 'error') {
+        return 'Connection failed';
+    }
+    return String(res);
+}
+
 export default Object.freeze({
     safeParseLocalStorageObject(key) {
         var res;
@@ -28,7 +35,7 @@ export default Object.freeze({
         if (res.responseText) {
             return res.responseText;
         }
-        return res;
+        return parseGenericResponseError(res);
     },
 
     parseErrorJSON(res) {
@@ -43,7 +50,7 @@ export default Object.freeze({
             }
         }
         else {
-            return res;
+            return parseGenericResponseError(res);
         }
     },
 
