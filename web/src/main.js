@@ -4,9 +4,7 @@ import App from 'components/App.vue';
 
 const app = new Vue({
     el: '#main',
-    components: {
-        App,
-    },
+    render: (createElement) => createElement(App),
 });
 
 window.app = app.$children[0];
