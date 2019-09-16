@@ -1,6 +1,9 @@
 function parseGenericResponseError(res) {
-    if (res.readyState === 0 || res.statusText == 'error') {
-        return 'Connection failed';
+    if (parseInt(res.status) >= 400) {
+        return 'Connection failed with code ' + res.status;
+    }
+    if (res.readyState === 0 || res.statusText.toLowerCase() == 'error') {
+        return 'Connection failed with unspecified error';
     }
     return String(res);
 }
@@ -50,7 +53,7 @@ export default Object.freeze({
             }
         }
         else {
-            return parseGenericResponseError(res);
+            return 'JSON fetch failed: ' + this.parseErrorText(res);
         }
     },
 
