@@ -1,6 +1,6 @@
 <template>
     <b-alert
-        :variant="type"
+        :variant="variant"
         :show="text.length > 0"
         dismissible
         @dismissed="$emit('input', '')"
@@ -18,7 +18,7 @@ export default {
         BAlert,
     },
     props: {
-        type: {
+        variant: {
             type: String,
             required: true,
         },

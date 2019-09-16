@@ -67,7 +67,7 @@
                     <hr>
                     <alert
                         v-model="tbaReadError"
-                        type="danger"
+                        variant="danger"
                     />
                     <label class="row col">
                         Read API key (<a
@@ -146,7 +146,7 @@
                         <h3 class="mt-2">Team remappings</h3>
                         <alert
                             v-model="remapError"
-                            type="danger"
+                            variant="danger"
                         />
 
                         <ul>
@@ -211,7 +211,7 @@
             >
                 <alert
                     v-model="scheduleError"
-                    type="danger"
+                    variant="danger"
                 />
                 <b-alert
                     v-model="scheduleUploaded"
@@ -278,7 +278,7 @@
                         </table>
                         <alert
                             v-model="scheduleError"
-                            type="danger"
+                            variant="danger"
                         />
                         <p>
                             <span class="warning">Warning:</span> this will overwrite any match data on TBA for these matches.
@@ -358,7 +358,7 @@
                 </p>
                 <alert
                     v-model="rankingsError"
-                    type="danger"
+                    variant="danger"
                     prefix="Rankings:"
                 />
                 <div v-if="inMatchAdvanced">
@@ -410,7 +410,7 @@
                 </div>
                 <alert
                     v-model="matchError"
-                    type="danger"
+                    variant="danger"
                 />
                 <div v-if="matchSummaries.length">
                     <h3>Matches to upload ({{ matchSummaries.length }})</h3>
@@ -493,7 +493,7 @@
                 </ul>
                 <alert
                     v-model="videoError"
-                    type="danger"
+                    variant="danger"
                 />
 
                 <b-form-checkbox v-model="showExistingVideos">
@@ -650,7 +650,7 @@
                 </div>
                 <alert
                     v-model="fmsConfigError"
-                    type="danger"
+                    variant="danger"
                 />
             </b-tab>
 
@@ -704,7 +704,7 @@
                 </div>
                 <alert
                     v-model="matchEditError"
-                    type="danger"
+                    variant="danger"
                 />
                 <table class="table match-edit">
                     <thead>
