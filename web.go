@@ -100,7 +100,7 @@ func apiTBARequest(path string, w http.ResponseWriter, r *http.Request) {
         apiPanicInternal("read failed: %s", err)
     }
 
-    res, err := tba.SendRequest(path, body, params)
+    res, err := tba.SendRequest(FMSConfig.TbaUrl, path, body, params)
     if err != nil {
         apiPanicInternal("TBA request failed: %s", err)
     }
@@ -146,7 +146,6 @@ func apiGetFMSConfig(w http.ResponseWriter, r *http.Request) {
 func apiSetFMSConfig(w http.ResponseWriter, r *http.Request) {
     body, _ := ioutil.ReadAll(r.Body)
     err := json.Unmarshal(body, &FMSConfig)
-    logger.Printf("Changed FMS Config: Server = \"%s\", Data Folder = \"%s\"\n", FMSConfig.Server, FMSConfig.DataFolder)
     resp := make(map[string]interface{})
     resp["ok"] = (err == nil)
     if err != nil {
@@ -154,6 +153,7 @@ func apiSetFMSConfig(w http.ResponseWriter, r *http.Request) {
     }
     resp["config"] = FMSConfig
     out, err := json.Marshal(resp)
+    logger.Printf("Changed FMS config: %s\n", out)
     w.Write(out)
     if err != nil {
         logger.Printf("apiSetFMSConfig: Marshal failed: %s\n", err)

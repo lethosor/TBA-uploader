@@ -42,11 +42,11 @@ func GetPlayoffCode(match_id int) MatchCode {
     }
 }
 
-func SendRequest(url string, body []byte, params *EventParams) (*http.Response, error) {
+func SendRequest(tba_url string, url string, body []byte, params *EventParams) (*http.Response, error) {
     url = fmt.Sprintf("/api/trusted/v1/event/%s/%s", params.Event, url)
     sig := fmt.Sprintf("%x", md5.Sum(append([]byte(params.Secret + url), body...)))
 
-    url = "https://www.thebluealliance.com" + url
+    url = tba_url + url
     request, err := http.NewRequest("POST", url, bytes.NewReader(body))
     if err != nil {
         return nil, err

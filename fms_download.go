@@ -15,15 +15,16 @@ import (
 )
 
 var FMSConfig struct {
-    Server string `json:"server"`
+    FmsUrl string `json:"fms_url"`
     DataFolder string `json:"data_folder"`
+    TbaUrl string `json:"tba_url"`
 }
 
 func checkFMSConnection() {
     // make sure the FMS server is running
-    logger.Printf("Looking for FMS at %s...\n", FMSConfig.Server)
+    logger.Printf("Looking for FMS at %s...\n", FMSConfig.FmsUrl)
     client := http.Client{Timeout: 5 * time.Second}
-    _, err := client.Get(FMSConfig.Server)
+    _, err := client.Get(FMSConfig.FmsUrl)
     if err != nil {
         logger.Println("Failed to connect to FMS!", err)
     } else {
@@ -77,7 +78,7 @@ func getMatchDownloadPath(level int, folder string) string {
 }
 
 func downloadMatches(level int, folder string, new_only bool) ([]string, error) {
-    url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSConfig.Server, level)
+    url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSConfig.FmsUrl, level)
     folder = path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level))
     // ensure that the matches folder exists even if no matches are fetched
     os.MkdirAll(path.Join(folder, "matches"), os.ModePerm);
@@ -102,7 +103,7 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
             logger.Printf("Couldn't find link in row %d\n", i)
             return
         }
-        match_url = FMSConfig.Server + match_url
+        match_url = FMSConfig.FmsUrl + match_url
         button := row.Find("button").First()
         button_text := strings.Replace(button.Text(), " ", "", -1)
         button_text = strings.Replace(button_text, "/", "-", -1)
@@ -125,11 +126,11 @@ func downloadAllMatches(level int, folder string) ([]string, error) {
 }
 
 func downloadRankings() ([]byte, error) {
-    request, err := http.NewRequest("GET", FMSConfig.Server + "/Pit/GetData", nil)
+    request, err := http.NewRequest("GET", FMSConfig.FmsUrl + "/Pit/GetData", nil)
     if err != nil {
         return nil, err
     }
-    request.Header.Add("Referer", FMSConfig.Server + "/Pit/Qual")
+    request.Header.Add("Referer", FMSConfig.FmsUrl + "/Pit/Qual")
     client := http.Client{Timeout: 5 * time.Second}
     response, err := client.Do(request)
     if err != nil {

@@ -11,6 +11,9 @@ module.exports = {
         "browser": true,
         "jquery": true,
     },
+    "globals": {
+        "FMS_CONFIG": "readonly",
+    },
     "rules": {
         "indent": [
             "error",

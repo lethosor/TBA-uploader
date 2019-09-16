@@ -4,7 +4,7 @@
         <h2>
             TBA uploader<span v-if="eventSelected"> -
                 <a
-                    :href="'https://www.thebluealliance.com/event/' + selectedEvent"
+                    :href="fmsConfig.tba_url + '/event/' + selectedEvent"
                     target="_blank"
                 >{{ selectedEvent }}</a>
             </span>
@@ -71,7 +71,7 @@
                     />
                     <label class="row col">
                         Read API key (<a
-                            href="https://www.thebluealliance.com/account"
+                            :href="fmsConfig.tba_url + '/account'"
                             target="_blank"
                         >create a key</a>&nbsp;if needed)
                         <b-form-input
@@ -626,12 +626,16 @@
                 <p>Options in this section need to be saved by clicking "Save" below. Also note that these can be specified on the command line as well, which is more useful for development.</p>
                 <div class="row mb-2">
                     <label class="col-sm-12 col-md-8">
-                        Server (default: <code>http://10.0.100.5</code>):
-                        <b-form-input v-model="fmsConfig.server" />
+                        FMS URL (default: <code>http://10.0.100.5</code>):
+                        <b-form-input v-model="fmsConfig.fms_url" />
                     </label>
                     <label class="col-sm-12 col-md-8">
                         Data folder:
                         <b-form-input v-model="fmsConfig.data_folder" />
+                    </label>
+                    <label class="col-sm-12 col-md-8">
+                        TBA URL (default: <code>https://www.thebluealliance.com</code>):
+                        <b-form-input v-model="fmsConfig.tba_url" />
                     </label>
                     <div class="col-sm-12">
                         <b-button
@@ -866,7 +870,7 @@ function sendApiRequest(url, event, body) {
 window.sendApiRequest = sendApiRequest;
 
 function tbaApiEventRequest(event, route) {
-    var url = 'https://www.thebluealliance.com/api/v3/event/' + event;
+    var url = FMS_CONFIG.tba_url + '/api/v3/event/' + event;
     if (route) {
         url += '/' + route;
     }

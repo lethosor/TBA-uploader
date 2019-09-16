@@ -16,7 +16,7 @@ export default Object.freeze({
     },
 
     async getTbaJson({event, route, key}) {
-        var url = 'https://www.thebluealliance.com/api/v3/event/' + event;
+        var url = FMS_CONFIG.tba_url + '/api/v3/event/' + event;
         if (route) {
             url += '/' + route;
         }

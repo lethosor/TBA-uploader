@@ -18,13 +18,15 @@ func main() {
     }
 
     port := flag.Int("port", 8808, "web server port")
-    fms_server := flag.String("fms-server", "http://10.0.100.5", "FMS server address (including protocol)")
+    fms_url := flag.String("fms-url", "http://10.0.100.5", "FMS URL (including protocol)")
     no_fms := flag.Bool("no-fms", false, "disable FMS connectivity")
+    tba_url := flag.String("tba-url", "https://www.thebluealliance.com", "TBA URL (including protocol)")
     data_folder := flag.String("data-folder", filepath.Join(filepath.Dir(exe), "fms_data"), "FMS data destination folder")
     web_folder := flag.String("web-folder", "", "folder to serve files from (defaults to bundled files)")
     flag.Parse()
 
-    FMSConfig.Server = *fms_server
+    FMSConfig.FmsUrl = *fms_url
+    FMSConfig.TbaUrl = *tba_url
 
     FMSConfig.DataFolder, err = filepath.Abs(*data_folder)
     if err != nil {
