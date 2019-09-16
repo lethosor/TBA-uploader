@@ -1093,7 +1093,9 @@ export default {
         $.get('/README.md', function(readme) {
             // remove first line (header)
             readme = readme.substr(readme.indexOf('\n'));
-            this.helpHTML = new showdown.Converter().makeHtml(readme);
+            this.helpHTML = new showdown.Converter({
+                simplifiedAutoLink: true,
+            }).makeHtml(readme);
         }.bind(this));
 
         $(function() {
