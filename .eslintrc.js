@@ -11,10 +11,6 @@ module.exports = {
         "browser": true,
         "jquery": true,
     },
-    "globals": {
-        "Vue": "readonly",
-        "showdown": "readonly",
-    },
     "rules": {
         "indent": [
             "error",

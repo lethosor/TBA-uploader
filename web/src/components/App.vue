@@ -826,6 +826,7 @@ import {
     BTabs,
 } from 'bootstrap-vue';
 import 'regenerator-runtime';
+import showdown from 'showdown';
 import Vue from 'vue';
 
 import api from 'src/api.js';
