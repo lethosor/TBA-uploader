@@ -1656,7 +1656,11 @@ export default {
         uploadRankings: function() {
             this.rankingsError = '';
             this.inUploadRankings = true;
-            $.getJSON('/api/rankings/fetch', function(data) {
+            const params = {
+                event: this.selectedEvent,
+                level: this.matchLevel,
+            };
+            $.getJSON('/api/rankings/fetch', params, function(data) {
                 var rankings = ((data && data.qualRanks) || []).map(tba.convertToTBARankings[this.eventYear]);
                 if (!rankings || !rankings.length) {
                     this.rankingsError = 'No rankings available from FMS';

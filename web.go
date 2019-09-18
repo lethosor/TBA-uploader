@@ -375,7 +375,9 @@ func apiDeleteMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiFetchRankings(w http.ResponseWriter, r *http.Request) {
-    out, err := downloadRankings()
+    event := r.URL.Query().Get("event")
+    level := checkRequestLevel(r)
+    out, err := downloadRankings(level, event)
     if err != nil {
         apiPanicInternal("ranking fetch failed: %s", err)
     }

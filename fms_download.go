@@ -73,8 +73,16 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
     return filepath, true, nil
 }
 
+func getLevelDataPath(folder string, level int, subfolder string) string {
+    return path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level), subfolder)
+}
+
 func getMatchDownloadPath(level int, folder string) string {
-    return path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level), "matches")
+    return getLevelDataPath(folder, level, "matches")
+}
+
+func getRankingDownloadPath(level int, folder string) string {
+    return getLevelDataPath(folder, level, "rankings")
 }
 
 func downloadMatches(level int, folder string, new_only bool) ([]string, error) {
@@ -125,7 +133,9 @@ func downloadAllMatches(level int, folder string) ([]string, error) {
     return downloadMatches(level, folder, false)
 }
 
-func downloadRankings() ([]byte, error) {
+func downloadRankings(level int, folder string) ([]byte, error) {
+    ranking_path := getRankingDownloadPath(level, folder)
+    os.MkdirAll(ranking_path, os.ModePerm)
     request, err := http.NewRequest("GET", FMSConfig.FmsUrl + "/Pit/GetData", nil)
     if err != nil {
         return nil, err
@@ -136,5 +146,19 @@ func downloadRankings() ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    return ioutil.ReadAll(response.Body)
+    out, err := ioutil.ReadAll(response.Body)
+    if err == nil {
+        ranking_files, _ := listFilesWithExtension(ranking_path, "json")
+        i := len(ranking_files) + 1
+        var dest_filename string
+        for {
+            dest_filename = path.Join(ranking_path, fmt.Sprintf("%05d.json", i))
+            if !fileExists(dest_filename) {
+                break
+            }
+            i += 1
+        }
+        err = ioutil.WriteFile(dest_filename, out, os.ModePerm)
+    }
+    return out, err
 }
