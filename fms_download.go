@@ -50,19 +50,19 @@ func downloadFile(folder string, filename string, url string, overwrite bool) (f
         }
     }
 
-    // Create the file
-    out, err := os.Create(filepath)
-    if err != nil {
-        return
-    }
-    defer out.Close()
-
     // Get the data
     resp, err := http.Get(url)
     if err != nil {
         return
     }
     defer resp.Body.Close()
+
+    // Create the file
+    out, err := os.Create(filepath)
+    if err != nil {
+        return
+    }
+    defer out.Close()
 
     // Write the body to file
     _, err = io.Copy(out, resp.Body)
