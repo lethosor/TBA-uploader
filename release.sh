@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
+cd "$(dirname "$0")"
 . common.inc.sh
-
-cd $(dirname "$0")
 
 if git describe --tags --exact-match >/dev/null 2>&1; then
     version="$(git describe --tags --abbrev=0)"

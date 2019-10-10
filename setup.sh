@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+cd "$(dirname "$0")"
 . common.inc.sh
 
 run_cmd go get -u github.com/go-bindata/go-bindata/...
