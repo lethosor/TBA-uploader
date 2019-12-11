@@ -1463,7 +1463,7 @@ export default {
                     this.uploadRankings();
                 }
                 sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
-                    this.selectedEvent, match_ids
+                    this.selectedEvent, match_ids,
                 ).fail(function(res) {
                     this.matchError += '\nReceipt generation failed: ' + res.responseText;
                 }.bind(this));
