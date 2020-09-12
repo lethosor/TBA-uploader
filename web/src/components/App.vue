@@ -988,9 +988,10 @@ export default {
     }),
     computed: {
         BRACKET_TYPES: function() {
-            return Object.fromEntries(Object.keys(BRACKET_TYPE).map((key) => [
-                BRACKET_TYPE[key], BRACKET_NAME[key],
-            ]));
+            return Object.keys(BRACKET_TYPE).map((key) => ({
+                value: BRACKET_TYPE[key],
+                text: BRACKET_NAME[key],
+            }));
         },
         eventSelected: function() {
             return !!this.selectedEvent && !this.inAddEvent;

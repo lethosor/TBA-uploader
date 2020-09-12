@@ -23,6 +23,10 @@ module.exports = {
                 loader: 'babel-loader',
                 query: {
                     presets: ['@babel/env'],
+                    overrides: [{
+                        test: './node_modules/bootstrap-vue/esm/icons/icons.js',
+                        compact: true,
+                    }],
                 },
             },
             {
