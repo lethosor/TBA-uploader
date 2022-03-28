@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"../tba"
+	"github.com/lethosor/TBA-uploader/tba"
 )
 
 func split_and_strip(text string, separator string) ([]string) {

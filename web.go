@@ -13,8 +13,8 @@ import (
 
     "github.com/gorilla/mux"
 
-    "./fms_parser"
-    "./tba"
+    "github.com/lethosor/TBA-uploader/fms_parser"
+    "github.com/lethosor/TBA-uploader/tba"
 )
 
 // @todo hack
