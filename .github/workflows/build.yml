@@ -1,0 +1,69 @@
+name: Build
+on:
+  push:
+    branches:
+      - master
+      - ci
+      - 'ci-*'
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    name: Build (Go ${{ matrix.go-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        upload:
+          - true
+        go-version:
+          - '1.18'
+        include:
+          - go-version: '1.16'
+            upload: false
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Install dependencies
+        run: ./setup.sh
+      - name: Build
+        env:
+          build_js: 1
+        run: ./build.sh
+      - name: Build releases
+        id: release
+        if: ${{ matrix.upload }}
+        run: |
+          ./release.sh | tee release.log
+          version="$(grep Version: release.log | sed 's/Version:\s*//')"
+          echo "::set-output name=version::$version"
+          echo "::set-output name=output_prefix::bin/release/$version/TBA-uploader-$version"
+      - name: Upload artifact (win32)
+        if: ${{ matrix.upload }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: TBA-uploader-${{steps.release.outputs.version}}-win32.zip
+          path: ${{steps.release.outputs.output_prefix}}-win32.zip
+      - name: Upload artifact (win64)
+        if: ${{ matrix.upload }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: TBA-uploader-${{steps.release.outputs.version}}-win64.zip
+          path: ${{steps.release.outputs.output_prefix}}-win64.zip
+      - name: Upload artifact (mac64)
+        if: ${{ matrix.upload }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: TBA-uploader-${{steps.release.outputs.version}}-mac64.zip
+          path: ${{steps.release.outputs.output_prefix}}-mac64.zip
+      - name: Upload artifact (linux64)
+        if: ${{ matrix.upload }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: TBA-uploader-${{steps.release.outputs.version}}-linux64.zip
+          path: ${{steps.release.outputs.output_prefix}}-linux64.zip
