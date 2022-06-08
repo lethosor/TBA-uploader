@@ -6,11 +6,11 @@ import (
     "os"
     "testing"
 
-    "./fms_parser"
+    "github.com/lethosor/TBA-uploader/fms_parser"
 )
 
 func TestMain(m *testing.M) {
-    FMSConfig.Server = "http://localhost:5555"
+    FMSConfig.FmsUrl = "http://localhost:5555"
     FMSConfig.DataFolder = "fms_data_test"
     os.Exit(m.Run())
 }
