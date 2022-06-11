@@ -45,6 +45,7 @@ func testParseSingleMatch(
 	parsed_result := testTbaMatchResult{}
 	json.Unmarshal(parsed_marshaled, &parsed_result);
 
+	deep.MaxDiff = 100
 	if diff := deep.Equal(parsed_result.ScoreBreakdown, tba_result.ScoreBreakdown); diff != nil {
 		t.Errorf("%s: breakdown does not match: %s", fms_html_path, diff)
 	}
