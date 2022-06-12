@@ -46,9 +46,11 @@ func addManualFields2022(breakdown map[string]interface{}, info fmsScoreInfo2022
 
 // map FMS names to API names of basic integer fields
 var simpleFields2022 = map[string]string {
+	"auto cargo total scored": "autoCargoTotal",
+	"teleop cargo total scored": "teleopCargoTotal",
+	"match cargo total scored": "matchCargoTotal",
 	"endgame points": "endgamePoints",
 	"taxi points": "autoTaxiPoints",
-	// "ranking points": "rp",
 	"adjustments": "adjustPoints",
 }
 
@@ -144,7 +146,7 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 
 			// Handle each data row
 			if api_field, ok := simpleFields2022[row_name]; ok {
-				assignBreakdownAllianceFields[int, int](breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
+				assignBreakdownAllianceFields(breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
 					blue: checkParseInt(blue_text, "blue " + api_field),
 					red: checkParseInt(red_text, "red " + api_field),
 				})
@@ -162,10 +164,33 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 				red_rp := checkParseInt(red_text, "red ranking points")
 				breakdown["blue"]["rankingPoints"] = blue_rp
 				breakdown["red"]["rankingPoints"] = red_rp
+			} else if row_name == "autonomous points" {
+				blue_points := checkParseInt(blue_text, "blue " + row_name)
+				red_points := checkParseInt(red_text, "red " + row_name)
+				assignBreakdownAllianceFields(breakdown, "autoPoints", identity_fn[int], breakdownAllianceFields[int]{
+					blue: blue_points,
+					red: red_points,
+				})
+				scoreInfo.blue.auto = blue_points
+				scoreInfo.red.auto = red_points
+			} else if row_name == "teleop points" {
+				blue_points := checkParseInt(blue_text, "blue " + row_name)
+				red_points := checkParseInt(red_text, "red " + row_name)
+				assignBreakdownAllianceFields(breakdown, "teleopPoints", identity_fn[int], breakdownAllianceFields[int]{
+					blue: blue_points,
+					red: red_points,
+				})
+				scoreInfo.blue.teleop = blue_points
+				scoreInfo.red.teleop = red_points
 			} else if row_name == "taxi" {
 				assignBreakdownRobotFields(breakdown, "taxiRobot", boolToYesNo, breakdownRobotFields[bool]{
 					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
 					red: iconsToBools(red_cell, 3, "fa-check", "fa-times"),
+				})
+			} else if row_name == "quintet achieved?" {
+				assignBreakdownAllianceFields(breakdown, "quintetAchieved", identity_fn[bool], breakdownAllianceFields[bool]{
+					blue: iconsToBools(blue_cell, 1, "fa-check", "fa-times")[0],
+					red: iconsToBools(red_cell, 1, "fa-check", "fa-times")[0],
 				})
 			} else {
 				breakdown["blue"]["!" + row_name] = blue_text
