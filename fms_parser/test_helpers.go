@@ -2,7 +2,9 @@ package fms_parser
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -41,9 +43,13 @@ func testParseSingleMatch(
 		return
 	}
 
-	parsed_marshaled, _ := json.Marshal(parsed_json)
+	parsed_marshaled, _ := json.MarshalIndent(parsed_json, "", "  ")
 	parsed_result := testTbaMatchResult{}
 	json.Unmarshal(parsed_marshaled, &parsed_result);
+
+	if os.Getenv("TEST_DEBUG") != "" {
+		fmt.Printf("%s", parsed_marshaled)
+	}
 
 	deep.MaxDiff = 100
 	if diff := deep.Equal(parsed_result.ScoreBreakdown, tba_result.ScoreBreakdown); diff != nil {
