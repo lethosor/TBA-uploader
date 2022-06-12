@@ -13,25 +13,14 @@ import (
 )
 
 type fmsScoreInfo2022 struct {
-	auto int64
-	teleop int64
-	fouls int64
-	total int64
-
-	baseRP int64  // win-loss-tie RP only
-	rocketRP bool
-	habRP bool
-
-	hatchPanels int64
-	scoredHatchPanels int64
-
-	fields map[string]int64  // indexed by values of simpleFields2022
+	auto int
+	teleop int
+	fouls int
+	total int
 }
 
 func makeFmsScoreInfo2022() fmsScoreInfo2022 {
-	return fmsScoreInfo2022{
-		fields: make(map[string]int64),
-	}
+	return fmsScoreInfo2022{}
 }
 
 type extraMatchAllianceInfo2022 struct {
@@ -58,7 +47,7 @@ func addManualFields2022(breakdown map[string]interface{}, info fmsScoreInfo2022
 // map FMS names to API names of basic integer fields
 var simpleFields2022 = map[string]string {
 	"endgame points": "endgamePoints",
-	"taxi points": "taxiPoints",
+	"taxi points": "autoTaxiPoints",
 	// "ranking points": "rp",
 	"adjustments": "adjustPoints",
 }
@@ -125,12 +114,12 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 
 	parse_errors := make([]string, 0)
 
-	checkParseInt := func(s, desc string) int64 {
+	checkParseInt := func(s, desc string) int {
 		n, err := strconv.ParseInt(s, 10, 0)
 		if err != nil {
 			panic(fmt.Sprintf("parse int %s failed: %s", desc, err))
 		}
-		return n
+		return int(n)
 	}
 
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
@@ -154,7 +143,12 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 			red_text  := strings.ToLower(strings.TrimSpace(red_cell.Text()))
 
 			// Handle each data row
-			if row_name == "final score" {
+			if api_field, ok := simpleFields2022[row_name]; ok {
+				assignBreakdownAllianceFields[int, int](breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
+					blue: checkParseInt(blue_text, "blue " + api_field),
+					red: checkParseInt(red_text, "red " + api_field),
+				})
+			} else if row_name == "final score" {
 				blue_score := checkParseInt(blue_text, "blue final score")
 				red_score := checkParseInt(red_text, "red final score")
 				breakdown["blue"]["totalPoints"] = blue_score

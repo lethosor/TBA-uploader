@@ -79,11 +79,25 @@ func iconsToBools(node *goquery.Selection, count int, true_class, false_class st
 	return out
 }
 
+func identity_fn[T any](in T) T {
+	return in
+}
+
 func boolToYesNo(in bool) string {
 	if (in) {
 		return "Yes"
 	}
 	return "No"
+}
+
+type breakdownAllianceFields[T any] struct {
+	blue T
+	red T
+}
+
+func assignBreakdownAllianceFields[T, T2 any](breakdowns map[string]map[string]interface{}, field string, callback func(T) T2, values breakdownAllianceFields[T]) {
+	breakdowns["blue"][field] = callback(values.blue)
+	breakdowns["red"][field] = callback(values.red)
 }
 
 type breakdownRobotFields[T any] struct {
