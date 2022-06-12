@@ -168,7 +168,11 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 				red_rp := checkParseInt(red_text, "red ranking points")
 				breakdown["blue"]["rankingPoints"] = blue_rp
 				breakdown["red"]["rankingPoints"] = red_rp
-
+			} else if row_name == "taxi" {
+				assignBreakdownRobotFields(breakdown, "taxiRobot", boolToYesNo, breakdownRobotFields[bool]{
+					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
+					red: iconsToBools(red_cell, 3, "fa-check", "fa-times"),
+				})
 			} else {
 				breakdown["blue"]["!" + row_name] = blue_text
 				breakdown["red"]["!" + row_name] = red_text
