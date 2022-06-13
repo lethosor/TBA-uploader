@@ -131,6 +131,21 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 		}
 	}
 
+	assignCargoScoredLocations := func(hub_name, alliance string, container *goquery.Selection) {
+		desc := fmt.Sprintf("%s hub cargo scored for %s alliance", hub_name, alliance)
+		validateMatchPhase(desc)
+		cells := container.Find("div[title]")
+		if cells.Length() != 4 {
+			panic(fmt.Sprintf("invalid cell count: %d in %s", cells.Length(), desc))
+		}
+		cells.Each(func(_ int, cell *goquery.Selection) {
+			title, _ := cell.Attr("title")
+			exit_name := strings.Split(title, " ")[1]
+			breakdown[alliance][fmt.Sprintf("%sCargo%s%s", match_phase, strings.Title(hub_name), exit_name)] =
+				checkParseInt(cell.Text(), fmt.Sprintf("%s: %s", desc, title))
+		})
+	}
+
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
 		defer func() {
 			if r := recover(); r != nil {
@@ -235,6 +250,10 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 					blue: iconsToBools(blue_cell, 1, "fa-check", "fa-times")[0],
 					red: iconsToBools(red_cell, 1, "fa-check", "fa-times")[0],
 				})
+			} else if row_name == "lower hub cargo scored" || row_name == "upper hub cargo scored" {
+				hub_name := strings.Split(row_name, " ")[0]
+				assignCargoScoredLocations(hub_name, "blue", blue_cell)
+				assignCargoScoredLocations(hub_name, "red", red_cell)
 			} else if row_name == "endgame" {
 				assignBreakdownRobotFields(breakdown, "endgameRobot", identity_fn[string], breakdownRobotFields[string]{
 					blue: split_and_strip(blue_text, "\n"),
