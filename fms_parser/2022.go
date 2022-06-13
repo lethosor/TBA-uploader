@@ -124,6 +124,13 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 		return int(n)
 	}
 
+	match_phase := ""
+	validateMatchPhase := func(desc string) {
+		if match_phase == "" {
+			panic(fmt.Sprintf("no active match phase: %s", desc))
+		}
+	}
+
 	dom.Find("tr").Each(func(i int, s *goquery.Selection){
 		defer func() {
 			if r := recover(); r != nil {
@@ -137,6 +144,9 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 			row_name := strings.ToLower(strings.TrimSpace(columns.Eq(0).Text()))
 			if (row_name == "") {
 				return // continue
+			}
+			if (row_name == "taxi") {
+				match_phase = "auto"
 			}
 
 			blue_cell := columns.Eq(1)
@@ -173,6 +183,7 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 				})
 				scoreInfo.blue.auto = blue_points
 				scoreInfo.red.auto = red_points
+				match_phase = "teleop"
 			} else if row_name == "teleop points" {
 				blue_points := checkParseInt(blue_text, "blue " + row_name)
 				red_points := checkParseInt(red_text, "red " + row_name)
@@ -182,10 +193,17 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 				})
 				scoreInfo.blue.teleop = blue_points
 				scoreInfo.red.teleop = red_points
+				match_phase = ""
 			} else if row_name == "taxi" {
 				assignBreakdownRobotFields(breakdown, "taxiRobot", boolToYesNo, breakdownRobotFields[bool]{
 					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
 					red: iconsToBools(red_cell, 3, "fa-check", "fa-times"),
+				})
+			} else if row_name == "cargo points" {
+				validateMatchPhase(row_name)
+				assignBreakdownAllianceFields(breakdown, match_phase + "CargoPoints", identity_fn[int], breakdownAllianceFields[int]{
+					blue: checkParseInt(blue_text, "blue " + match_phase + " cargo points"),
+					red: checkParseInt(red_text, "red " + match_phase + " cargo points"),
 				})
 			} else if row_name == "quintet achieved?" {
 				assignBreakdownAllianceFields(breakdown, "quintetAchieved", identity_fn[bool], breakdownAllianceFields[bool]{
