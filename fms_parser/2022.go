@@ -151,8 +151,8 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 
 			blue_cell := columns.Eq(1)
 			red_cell  := columns.Eq(2)
-			blue_text := strings.ToLower(strings.TrimSpace(blue_cell.Text()))
-			red_text  := strings.ToLower(strings.TrimSpace(red_cell.Text()))
+			blue_text := strings.TrimSpace(blue_cell.Text())
+			red_text  := strings.TrimSpace(red_cell.Text())
 
 			parseIntWrapper := func(s, alliance string) int {
 				return checkParseInt(s, alliance + " " + row_name)
@@ -234,6 +234,11 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 				assignBreakdownAllianceFields(breakdown, "quintetAchieved", identity_fn[bool], breakdownAllianceFields[bool]{
 					blue: iconsToBools(blue_cell, 1, "fa-check", "fa-times")[0],
 					red: iconsToBools(red_cell, 1, "fa-check", "fa-times")[0],
+				})
+			} else if row_name == "endgame" {
+				assignBreakdownRobotFields(breakdown, "endgameRobot", identity_fn[string], breakdownRobotFields[string]{
+					blue: split_and_strip(blue_text, "\n"),
+					red: split_and_strip(red_text, "\n"),
 				})
 			} else {
 				breakdown["blue"]["!" + row_name] = blue_text
