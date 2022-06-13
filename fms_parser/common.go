@@ -100,6 +100,11 @@ func assignBreakdownAllianceFields[T, T2 any](breakdowns map[string]map[string]i
 	breakdowns["red"][field] = callback(values.red)
 }
 
+func assignBreakdownAllianceFieldsConst[T any](breakdowns map[string]map[string]interface{}, field string, value T) {
+	breakdowns["blue"][field] = value
+	breakdowns["red"][field] = value
+}
+
 type breakdownRobotFields[T any] struct {
 	blue []T
 	red []T
@@ -141,5 +146,23 @@ func assignTbaTeams(alliances map[string]map[string]interface{}, teams breakdown
 			tba_teams[i] = "frc" + alliance_teams[i]
 		}
 		alliances[alliance]["teams"] = tba_teams
+	}
+}
+
+func assignBreakdownRpFromBadges(breakdowns map[string]map[string]interface{}, rp_badge_names map[string]string, cells breakdownAllianceFields[*goquery.Selection]) {
+	groups := map[string]*goquery.Selection{
+		"blue": cells.blue,
+		"red": cells.red,
+	}
+	for alliance, cell := range groups {
+		for _, field := range rp_badge_names {
+			breakdowns[alliance][field] = false
+		}
+		cell.Find("img").Each(func(_ int, img *goquery.Selection) {
+			title, _ := img.Attr("title")
+			if field, ok := rp_badge_names[title]; ok {
+				breakdowns[alliance][field] = true
+			}
+		})
 	}
 }

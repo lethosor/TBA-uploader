@@ -26,8 +26,6 @@ func makeFmsScoreInfo2022() fmsScoreInfo2022 {
 type extraMatchAllianceInfo2022 struct {
 	Dqs []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
-	AddRpRocket bool `json:"add_rp_rocket"`
-	AddRpHabClimb bool `json:"add_rp_hab_climb"`
 }
 
 func makeExtraMatchAllianceInfo2022() extraMatchAllianceInfo2022 {
@@ -52,6 +50,11 @@ var simpleFields2022 = map[string]string {
 	"endgame points": "endgamePoints",
 	"taxi points": "autoTaxiPoints",
 	"adjustments": "adjustPoints",
+}
+
+var RP_BADGE_NAMES_2022 = map[string]string {
+	"Cargo Bonus Ranking Point Achieved": "cargoBonusRankingPoint",
+	"Hangar Bonus Ranking Point Achieved": "hangarBonusRankingPoint",
 }
 
 func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{}, error) {
@@ -198,8 +201,8 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 			} else if row_name == "ranking points" {
 				blue_rp := checkParseInt(blue_text, "blue ranking points")
 				red_rp := checkParseInt(red_text, "red ranking points")
-				breakdown["blue"]["rankingPoints"] = blue_rp
-				breakdown["red"]["rankingPoints"] = red_rp
+				breakdown["blue"]["rp"] = blue_rp
+				breakdown["red"]["rp"] = red_rp
 			} else if row_name == "autonomous points" {
 				blue_points := checkParseInt(blue_text, "blue " + row_name)
 				red_points := checkParseInt(red_text, "red " + row_name)
@@ -259,12 +262,25 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 					blue: split_and_strip(blue_text, "\n"),
 					red: split_and_strip(red_text, "\n"),
 				})
+			} else if row_name == "achievement badges" {
+				assignBreakdownRpFromBadges(breakdown, RP_BADGE_NAMES_2022, breakdownAllianceFields[*goquery.Selection]{
+					blue: blue_cell,
+					red: red_cell,
+				})
 			} else {
 				breakdown["blue"]["!" + row_name] = blue_text
 				breakdown["red"]["!" + row_name] = red_text
 			}
 		}
 	})
+
+	if (playoff) {
+		// set bonus RPs to false since the row is absent
+		assignBreakdownAllianceFieldsConst(breakdown, "rp", 0)
+		for _, field := range RP_BADGE_NAMES_2022 {
+			assignBreakdownAllianceFieldsConst(breakdown, field, false)
+		}
+	}
 
 	addManualFields2022(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
 	addManualFields2022(breakdown["red"], scoreInfo.red, extra_info["red"], playoff)
