@@ -111,3 +111,21 @@ func assignBreakdownRobotFields[T, T2 any](breakdowns map[string]map[string]inte
 		breakdowns["red"][fmt.Sprintf("%s%d", prefix, i + 1)] = callback(values.red[i])
 	}
 }
+
+type breakdownAllianceMultipleFields[T any] struct {
+	blue []T
+	red []T
+}
+
+func assignBreakdownAllianceMultipleFields[T, T2 any](breakdowns map[string]map[string]interface{}, fields []string, callback func(value T, alliance string) T2, values breakdownAllianceMultipleFields[T]) {
+	if (len(values.blue) != len(fields)) {
+		panic(fmt.Sprintf("blue length mismatch: expected %d, got %d", len(fields), len(values.blue)))
+	}
+	if (len(values.red) != len(fields)) {
+		panic(fmt.Sprintf("red length mismatch: expected %d, got %d", len(fields), len(values.red)))
+	}
+	for i, field := range fields {
+		breakdowns["blue"][field] = callback(values.blue[i], "blue")
+		breakdowns["red"][field] = callback(values.red[i], "red")
+	}
+}

@@ -142,10 +142,10 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 		columns := s.Children()
 		if columns.Length() == 3 {
 			row_name := strings.ToLower(strings.TrimSpace(columns.Eq(0).Text()))
-			if (row_name == "") {
+			if row_name == "" || row_name == "match score item" {
 				return // continue
 			}
-			if (row_name == "taxi") {
+			if row_name == "taxi" {
 				match_phase = "auto"
 			}
 
@@ -153,6 +153,10 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 			red_cell  := columns.Eq(2)
 			blue_text := strings.ToLower(strings.TrimSpace(blue_cell.Text()))
 			red_text  := strings.ToLower(strings.TrimSpace(red_cell.Text()))
+
+			parseIntWrapper := func(s, alliance string) int {
+				return checkParseInt(s, alliance + " " + row_name)
+			}
 
 			// Handle each data row
 			if api_field, ok := simpleFields2022[row_name]; ok {
@@ -194,6 +198,20 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 				scoreInfo.blue.teleop = blue_points
 				scoreInfo.red.teleop = red_points
 				match_phase = ""
+			} else if row_name == "foul points" {
+				blue_points := checkParseInt(blue_text, "blue " + row_name)
+				red_points := checkParseInt(red_text, "red " + row_name)
+				assignBreakdownAllianceFields(breakdown, "foulPoints", identity_fn[int], breakdownAllianceFields[int]{
+					blue: blue_points,
+					red: red_points,
+				})
+				scoreInfo.blue.fouls = blue_points
+				scoreInfo.red.fouls = red_points
+			} else if row_name == "fouls/techs committed" {
+				assignBreakdownAllianceMultipleFields(breakdown, []string{"foulCount", "techFoulCount"}, parseIntWrapper, breakdownAllianceMultipleFields[string]{
+					blue: split_and_strip(blue_text, "•"),
+					red: split_and_strip(red_text, "•"),
+				})
 			} else if row_name == "taxi" {
 				assignBreakdownRobotFields(breakdown, "taxiRobot", boolToYesNo, breakdownRobotFields[bool]{
 					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
