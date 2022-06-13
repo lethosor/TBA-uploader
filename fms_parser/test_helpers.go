@@ -13,8 +13,16 @@ import (
 	"github.com/go-test/deep"
 )
 
+type testTbaAllianceTeams struct {
+	TeamKeys []string `json:"teams" json:"team_keys"`
+}
+
 type testTbaMatchResult struct {
 	CompLevel string `json:"comp_level"`
+	Alliances struct {
+		Blue map[string]interface{} `json:"blue"`
+		Red  map[string]interface{} `json:"red"`
+	} `json:"alliances"`
 	ScoreBreakdown struct {
 		Blue map[string]interface{} `json:"blue"`
 		Red  map[string]interface{} `json:"red"`
@@ -52,6 +60,15 @@ func testParseSingleMatch(
 	}
 
 	deep.MaxDiff = 100
+
+	// write API expects "teams", but read API returns "team_keys"
+	if diff := deep.Equal(parsed_result.Alliances.Blue["teams"], tba_result.Alliances.Blue["team_keys"]); diff != nil {
+		t.Errorf("%s: blue alliance does not match: %s", fms_html_path, diff)
+	}
+	if diff := deep.Equal(parsed_result.Alliances.Red["teams"], tba_result.Alliances.Red["team_keys"]); diff != nil {
+		t.Errorf("%s: red alliance does not match: %s", fms_html_path, diff)
+	}
+
 	if diff := deep.Equal(parsed_result.ScoreBreakdown, tba_result.ScoreBreakdown); diff != nil {
 		t.Errorf("%s: breakdown does not match: %s", fms_html_path, diff)
 	}

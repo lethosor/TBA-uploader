@@ -129,3 +129,17 @@ func assignBreakdownAllianceMultipleFields[T, T2 any](breakdowns map[string]map[
 		breakdowns["red"][field] = callback(values.red[i], "red")
 	}
 }
+
+func assignTbaTeams(alliances map[string]map[string]interface{}, teams breakdownRobotFields[string]) {
+	groups := map[string][]string{
+		"blue": teams.blue,
+		"red": teams.red,
+	}
+	for alliance, alliance_teams := range groups {
+		tba_teams := make([]string, len(alliance_teams))
+		for i := 0; i < 3; i++ {
+			tba_teams[i] = "frc" + alliance_teams[i]
+		}
+		alliances[alliance]["teams"] = tba_teams
+	}
+}
