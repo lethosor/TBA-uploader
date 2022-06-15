@@ -13,6 +13,8 @@ func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interf
 		return parseHTMLtoJSON2018(filename, playoff)
 	} else if (year == 2019) {
 		return parseHTMLtoJSON2019(filename, playoff)
+	} else if (year == 2022) {
+		return parseHTMLtoJSON2022(filename, playoff)
 	} else {
 		return nil, fmt.Errorf("ParseHTMLtoJSON: unsupported year: %d", year)
 	}
@@ -32,6 +34,9 @@ var extraAllianceInfoCtors = map[int]func() ExtraMatchAllianceInfo {
 	},
 	2019: func() ExtraMatchAllianceInfo {
 		return makeExtraMatchAllianceInfo2019()
+	},
+	2022: func() ExtraMatchAllianceInfo {
+		return makeExtraMatchAllianceInfo2022()
 	},
 }
 
