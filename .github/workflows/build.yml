@@ -17,9 +17,6 @@ jobs:
           - true
         go-version:
           - '1.18'
-        include:
-          - go-version: '1.16'
-            upload: false
     steps:
       - name: Clone
         uses: actions/checkout@v3
@@ -35,6 +32,8 @@ jobs:
         env:
           build_js: 1
         run: ./build.sh
+      - name: Build tools
+        run: ./tools/build.sh
       - name: Build releases
         id: release
         if: ${{ matrix.upload }}

@@ -914,6 +914,7 @@ const EXTRA_FIELDS = {
         add_rp_rocket: false,
         add_rp_hab_climb: false,
     },
+    2022: {},
 };
 
 export default {
