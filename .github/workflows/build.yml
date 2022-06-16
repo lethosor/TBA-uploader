@@ -5,6 +5,8 @@ on:
       - master
       - ci
       - 'ci-*'
+    tags:
+      - 'v*'
   pull_request:
 jobs:
   build:
@@ -68,3 +70,9 @@ jobs:
         with:
           name: TBA-uploader-${{steps.release.outputs.version}}-linux64.zip
           path: ${{steps.release.outputs.output_prefix}}-linux64.zip
+      - name: Publish release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            ${{steps.release.outputs.output_prefix}}-*.zip
