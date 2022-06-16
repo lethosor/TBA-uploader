@@ -16,6 +16,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestDownloadMatches(t *testing.T) {
+    if os.Getenv("CI") != "" {
+        t.Skip("Test server not implemented in CI")
+    }
+
     fmt.Println(getMatchDownloadPath(MATCH_LEVEL_QUAL, "all"))
     files, err := downloadNewMatches(MATCH_LEVEL_QUAL, "all")
     if err != nil {

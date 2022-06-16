@@ -34,6 +34,8 @@ jobs:
         run: ./build.sh
       - name: Build tools
         run: ./tools/build.sh
+      - name: Test
+        run: go test ./...
       - name: Build releases
         id: release
         if: ${{ matrix.upload }}
