@@ -1191,6 +1191,7 @@ export default {
 
             this.$set(this.eventExtras, event, $.extend({}, {
                 remap_teams: [],
+                playoff_type: null,
             }, this.eventExtras[event]));
 
             if (!this.awards[event] || !this.awards[event].length) {
