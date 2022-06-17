@@ -1037,6 +1037,9 @@ export default {
         isPlayoff: function() {
             return this.matchLevel == MATCH_LEVEL.PLAYOFF;
         },
+        eventPlayoffType: function() {
+            return this.eventExtras[this.selectedEvent].playoff_type;
+        },
         schedulePendingMatchCells: function() {
             var addTeamCell = function(cells, match, color, i) {
                 var cls = {};
@@ -1304,7 +1307,7 @@ export default {
         onScheduleUpload: function(event) {
             this.scheduleReset(true);
             try {
-                var schedule = Schedule.parse(event.body);
+                var schedule = Schedule.parse(event.body, this.eventPlayoffType);
             }
             catch (error) {
                 if (typeof error == 'string') {

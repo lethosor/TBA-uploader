@@ -1,27 +1,11 @@
 const Schedule = {};
 
-Schedule.getTBAPlayoffCode = function(match_id) {
-    if (match_id <= 12) {
-        return {
-            comp_level: "qf",
-            set_number: ((match_id - 1) % 4) + 1,
-            match_number: Math.floor((match_id - 1) / 4) + 1,
-        };
+Schedule.getTBAPlayoffCode = function(bracket_type, match_id) {
+    let bracket = BRACKETS[bracket_type];
+    if (!bracket) {
+        throw 'Unsupported bracket type: ' + bracket_type;
     }
-    else if (match_id <= 18) {
-        return {
-            comp_level: "sf",
-            set_number: ((match_id - 1) % 2) + 1,
-            match_number: Math.floor((match_id - 1) / 2) - 5,
-        };
-    }
-    else {
-        return {
-            comp_level: "f",
-            set_number: 1,
-            match_number: match_id - 18,
-        };
-    }
+    return bracket[match_id];
 };
 
 Schedule.getTBAMatchKey = function(match) {
@@ -33,7 +17,7 @@ Schedule.getTBAMatchKey = function(match) {
     }
 };
 
-Schedule.parse = function(rawCsv) {
+Schedule.parse = function(rawCsv, playoffType) {
     var lines = rawCsv.split('\n').map(function(line) {
         return line.trim().toLowerCase().replace(/\s*/g, '').split(',');
     });
@@ -103,7 +87,7 @@ Schedule.parse = function(rawCsv) {
         }
         else {
             raw_id = match.description.match(/#(\d+)/)[1];
-            code = Schedule.getTBAPlayoffCode(raw_id);
+            code = Schedule.getTBAPlayoffCode(playoffType, raw_id);
         }
 
         return Object.assign(code, {

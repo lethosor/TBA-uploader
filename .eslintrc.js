@@ -12,6 +12,7 @@ module.exports = {
         "jquery": true,
     },
     "globals": {
+        "BRACKETS": "readonly",
         "FMS_CONFIG": "readonly",
     },
     "rules": {
