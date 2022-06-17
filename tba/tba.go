@@ -20,8 +20,8 @@ type MatchCode struct {
     Match int `json:"match_number"`
 }
 
-func GetPlayoffCode(match_id int) MatchCode {
-    return GetBracket(BRACKET_TYPE_BRACKET_8_TEAM)[match_id]
+func GetPlayoffCode(bracket_type, match_id int) MatchCode {
+    return GetBracket(bracket_type)[match_id]
 }
 
 func SendRequest(tba_url string, url string, body []byte, params *EventParams) (*http.Response, error) {
@@ -50,9 +50,13 @@ type playoffRoundInfo struct {
 var playoffRounds = map[int][]playoffRoundInfo {
     // note: most finals rounds have 6 potential matches due to "up to 3" overtime matches
     BRACKET_TYPE_BRACKET_8_TEAM: {
-        playoffRoundInfo{level: "qf", sets: 4, matches_per_set: 3},
-        playoffRoundInfo{level: "sf", sets: 2, matches_per_set: 3},
-        playoffRoundInfo{level: "f", sets: 1, matches_per_set: 6},
+        {level: "qf", sets: 4, matches_per_set: 3},
+        {level: "sf", sets: 2, matches_per_set: 3},
+        {level: "f", sets: 1, matches_per_set: 6},
+    },
+    BRACKET_TYPE_ROUND_ROBIN_6_TEAM: {
+        {level: "sf", sets: 1, matches_per_set: 15},
+        {level: "f", sets: 1, matches_per_set: 6},
     },
 }
 

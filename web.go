@@ -231,7 +231,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 match_info["match_number"] = extra_info.MatchCodeOverride.Match
             } else if (level == MATCH_LEVEL_PLAYOFF) {
                 // playoffs
-                code := tba.GetPlayoffCode(match_number)
+                code := tba.GetPlayoffCode(BRACKET_TYPE_BRACKET_8_TEAM, match_number)
                 match_info["comp_level"] = code.Level
                 match_info["set_number"] = code.Set
                 match_info["match_number"] = code.Match
