@@ -195,7 +195,8 @@
                             <b-button
                                 variant="danger"
                                 class="ml-2"
-                                :disabled="eventExtras[selectedEvent].playoff_type === undefined || eventExtras[selectedEvent].playoff_type === tbaEventData.playoff_type"
+                                :disabled="!canChangePlayoffType()[0]"
+                                :title="canChangePlayoffType()[1]"
                                 @click="updatePlayoffType"
                             >
                                 Change playoff type
@@ -1266,6 +1267,16 @@ export default {
             }).fail(function(error) {
                 this.remapError = utils.parseErrorText(error);
             }.bind(this));
+        },
+
+        canChangePlayoffType: function() {
+            if (this.eventExtras[this.selectedEvent].playoff_type === undefined) {
+                return [false, 'No event is loaded'];
+            }
+            if (this.eventExtras[this.selectedEvent].playoff_type === this.tbaEventData.playoff_type) {
+                return [false, 'Playoff type is already set to this'];
+            }
+            return [true];
         },
 
         updatePlayoffType: function() {
