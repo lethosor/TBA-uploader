@@ -3,8 +3,8 @@ const fs = require('fs');
 const commandLineArgs = require('command-line-args');
 const JSON5 = require('json5');
 
-function generateGo(consts) {
-    return 'package main\n\n' + Object.entries(consts).map(([type, values]) =>
+function generateGo(consts, { package = 'main' }) {
+    return 'package ' + package + '\n\n' + Object.entries(consts).map(([type, values]) =>
         'const (\n' + Object.entries(values).map(([key, value]) =>
             `\t${type}_${key} = ${JSON.stringify(value)}\n`
         ).join('') + ')\n\n'
@@ -21,6 +21,7 @@ function main() {
     const args = commandLineArgs([
         {name: 'input-file', type: String, defaultOption: true},
         {name: 'output-go', type: String},
+        {name: 'go-package', type: String},
         {name: 'output-js', type: String},
     ]);
 
@@ -30,7 +31,9 @@ function main() {
 
     const inJson = JSON5.parse(fs.readFileSync(args['input-file']));
     if (args['output-go']) {
-        fs.writeFileSync(args['output-go'], generateGo(inJson));
+        fs.writeFileSync(args['output-go'], generateGo(inJson, {
+            package: args['go-package'],
+        }));
     }
     if (args['output-js']) {
         fs.writeFileSync(args['output-js'], generateJs(inJson));

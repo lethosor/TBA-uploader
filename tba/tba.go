@@ -21,25 +21,7 @@ type MatchCode struct {
 }
 
 func GetPlayoffCode(match_id int) MatchCode {
-    if (match_id <= 12) {
-        return MatchCode{
-            Level: "qf",
-            Set: ((match_id - 1) % 4) + 1,
-            Match: ((match_id - 1) / 4) + 1,
-        }
-    } else if (match_id <= 18) {
-        return MatchCode{
-            Level: "sf",
-            Set: ((match_id - 1) % 2) + 1,
-            Match: ((match_id - 1) / 2) - 5,
-        }
-    } else {
-        return MatchCode{
-            Level: "f",
-            Set: 1,
-            Match: match_id - 18,
-        }
-    }
+    return GetBracket(BRACKET_TYPE_BRACKET_8_TEAM)[match_id]
 }
 
 func SendRequest(tba_url string, url string, body []byte, params *EventParams) (*http.Response, error) {
@@ -55,4 +37,50 @@ func SendRequest(tba_url string, url string, body []byte, params *EventParams) (
     request.Header.Add("X-TBA-Auth-Sig", sig);
     client := http.Client{Timeout: 5 * time.Second}
     return client.Do(request)
+}
+
+type Bracket map[int]MatchCode
+
+type playoffRoundInfo struct {
+    level string
+    sets int
+    matches_per_set int
+}
+
+var playoffRounds = map[int][]playoffRoundInfo {
+    // note: most finals rounds have 6 potential matches due to "up to 3" overtime matches
+    BRACKET_TYPE_BRACKET_8_TEAM: {
+        playoffRoundInfo{level: "qf", sets: 4, matches_per_set: 3},
+        playoffRoundInfo{level: "sf", sets: 2, matches_per_set: 3},
+        playoffRoundInfo{level: "f", sets: 1, matches_per_set: 6},
+    },
+}
+
+func generateBracket(bracket_type int) Bracket {
+    rounds, ok := playoffRounds[bracket_type]
+    if ok {
+        codes := make(Bracket)
+        i := 1
+        for _, round := range rounds {
+            for match := 1; match <= round.matches_per_set; match++ {
+                for set := 1; set <= round.sets; set++ {
+                    codes[i] = MatchCode{Level: round.level, Set: set, Match: match}
+                    i++
+                }
+            }
+        }
+        return codes
+    }
+    return nil
+}
+
+var cachedBrackets = make(map[int]Bracket)
+
+func GetBracket(bracket_type int) Bracket {
+    bracket, ok := cachedBrackets[bracket_type]
+    if !ok {
+        bracket = generateBracket(bracket_type)
+        cachedBrackets[bracket_type] = bracket
+    }
+    return bracket
 }
