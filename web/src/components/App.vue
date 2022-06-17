@@ -63,7 +63,12 @@
                     </b-button>
                 </div>
                 <div v-if="!inAddEvent">
-                    <div v-if="tbaEventData.name">Event name: {{ tbaEventData.name }} ({{ tbaEventData.year }})</div>
+                    <div
+                        v-if="tbaEventData.name"
+                        class="mt-2"
+                    >
+                        Event name: {{ tbaEventData.name }} ({{ tbaEventData.year }})
+                    </div>
                     <hr>
                     <alert
                         v-model="tbaReadError"
