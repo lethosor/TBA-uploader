@@ -202,6 +202,14 @@
                                 Change playoff type
                             </b-button>
                         </div>
+                        <b-alert
+                            v-if="selectedEvent && !isPlayoffTypeSupported(eventPlayoffType)"
+                            variant="danger"
+                            class="mt-2"
+                            show
+                        >
+                            This playoff type is not supported. Schedule and match uploads will fail.
+                        </b-alert>
                     </div>
                 </div>
             </b-tab>
@@ -1280,6 +1288,10 @@ export default {
                 return [false, 'Playoff type is already set to this'];
             }
             return [true];
+        },
+
+        isPlayoffTypeSupported: function(type) {
+            return Boolean(BRACKETS[type]);
         },
 
         updatePlayoffType: function() {
