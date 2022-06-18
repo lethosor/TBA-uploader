@@ -1,5 +1,24 @@
 const Schedule = {};
 
+/*
+Example custom schedule CSV (TODO: document)
+
+TBA Match Schedule,
+level,set,match,Time,Description,Blue 1,Blue 2,Blue 3,Red 1,Red 2,Red 3,
+sf,1,1 ,,Round-robin 1,5498,815,3175,9993,33,313,
+sf,1,2 ,,Round-robin 2,862,3604,7174,5069,5530,280,
+sf,1,3 ,,Round-robin 3,5907,5531,9996,6528,5050,7191,
+sf,1,4 ,,Round-robin 4,3655,5090,6914,6618,9994,2620,
+sf,1,5 ,,Round-robin 5,5498,815,3175,9993,33,313,
+sf,1,6 ,,Round-robin 6,862,3604,7174,5069,5530,280,
+sf,1,7 ,,Round-robin 7,5907,5531,9996,6528,5050,7191,
+sf,1,8 ,,Round-robin 8,3655,5090,6914,6618,9994,2620,
+sf,1,9 ,,Round-robin 9,5498,815,3175,9993,33,313,
+sf,1,10,,Round-robin 10,862,3604,7174,5069,5530,280,
+sf,1,11,,Round-robin 11,5907,5531,9996,6528,5050,7191,
+sf,1,12,,Round-robin 12,3655,5090,6914,6618,9994,2620,
+*/
+
 Schedule.getTBAPlayoffCode = function(bracket_type, match_id) {
     let bracket = BRACKETS[bracket_type];
     if (!bracket) {
@@ -24,6 +43,7 @@ Schedule.parse = function(rawCsv, playoffType) {
     if (lines[0][0].indexOf('matchschedule') < 0) {
         throw 'Wrong report type. You uploaded: ' + rawCsv.split(',')[0];
     }
+    let hasTbaCodes = lines[0][0].includes('tba');
     // find header
     var columnIndices = {};
     for (var i = 0; i < lines.length; i++) {
@@ -36,7 +56,11 @@ Schedule.parse = function(rawCsv, playoffType) {
             break;
         }
     }
-    var missingColumns = ['red1', 'red2', 'red3', 'blue1', 'blue2', 'blue3', 'time', 'description'].filter(function(col) {
+    const requiredColumns = ['red1', 'red2', 'red3', 'blue1', 'blue2', 'blue3', 'time', 'description'];
+    if (hasTbaCodes) {
+        requiredColumns.push('level', 'set', 'match');
+    }
+    var missingColumns = requiredColumns.filter(function(col) {
         return columnIndices[col] === undefined;
     });
     if (missingColumns.length) {
@@ -77,7 +101,14 @@ Schedule.parse = function(rawCsv, playoffType) {
     }).map(function(match) {
         var raw_id;
         var code;
-        if (match.description.startsWith('qual')) {
+        if (hasTbaCodes) {
+            code = {
+                comp_level: match.level,
+                set_number: match.set,
+                match_number: match.match,
+            };
+        }
+        else if (match.description.startsWith('qual')) {
             raw_id = Number(match.description.match(/\d+/)[0]);
             code = {
                 comp_level: 'qm',
@@ -88,6 +119,9 @@ Schedule.parse = function(rawCsv, playoffType) {
         else {
             raw_id = match.description.match(/#(\d+)/)[1];
             code = Schedule.getTBAPlayoffCode(playoffType, raw_id);
+            if (!code) {
+                throw 'Could not parse match description: ' + match.description;
+            }
         }
 
         return Object.assign(code, {
