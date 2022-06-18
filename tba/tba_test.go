@@ -80,3 +80,15 @@ var playoff_codes_6_round_robin = Bracket {
 func TestPlayoffCodes6RoundRobin(t *testing.T) {
     testBracket(t, playoff_codes_6_round_robin, BRACKET_TYPE_ROUND_ROBIN_6_TEAM, BRACKET_NAME_ROUND_ROBIN_6_TEAM)
 }
+
+var playoff_codes_custom = Bracket {
+    // for now, these should return default-initialized structs
+    1: {},
+    2: {},
+    3: {},
+    4: {},
+}
+
+func TestPlayoffCodesCustom(t *testing.T) {
+    testBracket(t, playoff_codes_custom, BRACKET_TYPE_CUSTOM, BRACKET_NAME_CUSTOM)
+}
