@@ -63,7 +63,12 @@
                     </b-button>
                 </div>
                 <div v-if="!inAddEvent">
-                    <div v-if="tbaEventData.name">Event name: {{ tbaEventData.name }} ({{ tbaEventData.year }})</div>
+                    <div
+                        v-if="tbaEventData.name"
+                        class="mt-2"
+                    >
+                        Event name: {{ tbaEventData.name }} ({{ tbaEventData.year }})
+                    </div>
                     <hr>
                     <alert
                         v-model="tbaReadError"
@@ -202,6 +207,14 @@
                                 Change playoff type
                             </b-button>
                         </div>
+                        <b-alert
+                            v-if="selectedEvent && !isPlayoffTypeSupported(eventPlayoffType)"
+                            variant="danger"
+                            class="mt-2"
+                            show
+                        >
+                            This playoff type is not supported. Schedule and match uploads will fail.
+                        </b-alert>
                     </div>
                 </div>
             </b-tab>
@@ -1037,6 +1050,9 @@ export default {
         isPlayoff: function() {
             return this.matchLevel == MATCH_LEVEL.PLAYOFF;
         },
+        eventPlayoffType: function() {
+            return this.eventExtras[this.selectedEvent].playoff_type;
+        },
         schedulePendingMatchCells: function() {
             var addTeamCell = function(cells, match, color, i) {
                 var cls = {};
@@ -1279,6 +1295,10 @@ export default {
             return [true];
         },
 
+        isPlayoffTypeSupported: function(type) {
+            return Boolean(BRACKETS[type]);
+        },
+
         updatePlayoffType: function() {
             const playoff_type = this.eventExtras[this.selectedEvent].playoff_type;
             sendApiRequest('/api/info/upload', this.selectedEvent, {
@@ -1304,7 +1324,7 @@ export default {
         onScheduleUpload: function(event) {
             this.scheduleReset(true);
             try {
-                var schedule = Schedule.parse(event.body);
+                var schedule = Schedule.parse(event.body, this.eventPlayoffType);
             }
             catch (error) {
                 if (typeof error == 'string') {

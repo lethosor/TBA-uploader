@@ -136,6 +136,25 @@ func jsFMSConfig(w http.ResponseWriter, r *http.Request) {
     }
 }
 
+func jsBrackets(w http.ResponseWriter, r *http.Request) {
+    brackets := make(map[int]tba.Bracket)
+    // todo: figure out proper bounds
+    for i := 0; i < 100; i++ {
+        bracket := tba.GetBracket(i)
+        if bracket != nil {
+            brackets[i] = bracket
+        }
+    }
+
+    out, err := json.Marshal(brackets)
+    if err != nil {
+        apiPanicInternal("%s", err)
+    }
+    w.Write([]byte("window.BRACKETS=Object.freeze("))
+    w.Write(out)
+    w.Write([]byte(");"))
+}
+
 func apiGetFMSConfig(w http.ResponseWriter, r *http.Request) {
     out, err := marshalFMSConfig(w)
     if err == nil {
@@ -231,7 +250,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 match_info["match_number"] = extra_info.MatchCodeOverride.Match
             } else if (level == MATCH_LEVEL_PLAYOFF) {
                 // playoffs
-                code := tba.GetPlayoffCode(match_number)
+                code := tba.GetPlayoffCode(BRACKET_TYPE_BRACKET_8_TEAM, match_number)
                 match_info["comp_level"] = code.Level
                 match_info["set_number"] = code.Set
                 match_info["match_number"] = code.Match
@@ -424,6 +443,7 @@ func RunWebServer(port int, web_folder string) {
     }
     handleFuncWrapper(r, "/js/version.js", jsVersion)
     handleFuncWrapper(r, "/js/fms_config.js", jsFMSConfig)
+    handleFuncWrapper(r, "/js/brackets.js", jsBrackets)
     handleFuncWrapper(r, "/api/fms_config/get", apiGetFMSConfig)
     handleFuncWrapper(r, "/api/fms_config/set", apiSetFMSConfig)
     handleFuncWrapper(r, "/api/keys/fetch", apiKeysFetch)
