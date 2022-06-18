@@ -120,7 +120,7 @@ Schedule.parse = function(rawCsv, playoffType) {
             raw_id = match.description.match(/#(\d+)/)[1];
             code = Schedule.getTBAPlayoffCode(playoffType, raw_id);
             if (!code) {
-                throw 'Could not parse match description: ' + match.description;
+                throw 'Playoff match ID out of range: ' + raw_id;
             }
         }
 
