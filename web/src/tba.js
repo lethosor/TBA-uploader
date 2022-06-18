@@ -15,7 +15,9 @@ const tba = Object.freeze({
                 rank: r.rank,
                 played: r.played,
                 dqs: r.dq,
-                "Record (W-L-T)": r.wins + '-' + r.losses + '-' + r.ties,
+                wins: r.wins,
+                losses: r.losses,
+                ties: r.ties,
             };
         },
         // keys should match https://github.com/the-blue-alliance/the-blue-alliance/blob/py3/src/backend/common/consts/ranking_sort_orders.py
@@ -54,7 +56,6 @@ const tba = Object.freeze({
             "Auto",
             "Ownership",
             "Vault",
-            "Record (W-L-T)",
         ],
         2019: [
             "Ranking Score",
@@ -62,14 +63,12 @@ const tba = Object.freeze({
             "Hatch Panel",
             "HAB Climb",
             "Sandstorm Bonus",
-            "Record (W-L-T)",
         ],
         2022: [
             "Ranking Score",
             "Avg Match",
             "Avg Hangar",
             "Avg Taxi + Auto Cargo",
-            "Record (W-L-T)",
         ],
     }),
 });
