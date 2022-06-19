@@ -104,8 +104,8 @@ Schedule.parse = function(rawCsv, playoffType) {
         if (hasTbaCodes) {
             code = {
                 comp_level: match.level,
-                set_number: match.set,
-                match_number: match.match,
+                set_number: Number(match.set),
+                match_number: Number(match.match),
             };
         }
         else if (match.description.startsWith('qual')) {
