@@ -1,6 +1,7 @@
 package main
 
 import (
+    "crypto/md5"
     "errors"
     "fmt"
     "io"
@@ -89,7 +90,10 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
     url := fmt.Sprintf("%s/FieldMonitor/MatchesPartialByLevel?levelParam=%d", FMSConfig.FmsUrl, level)
     folder = path.Join(FMSConfig.DataFolder, folder, fmt.Sprintf("level%d", level))
     // ensure that the matches folder exists even if no matches are fetched
-    os.MkdirAll(path.Join(folder, "matches"), os.ModePerm);
+    matches_dir := path.Join(folder, "matches")
+    backups_dir := path.Join(folder, "backups")
+    os.MkdirAll(matches_dir, os.ModePerm);
+    os.MkdirAll(backups_dir, os.ModePerm);
 
     filename, ok, err := downloadFile(folder, "match_list.html", url, true)
     if !ok {
@@ -115,14 +119,40 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
         button := row.Find("button").First()
         button_text := strings.Replace(button.Text(), " ", "", -1)
         button_text = strings.Replace(button_text, "/", "-", -1)
-        filename, ok, err := downloadFile(path.Join(folder, "matches"), button_text + ".html", match_url, !new_only)
+        filename, ok, err := downloadFile(matches_dir, button_text + ".html", match_url, !new_only)
         if !ok {
             logger.Printf("Failed to download %s: %s\n", button_text, err)
         } else if err == nil {
             files = append(files, filename)
+
+            var err error
+            file_content, err := ioutil.ReadFile(filename)
+            if err != nil {
+                logger.Printf("Failed to hash %s: %s\n", filename, err)
+            } else {
+                hash := md5.Sum(file_content)
+                dest := path.Join(backups_dir, fmt.Sprintf("%s-%x.html", button_text, hash))
+                if !fileExists(dest) {
+                    err = copyFile(filename, dest, false)
+                    if err != nil {
+                        logger.Printf("Failed to back up %s to %s: %s\n", filename, dest, err)
+                    }
+                }
+            }
         }
     })
     return files, nil
+}
+
+func copyFile(src, dest string, overwrite bool) error {
+    if !overwrite && fileExists(dest) {
+        return errors.New(fmt.Sprintf("destination already exists: %s", dest))
+    }
+    content, err := ioutil.ReadFile(src)
+    if err != nil {
+        return err
+    }
+    return ioutil.WriteFile(dest, content, os.ModePerm)
 }
 
 func downloadNewMatches(level int, folder string) ([]string, error) {
