@@ -99,8 +99,15 @@ Schedule.parse = function(rawCsv, playoffType) {
         });
         return match;
     }).map(function(match) {
-        var raw_id;
-        var code;
+        let raw_id;
+        let code;
+        let tryParseMatchId = (pattern, index) => {
+            let matches = match.description.match(pattern);
+            if (!matches) {
+                throw 'Failed to parse match ID from: ' + match.description;
+            }
+            return Number(matches[index]);
+        };
         if (hasTbaCodes) {
             code = {
                 comp_level: match.level,
@@ -109,7 +116,7 @@ Schedule.parse = function(rawCsv, playoffType) {
             };
         }
         else if (match.description.startsWith('qual')) {
-            raw_id = Number(match.description.match(/\d+/)[0]);
+            raw_id = tryParseMatchId(/\d+/, 0);
             code = {
                 comp_level: 'qm',
                 set_number: 1,
@@ -117,7 +124,7 @@ Schedule.parse = function(rawCsv, playoffType) {
             };
         }
         else {
-            raw_id = match.description.match(/#(\d+)/)[1];
+            raw_id = tryParseMatchId(/#(\d+)/, 1);
             code = Schedule.getTBAPlayoffCode(playoffType, raw_id);
             if (!code) {
                 throw 'Playoff match ID out of range: ' + raw_id;
