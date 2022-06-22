@@ -43,7 +43,6 @@ Schedule.parse = function(rawCsv, playoffType) {
     if (lines[0][0].indexOf('matchschedule') < 0) {
         throw 'Wrong report type. You uploaded: ' + rawCsv.split(',')[0];
     }
-    let hasTbaCodes = lines[0][0].includes('tba');
     // find header
     var columnIndices = {};
     for (var i = 0; i < lines.length; i++) {
@@ -57,9 +56,7 @@ Schedule.parse = function(rawCsv, playoffType) {
         }
     }
     const requiredColumns = ['red1', 'red2', 'red3', 'blue1', 'blue2', 'blue3', 'time', 'description'];
-    if (hasTbaCodes) {
-        requiredColumns.push('level', 'set', 'match');
-    }
+    const hasTbaCodes = ['level', 'set', 'match'].every(k => columnIndices[k] !== undefined);
     var missingColumns = requiredColumns.filter(function(col) {
         return columnIndices[col] === undefined;
     });
