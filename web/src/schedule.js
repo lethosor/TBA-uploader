@@ -36,20 +36,20 @@ Schedule.getTBAMatchKey = function(match) {
     }
 };
 
-Schedule.parse = function(rawCsv, playoffType) {
-    var lines = rawCsv.split('\n').map(function(line) {
-        return line.trim().toLowerCase().replace(/\s*/g, '').split(',');
-    });
-    if (lines[0][0].indexOf('matchschedule') < 0) {
-        throw 'Wrong report type. You uploaded: ' + rawCsv.split(',')[0];
+Schedule.parse = function(cells, playoffType) {
+    var normalizedCells = cells.map(row =>
+        row.map(cell => cell.toLowerCase().replace(/\s*/g, '')),
+    );
+    if (normalizedCells[0][0].indexOf('matchschedule') < 0) {
+        throw 'Wrong report type. You uploaded: ' + cells[0][0];
     }
     // find header
     var columnIndices = {};
-    for (var i = 0; i < lines.length; i++) {
-        if (lines[i].indexOf('red1') >= 0) {
-            for (var j = 0; j < lines[i].length; j++) {
-                if (lines[i][j]) {
-                    columnIndices[lines[i][j]] = j;
+    for (var i = 0; i < normalizedCells.length; i++) {
+        if (normalizedCells[i].indexOf('red1') >= 0) {
+            for (var j = 0; j < normalizedCells[i].length; j++) {
+                if (normalizedCells[i][j]) {
+                    columnIndices[normalizedCells[i][j]] = j;
                 }
             }
             break;
@@ -85,7 +85,7 @@ Schedule.parse = function(rawCsv, playoffType) {
         };
     };
 
-    return lines.filter(function(line) {
+    return normalizedCells.filter(function(line) {
         return ['red1', 'red2', 'red3', 'blue1', 'blue2', 'blue3'].every(function(k) {
             return line[columnIndices[k]] && line[columnIndices[k]] != k && line[columnIndices[k]].match(/\d+/);
         });

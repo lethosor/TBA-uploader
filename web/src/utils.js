@@ -34,6 +34,12 @@ export default Object.freeze({
         return res;
     },
 
+    parseCSV(raw) {
+        return raw.split('\n').map(function(line) {
+            return line.trim().split(',');
+        });
+    },
+
     parseErrorText(res) {
         if (res.responseText) {
             return res.responseText;
