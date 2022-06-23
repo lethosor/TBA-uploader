@@ -1081,7 +1081,8 @@ export default {
             return this.matchLevel == MATCH_LEVEL.PLAYOFF;
         },
         eventPlayoffType: function() {
-            return this.eventExtras[this.selectedEvent].playoff_type;
+            const playoff_type = this.eventExtras[this.selectedEvent].playoff_type;
+            return Number.isFinite(playoff_type) ? playoff_type : BRACKET_TYPE.BRACKET_8_TEAM;
         },
         schedulePendingMatchCells: function() {
             var addTeamCell = function(cells, match, color, i) {
