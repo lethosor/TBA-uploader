@@ -1477,6 +1477,9 @@ export default {
                 cells.unshift(['match schedule']);
                 this.processSchedule(cells);
             }
+            catch (e) {
+                this.scheduleError = utils.parseErrorText(e);
+            }
             finally {
                 this.inScheduleRequest = false;
             }

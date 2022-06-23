@@ -11,9 +11,9 @@ let parseCellText = function(cell) {
     if (!cell.ItemModel) {
         return '';
     }
-    return cell.ItemModel.Paragraphval.map(paragraph =>
-        paragraph.Runs.map(run => run.RunText).filter(Boolean).join(' '),
-    ).filter(Boolean).join(' ');
+    return (cell.ItemModel.Paragraphval || []).map(paragraph =>
+        (paragraph.Runs || []).map(run => run.RunText).filter(Boolean).join(''),
+    ).filter(Boolean).join('');
 };
 
 Reports.convertToCellsWithPages = function(page_models) {
