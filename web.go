@@ -204,6 +204,10 @@ func apiUploadEventInfo(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("info/update", w, r)
 }
 
+func apiUploadTeams(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("team_list/update", w, r)
+}
+
 func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("awards/update", w, r)
 }
@@ -472,6 +476,7 @@ func RunWebServer(port int, web_folder string) {
     handleFuncWrapper(r, "/api/keys/fetch", apiKeysFetch)
     handleFuncWrapper(r, "/api/keys/update", apiKeysUpdate)
     handleFuncWrapper(r, "/api/info/upload", apiUploadEventInfo)
+    handleFuncWrapper(r, "/api/teams/upload", apiUploadTeams)
     handleFuncWrapper(r, "/api/awards/upload", apiUploadAwards)
     handleFuncWrapper(r, "/api/matches/fetch", apiFetchMatches)
     handleFuncWrapper(r, "/api/matches/upload", apiUploadMatches)
