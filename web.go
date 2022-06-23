@@ -229,11 +229,6 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
             }
             folder := filepath.Dir(files[i])
 
-            match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], level == MATCH_LEVEL_PLAYOFF)
-            if err != nil {
-                apiPanicInternal("failed to parse %s: %s", fname, err)
-            }
-
             match_extra_path := path.Join(folder, replaceExtension(fname, "extrajson"))
             var extra_info fms_parser.ExtraMatchInfo
             if (isFile(match_extra_path)) {
@@ -242,6 +237,16 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
                 if err != nil {
                     apiPanicInternal("failed to parse %s: %v", match_extra_path, err)
                 }
+            }
+
+            is_playoff := (level == MATCH_LEVEL_PLAYOFF)
+            if extra_info.MatchCodeOverride != nil {
+                is_playoff = (extra_info.MatchCodeOverride.Level != "qm")
+            }
+
+            match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], is_playoff)
+            if err != nil {
+                apiPanicInternal("failed to parse %s: %s", fname, err)
             }
 
             if (extra_info.MatchCodeOverride != nil) {
