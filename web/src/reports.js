@@ -3,6 +3,7 @@ window.Reports = Reports;
 
 Reports.Type = Object.freeze({
     QUAL_SCHEDULE: 'ScheduleReportQualification',
+    PLAYOFF_SCHEDULE: 'ScheduleReportPlayoff',
     TEAM_LIST: 'TeamListActiveEvent',
 });
 
