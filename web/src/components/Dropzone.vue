@@ -26,7 +26,6 @@
     border: 1px dashed #bbb;
     min-width: 300px;
     min-height: 4em;
-    margin-bottom: 1em;
     padding: 1em;
     text-align: center;
     cursor: pointer;

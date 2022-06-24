@@ -1,6 +1,8 @@
 package main
 
 import (
+    "errors"
+    "fmt"
     "io/ioutil"
     "os"
     "path/filepath"
@@ -40,4 +42,32 @@ func isFile(filename string) bool {
 func isDir(filename string) bool {
     info, err := os.Stat(filename)
     return err == nil && info.Mode().IsDir()
+}
+
+func readFromStringGenericMap[T any](m map[string]interface{}, keys ...string) (result T, err error) {
+    for i, key := range keys {
+        if raw_val, ok := m[key]; ok {
+            if i < len(keys) - 1 {
+                if m, ok = raw_val.(map[string]interface{}); ok {
+                    continue
+                } else {
+                    err = errors.New(fmt.Sprintf("not a nested map: %s", key))
+                    return
+                }
+            } else {
+                // last value
+                if val, ok := raw_val.(T); ok {
+                    return val, nil
+                } else {
+                    err = errors.New(fmt.Sprintf("cannot convert key from %T to %T: %s", raw_val, result, key))
+                    return
+                }
+            }
+        } else {
+            err = errors.New(fmt.Sprintf("key not present: %s", key))
+            return
+        }
+    }
+    err = errors.New("readFromStringGenericMap: unexpected end")
+    return
 }

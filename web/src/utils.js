@@ -34,6 +34,25 @@ export default Object.freeze({
         return res;
     },
 
+    parseCSVRaw(raw) {
+        return raw.split('\n').map(function(line) {
+            return line.trim().split(',');
+        });
+    },
+
+    parseCSVObjects(cells, headerRowIndex=0) {
+        const headerRow = cells[headerRowIndex];
+        return cells.slice(headerRowIndex + 1).map(row => {
+            let obj = {};
+            for (let i = 0; i < row.length; i++) {
+                if (headerRow[i]) {
+                    obj[headerRow[i]] = row[i];
+                }
+            }
+            return obj;
+        });
+    },
+
     parseErrorText(res) {
         if (res.responseText) {
             return res.responseText;

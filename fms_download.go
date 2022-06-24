@@ -1,7 +1,9 @@
 package main
 
 import (
+    "bytes"
     "crypto/md5"
+    "encoding/json"
     "errors"
     "fmt"
     "io"
@@ -191,4 +193,118 @@ func downloadRankings(level int, folder string) ([]byte, error) {
         err = ioutil.WriteFile(dest_filename, out, os.ModePerm)
     }
     return out, err
+}
+
+type reportPage map[string]interface{}
+
+func makeReportRequest(report_action, report_type string, headers map[string]string, body_fields map[string]interface{}) (map[string]interface{}, error) {
+    custom_data_raw, _ := json.Marshal([]map[string]string {{
+        "reportType": report_type,
+    }})
+    request_body := map[string]interface{} {
+        "reportAction": report_action,
+        "controlId": "sfreportviewer",
+        "reportPath": "",
+        "reportServerUrl": "",
+        "processingMode": "local",
+        "locale": "en-US",
+        "CustomData": string(custom_data_raw),
+    }
+    if body_fields != nil {
+        for field, value := range body_fields {
+            request_body[field] = value
+        }
+    }
+    body_encoded, err := json.Marshal(request_body)
+    if err != nil {
+        return nil, err
+    }
+
+    request, err := http.NewRequest("POST", FMSConfig.FmsUrl + "/Reports/PostReportAction", bytes.NewReader(body_encoded))
+    if err != nil {
+        return nil, err
+    }
+
+    request.Header.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+    request.Header.Set("Accept-Language", "en-US,en;q=0.9")
+    request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+    request.Header.Set("DNT", "1")
+    request.Header.Set("Origin", "http://10.0.100.5")
+    request.Header.Set("Referer", "http://10.0.100.5/Reports/" + report_type)
+    request.Header.Set("User-Agent", "Mozilla/5.0")
+    if headers != nil {
+        for header_name, header_value := range headers {
+            request.Header.Set(header_name, header_value)
+        }
+    }
+
+    client := http.Client{Timeout: 5 * time.Second}
+    response, err := client.Do(request)
+    if err != nil {
+        return nil, err
+    }
+
+    response_raw, err := ioutil.ReadAll(response.Body)
+    if err != nil {
+        return nil, err
+    }
+
+    out := make(map[string]interface{})
+    err = json.Unmarshal(response_raw, &out)
+    if err != nil {
+        return nil, err
+    }
+
+    return out, nil
+}
+
+func getReportToken(report_type string) (string, error) {
+    response, err := makeReportRequest("ReportLoad", report_type, nil, nil)
+    if err != nil {
+        return "", errors.New(fmt.Sprintf("makeReportRequest: %s", err))
+    }
+
+    return readFromStringGenericMap[string](response, "reportViewerID")
+}
+
+func downloadReportPage(report_type string, page int, token string) (reportPage, error) {
+    return makeReportRequest("GetPageModel", report_type, nil, map[string]interface{} {
+        "dataRefresh": true,
+        "dataSources": nil,
+        "isPrint": true,
+        "pageindex": page,
+        "pageInit": true,
+        "parameters": nil,
+        "refresh": false,
+        "reportViewerClientId": token,
+        "reportViewerToken": token,
+    })
+
+}
+
+func downloadReport(report_type string) ([]reportPage, error) {
+    token, err := getReportToken(report_type)
+    if err != nil {
+        return nil, err
+    }
+
+    page1, err := downloadReportPage(report_type, 1, token)
+    if err != nil {
+        return nil, err
+    }
+
+    page_count, err := readFromStringGenericMap[float64](page1, "reportPageModel", "TotalPages")
+    if err != nil {
+        return nil, err
+    }
+
+    pages := []reportPage{page1}
+    for i := 2; i <= int(page_count); i++ {
+        next_page, err := downloadReportPage(report_type, i, token)
+        if err != nil {
+            return nil, err
+        }
+        pages = append(pages, next_page)
+    }
+    return pages, nil
 }

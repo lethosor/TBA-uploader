@@ -1,7 +1,9 @@
 import argparse
+import json
 import re
 import os
 import sys
+import uuid
 
 import flask
 
@@ -51,6 +53,15 @@ for i in range(0, 3 + 1):
     except IOError as e:
         print(e)
 
+def validate_dict(desc, actual, expected_values):
+    def abort(message):
+        flask.abort(flask.make_response('%s: %s' % (desc, message), 400))
+    for k, v in expected_values.items():
+        if k not in actual:
+            abort('missing key: %s' % k)
+        if actual[k] != expected_values[k]:
+            abort('invalid %s: expected %r, got %r' % (k, expected_values[k], actual[k]))
+
 app = flask.Flask(__name__)
 
 @app.route('/FieldMonitor/MatchesPartialByLevel')
@@ -72,9 +83,57 @@ def rankings():
         return flask.jsonify(None)
     return flask.send_from_directory(args.folder, 'rankings.json')
 
+report_uuids = set()
+
+@app.route('/Reports/PostReportAction', methods=['POST'])
+def get_report():
+    body = flask.request.get_json()
+    report_type = json.loads(body['CustomData'])[0]['reportType']
+    validate_dict('headers', flask.request.headers, {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Origin': 'http://10.0.100.5',
+        'Referer': 'http://10.0.100.5/Reports/' + report_type,
+    })
+    validate_dict('body', body, {
+        'controlId': 'sfreportviewer',
+        'reportPath': '',
+        'reportServerUrl': '',
+        'processingMode': 'local',
+        'locale': 'en-US',
+    })
+    if body['reportAction'] == 'ReportLoad':
+        new_uuid = str(uuid.uuid4())
+        report_uuids.add(new_uuid)
+        return flask.jsonify({
+            'reportViewerID': new_uuid,
+            'reportViewerToken': new_uuid,
+        })
+    elif body['reportAction'] == 'GetPageModel':
+        validate_dict('body', body, {
+            'dataRefresh': True,
+            'dataSources': None,
+            'isPrint': True,
+            'pageInit': True,
+            'parameters': None,
+            'refresh': False,
+        })
+        page_id = int(body['pageindex'])
+        if page_id < 1:
+            return 'invalid page: %i' % page_id, 400
+        if body['reportViewerClientId'] != body['reportViewerToken']:
+            return 'tokens do not match', 400
+        if body['reportViewerToken'] not in report_uuids:
+            return 'invalid token', 400
+        report_folder = os.path.join(args.folder, 'reports', 'json')
+        report_filename = '%s.%i.json' % (report_type, page_id)
+        print('sending %s/%s' % (report_folder, report_filename))
+        return flask.send_from_directory(report_folder, report_filename)
+    else:
+        return 'invalid reportAction: %r' % body['reportAction'], 400
+
 @app.route('/api/index/')
 def api_index():
     return flask.jsonify(level_index)
 
 if __name__ == '__main__':
-    app.run(port=args.port, host=args.host)
+    app.run(port=args.port, host=args.host, debug=True)

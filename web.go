@@ -123,6 +123,15 @@ func marshalFMSConfig(w http.ResponseWriter) ([]byte, error) {
     return out, nil
 }
 
+func sendJson(w http.ResponseWriter, val any) {
+    out, err := json.Marshal(val)
+    if err != nil {
+        apiPanicInternal("json encode failed: %s", err)
+    }
+    w.Header().Set("Content-Type", "application/json")
+    w.Write(out)
+}
+
 func jsVersion(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte(fmt.Sprintf("window.VERSION=\"%s\";", Version)))
 }
@@ -193,6 +202,10 @@ func apiKeysUpdate(w http.ResponseWriter, r *http.Request) {
 
 func apiUploadEventInfo(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("info/update", w, r)
+}
+
+func apiUploadTeams(w http.ResponseWriter, r *http.Request) {
+    apiTBARequest("team_list/update", w, r)
 }
 
 func apiUploadAwards(w http.ResponseWriter, r *http.Request) {
@@ -420,6 +433,20 @@ func apiUploadMedia(w http.ResponseWriter, r *http.Request) {
     apiTBARequest("media/add", w, r)
 }
 
+func apiFetchReport(w http.ResponseWriter, r *http.Request) {
+    report_type := r.URL.Query().Get("report_type")
+    if report_type == "" {
+        apiPanicInternal("report_type param is required")
+    }
+
+    out, err := downloadReport(report_type)
+    if err != nil {
+        apiPanicInternal("failed to download report %s: %s", report_type, err)
+    }
+
+    sendJson(w, out)
+}
+
 func handleFuncWrapper(r *mux.Router, route string, handler func(w http.ResponseWriter, r *http.Request)) {
     r.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
         defer func() {
@@ -454,6 +481,7 @@ func RunWebServer(port int, web_folder string) {
     handleFuncWrapper(r, "/api/keys/fetch", apiKeysFetch)
     handleFuncWrapper(r, "/api/keys/update", apiKeysUpdate)
     handleFuncWrapper(r, "/api/info/upload", apiUploadEventInfo)
+    handleFuncWrapper(r, "/api/teams/upload", apiUploadTeams)
     handleFuncWrapper(r, "/api/awards/upload", apiUploadAwards)
     handleFuncWrapper(r, "/api/matches/fetch", apiFetchMatches)
     handleFuncWrapper(r, "/api/matches/upload", apiUploadMatches)
@@ -466,6 +494,7 @@ func RunWebServer(port int, web_folder string) {
     handleFuncWrapper(r, "/api/rankings/upload", apiUploadRankings)
     handleFuncWrapper(r, "/api/videos/upload", apiUploadVideos)
     handleFuncWrapper(r, "/api/media/upload", apiUploadMedia)
+    handleFuncWrapper(r, "/api/report/fetch", apiFetchReport)
     r.PathPrefix("/").Handler(http.FileServer(fs))
     addr := fmt.Sprintf(":%d", port)
     logger.Printf("Serving on %s\n", addr)

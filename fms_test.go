@@ -15,10 +15,14 @@ func TestMain(m *testing.M) {
     os.Exit(m.Run())
 }
 
-func TestDownloadMatches(t *testing.T) {
+func skipCI(t *testing.T) {
     if os.Getenv("CI") != "" {
         t.Skip("Test server not implemented in CI")
     }
+}
+
+func TestDownloadMatches(t *testing.T) {
+    skipCI(t)
 
     fmt.Println(getMatchDownloadPath(MATCH_LEVEL_QUAL, "all"))
     files, err := downloadNewMatches(MATCH_LEVEL_QUAL, "all")
@@ -49,4 +53,17 @@ func TestDownloadMatches(t *testing.T) {
     }
     out, _ := json.MarshalIndent(match_json, "", "  ")
     println(string(out))
+}
+
+func TestDownloadReports(t *testing.T) {
+    skipCI(t)
+
+    pages, err := downloadReport("ScheduleReportQualification")
+    if err != nil {
+        t.Error("downloadReport failed:", err)
+    }
+
+    if len(pages) != 2 {
+        t.Error(fmt.Sprintf("wrong page count: got %d, expected %d", len(pages), 2))
+    }
 }
