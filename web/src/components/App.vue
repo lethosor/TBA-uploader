@@ -394,7 +394,7 @@
                         variant="warning"
                         show
                     >
-                        No new competition levels detected; nothing to upload.
+                        No new matches detected; nothing to upload.
                     </b-alert>
                 </div>
             </b-tab>
@@ -1484,7 +1484,7 @@ export default {
                 this.inScheduleRequest = false;
             }
         },
-        processSchedule: function(cells) {
+        processSchedule: async function(cells) {
             try {
                 var schedule = Schedule.parse(cells, this.eventPlayoffType);
             }
@@ -1505,33 +1505,43 @@ export default {
             }, 0);
             this.scheduleStats.push(numSurrogates + ' surrogate team(s)');
 
-            this.scheduleStats.push('Checking against TBA schedule...');
+            const progressIndex = this.scheduleStats.push('Checking against TBA schedule...');
             this.inScheduleRequest = true;
-            tbaApiEventRequest(this.selectedEvent, 'matches').always(function() {
-                this.inScheduleRequest = false;
-                this.scheduleStats.pop();
-            }.bind(this)).then(function(tbaMatches) {
-                if (!tbaMatches) {
-                    tbaMatches = [];
-                }
-                var newLevels = Schedule.findAllCompLevels(schedule);
-                var tbaLevels = Schedule.findAllCompLevels(tbaMatches);
-                this.scheduleStats.push('TBA has level(s): ' + tbaLevels.join(', '));
-                this.scheduleStats.push('The FMS report has level(s): ' + newLevels.join(', '));
-                newLevels = newLevels.filter(function(level) {
-                    return tbaLevels.indexOf(level) < 0;
-                });
-                if (!newLevels.length) {
-                    this.scheduleStats.push('No new levels are present in the FMS report.');
-                    return;
-                }
-                this.scheduleStats.push('Level(s) to be added from the FMS report: ' + newLevels.join(', '));
-                this.schedulePendingMatches = schedule.filter(function(match) {
-                    return newLevels.indexOf(match.comp_level) >= 0;
-                });
-            }.bind(this)).fail(function(error) {
+
+            let tbaMatches = [];
+            try {
+                tbaMatches = (await tbaApiEventRequest(this.selectedEvent, 'matches')) || [];
+            }
+            catch (error) {
+                console.error(error);  // eslint-disable-line no-console
                 this.scheduleError = utils.parseErrorJSON(error);
-            }.bind(this));
+                return;
+            }
+            finally {
+                this.inScheduleRequest = false;
+                this.scheduleStats.splice(progressIndex - 1, 1); // remove progress message
+            }
+
+            let newLevels = Schedule.findAllCompLevels(schedule);
+            const tbaLevels = Schedule.findAllCompLevels(tbaMatches);
+            this.scheduleStats.push('TBA has level(s): ' + tbaLevels.join(', '));
+            this.scheduleStats.push('The FMS report has level(s): ' + newLevels.join(', '));
+            const tbaMatchKeys = tbaMatches.map(Schedule.getTBAMatchKey);
+
+            newLevels = newLevels.filter(function(level) {
+                return tbaLevels.indexOf(level) < 0;
+            });
+            if (!newLevels.length) {
+                this.scheduleStats.push('No new levels are present in the FMS report.');
+            }
+            else {
+                this.scheduleStats.push('Level(s) to be added from the FMS report: ' + newLevels.join(', '));
+            }
+
+            this.schedulePendingMatches = schedule.filter(function(match) {
+                return !tbaMatchKeys.includes(match._key);
+            });
+            this.scheduleStats.push(this.schedulePendingMatches.length + ' match(es) will be added');
         },
         postSchedule: function() {
             this.scheduleError = '';
