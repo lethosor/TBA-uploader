@@ -73,4 +73,4 @@ const tba = Object.freeze({
     }),
 });
 
-export default tba;
+module.exports = tba;
