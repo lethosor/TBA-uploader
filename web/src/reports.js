@@ -20,7 +20,7 @@ Reports.convertToCellsWithPages = function(page_models) {
     return page_models.map(page_model =>
         page_model.reportPageModel.PageData.map(page_data =>
             page_data.PageModel.map(page =>
-                page.CellModels.map(row =>
+                (page.CellModels || []).map(row =>
                     row.map(parseCellText),
                 ),
             ),
