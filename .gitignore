@@ -1,5 +1,4 @@
 bin/
-bindata_assetfs.go
 fms_data*/
 web/dist/README.md
 

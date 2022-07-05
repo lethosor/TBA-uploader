@@ -1,8 +1,10 @@
 package main
 
 import (
+    "embed"
     "encoding/json"
     "fmt"
+    "io/fs"
     "io/ioutil"
     "net/http"
     "os"
@@ -465,13 +467,17 @@ func handleFuncWrapper(r *mux.Router, route string, handler func(w http.Response
     })
 }
 
+//go:embed web/dist/*
+var embeddedFS embed.FS
+
 func RunWebServer(port int, web_folder string) {
     r := mux.NewRouter()
-    var fs http.FileSystem
+    var web_files http.FileSystem
     if web_folder != "" {
-        fs = http.Dir(web_folder)
+        web_files = http.Dir(web_folder)
     } else {
-        fs = AssetFile()
+        subfs, _ := fs.Sub(embeddedFS, "web/dist")
+        web_files = http.FS(subfs)
     }
     handleFuncWrapper(r, "/js/version.js", jsVersion)
     handleFuncWrapper(r, "/js/fms_config.js", jsFMSConfig)
@@ -495,7 +501,7 @@ func RunWebServer(port int, web_folder string) {
     handleFuncWrapper(r, "/api/videos/upload", apiUploadVideos)
     handleFuncWrapper(r, "/api/media/upload", apiUploadMedia)
     handleFuncWrapper(r, "/api/report/fetch", apiFetchReport)
-    r.PathPrefix("/").Handler(http.FileServer(fs))
+    r.PathPrefix("/").Handler(http.FileServer(web_files))
     addr := fmt.Sprintf(":%d", port)
     logger.Printf("Serving on %s\n", addr)
     err := http.ListenAndServe(addr, r)
