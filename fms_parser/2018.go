@@ -102,13 +102,13 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 	}
 
 	alliances := map[string]map[string]interface{} {
-		"blue": map[string]interface{} {
+		"blue": {
 			"teams": make([]string, 3),
 			"surrogates": extra_info["blue"].Surrogates,
 			"dqs": extra_info["blue"].Dqs,
 			"score": -1,
 		},
-		"red": map[string]interface{} {
+		"red": {
 			"teams": make([]string, 3),
 			"surrogates": extra_info["red"].Surrogates,
 			"dqs": extra_info["red"].Dqs,
