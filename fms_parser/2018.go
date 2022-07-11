@@ -13,26 +13,26 @@ import (
 )
 
 type fmsScoreInfo2018 struct {
-	auto int64
+	auto   int64
 	teleop int64
-	fouls int64
-	total int64
+	fouls  int64
+	total  int64
 
 	autoRunPoints int64
 	autoSwitchSec int64
 	endgamePoints int64
-	baseRP int64  // win-loss-tie RP only
+	baseRP        int64 // win-loss-tie RP only
 }
 
 type extraMatchAllianceInfo2018 struct {
-	Dqs []string `json:"dqs"`
+	Dqs        []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
-	InvertAuto bool `json:"invert_auto"`
+	InvertAuto bool     `json:"invert_auto"`
 }
 
 func makeExtraMatchAllianceInfo2018() extraMatchAllianceInfo2018 {
 	return extraMatchAllianceInfo2018{
-		Dqs: make([]string, 0),
+		Dqs:        make([]string, 0),
 		Surrogates: make([]string, 0),
 		InvertAuto: false,
 	}
@@ -92,7 +92,7 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 	extra_info := make(map[string]extraMatchAllianceInfo2018)
 	extra_info["blue"] = makeExtraMatchAllianceInfo2018()
 	extra_info["red"] = makeExtraMatchAllianceInfo2018()
-	extra_filename := filename[0:len(filename) - len(path.Ext(filename))] + ".extrajson"
+	extra_filename := filename[0:len(filename)-len(path.Ext(filename))] + ".extrajson"
 	extra_raw, err := ioutil.ReadFile(extra_filename)
 	if err == nil {
 		err = json.Unmarshal(extra_raw, &extra_info)
@@ -101,37 +101,37 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 		}
 	}
 
-	alliances := map[string]map[string]interface{} {
+	alliances := map[string]map[string]interface{}{
 		"blue": {
-			"teams": make([]string, 3),
+			"teams":      make([]string, 3),
 			"surrogates": extra_info["blue"].Surrogates,
-			"dqs": extra_info["blue"].Dqs,
-			"score": -1,
+			"dqs":        extra_info["blue"].Dqs,
+			"score":      -1,
 		},
 		"red": {
-			"teams": make([]string, 3),
+			"teams":      make([]string, 3),
 			"surrogates": extra_info["red"].Surrogates,
-			"dqs": extra_info["red"].Dqs,
-			"score": -1,
+			"dqs":        extra_info["red"].Dqs,
+			"score":      -1,
 		},
 	}
 
-	breakdown := map[string]map[string]interface{} {
+	breakdown := map[string]map[string]interface{}{
 		"blue": make(map[string]interface{}),
-		"red": make(map[string]interface{}),
+		"red":  make(map[string]interface{}),
 	}
 
 	var scoreInfo struct {
 		blue fmsScoreInfo2018
-		red fmsScoreInfo2018
+		red  fmsScoreInfo2018
 	}
 
 	parse_error := ""
-	dom.Find("tr").Each(func(i int, s *goquery.Selection){
+	dom.Find("tr").Each(func(i int, s *goquery.Selection) {
 		columns := s.Children()
 		if columns.Length() == 3 {
 			var infos [3]string
-			columns.Each(func(ii int, column *goquery.Selection){
+			columns.Each(func(ii int, column *goquery.Selection) {
 				infos[ii] = strings.TrimSpace(column.Text())
 			})
 			identifier := infos[1]
@@ -151,10 +151,10 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 				alliances["red"]["score"] = red_score
 				scoreInfo.blue.total = blue_score
 				scoreInfo.red.total = red_score
-				if (blue_score == red_score) {
+				if blue_score == red_score {
 					scoreInfo.blue.baseRP = 1
 					scoreInfo.red.baseRP = 1
-				} else if (blue_score > red_score) {
+				} else if blue_score > red_score {
 					scoreInfo.blue.baseRP = 2
 					scoreInfo.red.baseRP = 0
 				} else {
@@ -220,10 +220,10 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 				}
 				blue_ownership := split_and_strip(infos[0], "\n")
 				red_ownership := split_and_strip(infos[2], "\n")
-				breakdown["blue"][period + "SwitchOwnershipSec"], err = strconv.ParseInt(blue_ownership[0], 10, 0)
-				breakdown["blue"][period + "ScaleOwnershipSec"], err = strconv.ParseInt(blue_ownership[1], 10, 0)
-				breakdown["red"][period + "SwitchOwnershipSec"], err = strconv.ParseInt(red_ownership[0], 10, 0)
-				breakdown["red"][period + "ScaleOwnershipSec"], err = strconv.ParseInt(red_ownership[1], 10, 0)
+				breakdown["blue"][period+"SwitchOwnershipSec"], err = strconv.ParseInt(blue_ownership[0], 10, 0)
+				breakdown["blue"][period+"ScaleOwnershipSec"], err = strconv.ParseInt(blue_ownership[1], 10, 0)
+				breakdown["red"][period+"SwitchOwnershipSec"], err = strconv.ParseInt(red_ownership[0], 10, 0)
+				breakdown["red"][period+"ScaleOwnershipSec"], err = strconv.ParseInt(red_ownership[1], 10, 0)
 				if period == "auto" {
 					scoreInfo.blue.autoSwitchSec, err = strconv.ParseInt(blue_ownership[0], 10, 0)
 					scoreInfo.red.autoSwitchSec, err = strconv.ParseInt(red_ownership[0], 10, 0)
@@ -340,11 +340,11 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 						}
 					}
 				}
-				breakdown["blue"]["vault" + powerup + "Total"] = blue_total
-				breakdown["blue"]["vault" + powerup + "Played"] = blue_played
+				breakdown["blue"]["vault"+powerup+"Total"] = blue_total
+				breakdown["blue"]["vault"+powerup+"Played"] = blue_played
 
-				breakdown["red"]["vault" + powerup + "Total"] = red_total
-				breakdown["red"]["vault" + powerup + "Played"] = red_played
+				breakdown["red"]["vault"+powerup+"Total"] = red_total
+				breakdown["red"]["vault"+powerup+"Played"] = red_played
 			} else if identifier == "Levitate Powerup" {
 				// first character
 				blue_total, err := strconv.ParseInt(string(infos[0][0]), 10, 0)

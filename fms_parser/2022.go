@@ -13,10 +13,10 @@ import (
 )
 
 type fmsScoreInfo2022 struct {
-	auto int
+	auto   int
 	teleop int
-	fouls int
-	total int
+	fouls  int
+	total  int
 }
 
 func makeFmsScoreInfo2022() fmsScoreInfo2022 {
@@ -24,13 +24,13 @@ func makeFmsScoreInfo2022() fmsScoreInfo2022 {
 }
 
 type extraMatchAllianceInfo2022 struct {
-	Dqs []string `json:"dqs"`
+	Dqs        []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
 }
 
 func makeExtraMatchAllianceInfo2022() extraMatchAllianceInfo2022 {
 	return extraMatchAllianceInfo2022{
-		Dqs: make([]string, 0),
+		Dqs:        make([]string, 0),
 		Surrogates: make([]string, 0),
 	}
 }
@@ -43,17 +43,17 @@ func addManualFields2022(breakdown map[string]interface{}, info fmsScoreInfo2022
 }
 
 // map FMS names to API names of basic integer fields
-var simpleFields2022 = map[string]string {
-	"auto cargo total scored": "autoCargoTotal",
+var simpleFields2022 = map[string]string{
+	"auto cargo total scored":   "autoCargoTotal",
 	"teleop cargo total scored": "teleopCargoTotal",
-	"match cargo total scored": "matchCargoTotal",
-	"endgame points": "endgamePoints",
-	"taxi points": "autoTaxiPoints",
-	"adjustments": "adjustPoints",
+	"match cargo total scored":  "matchCargoTotal",
+	"endgame points":            "endgamePoints",
+	"taxi points":               "autoTaxiPoints",
+	"adjustments":               "adjustPoints",
 }
 
-var RP_BADGE_NAMES_2022 = map[string]string {
-	"Cargo Bonus Ranking Point Achieved": "cargoBonusRankingPoint",
+var RP_BADGE_NAMES_2022 = map[string]string{
+	"Cargo Bonus Ranking Point Achieved":  "cargoBonusRankingPoint",
 	"Hangar Bonus Ranking Point Achieved": "hangarBonusRankingPoint",
 }
 
@@ -80,7 +80,7 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 	extra_info := make(map[string]extraMatchAllianceInfo2022)
 	extra_info["blue"] = makeExtraMatchAllianceInfo2022()
 	extra_info["red"] = makeExtraMatchAllianceInfo2022()
-	extra_filename := filename[0:len(filename) - len(path.Ext(filename))] + ".extrajson"
+	extra_filename := filename[0:len(filename)-len(path.Ext(filename))] + ".extrajson"
 	extra_raw, err := ioutil.ReadFile(extra_filename)
 	if err == nil {
 		err = json.Unmarshal(extra_raw, &extra_info)
@@ -89,29 +89,29 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 		}
 	}
 
-	alliances := map[string]map[string]interface{} {
+	alliances := map[string]map[string]interface{}{
 		"blue": {
-			"teams": make([]string, 3),
+			"teams":      make([]string, 3),
 			"surrogates": extra_info["blue"].Surrogates,
-			"dqs": extra_info["blue"].Dqs,
-			"score": -1,
+			"dqs":        extra_info["blue"].Dqs,
+			"score":      -1,
 		},
 		"red": {
-			"teams": make([]string, 3),
+			"teams":      make([]string, 3),
 			"surrogates": extra_info["red"].Surrogates,
-			"dqs": extra_info["red"].Dqs,
-			"score": -1,
+			"dqs":        extra_info["red"].Dqs,
+			"score":      -1,
 		},
 	}
 
-	breakdown := map[string]map[string]interface{} {
+	breakdown := map[string]map[string]interface{}{
 		"blue": make(map[string]interface{}),
-		"red": make(map[string]interface{}),
+		"red":  make(map[string]interface{}),
 	}
 
 	var scoreInfo = struct {
 		blue fmsScoreInfo2022
-		red fmsScoreInfo2022
+		red  fmsScoreInfo2022
 	}{
 		makeFmsScoreInfo2022(),
 		makeFmsScoreInfo2022(),
@@ -149,7 +149,7 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 		})
 	}
 
-	dom.Find("tr").Each(func(i int, s *goquery.Selection){
+	dom.Find("tr").Each(func(i int, s *goquery.Selection) {
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Printf("Parse error in %s: %s\n", filename, r)
@@ -168,26 +168,26 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 			}
 
 			blue_cell := columns.Eq(1)
-			red_cell  := columns.Eq(2)
+			red_cell := columns.Eq(2)
 			blue_text := strings.TrimSpace(blue_cell.Text())
-			red_text  := strings.TrimSpace(red_cell.Text())
+			red_text := strings.TrimSpace(red_cell.Text())
 
 			parseIntWrapper := func(s, alliance string) int {
-				return checkParseInt(s, alliance + " " + row_name)
+				return checkParseInt(s, alliance+" "+row_name)
 			}
 
 			// Handle each data row
 			if api_field, ok := simpleFields2022[row_name]; ok {
 				assignBreakdownAllianceFields(breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
-					blue: checkParseInt(blue_text, "blue " + api_field),
-					red: checkParseInt(red_text, "red " + api_field),
+					blue: checkParseInt(blue_text, "blue "+api_field),
+					red:  checkParseInt(red_text, "red "+api_field),
 				})
 			} else if row_name == "teams" {
 				blue_teams := split_and_strip(blue_text, "\n")
 				red_teams := split_and_strip(red_text, "\n")
 				assignTbaTeams(alliances, breakdownRobotFields[string]{
 					blue: blue_teams,
-					red: red_teams,
+					red:  red_teams,
 				})
 			} else if row_name == "final score" {
 				blue_score := checkParseInt(blue_text, "blue final score")
@@ -204,54 +204,54 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 				breakdown["blue"]["rp"] = blue_rp
 				breakdown["red"]["rp"] = red_rp
 			} else if row_name == "autonomous points" {
-				blue_points := checkParseInt(blue_text, "blue " + row_name)
-				red_points := checkParseInt(red_text, "red " + row_name)
+				blue_points := checkParseInt(blue_text, "blue "+row_name)
+				red_points := checkParseInt(red_text, "red "+row_name)
 				assignBreakdownAllianceFields(breakdown, "autoPoints", identity_fn[int], breakdownAllianceFields[int]{
 					blue: blue_points,
-					red: red_points,
+					red:  red_points,
 				})
 				scoreInfo.blue.auto = blue_points
 				scoreInfo.red.auto = red_points
 				match_phase = "teleop"
 			} else if row_name == "teleop points" {
-				blue_points := checkParseInt(blue_text, "blue " + row_name)
-				red_points := checkParseInt(red_text, "red " + row_name)
+				blue_points := checkParseInt(blue_text, "blue "+row_name)
+				red_points := checkParseInt(red_text, "red "+row_name)
 				assignBreakdownAllianceFields(breakdown, "teleopPoints", identity_fn[int], breakdownAllianceFields[int]{
 					blue: blue_points,
-					red: red_points,
+					red:  red_points,
 				})
 				scoreInfo.blue.teleop = blue_points
 				scoreInfo.red.teleop = red_points
 				match_phase = ""
 			} else if row_name == "foul points" {
-				blue_points := checkParseInt(blue_text, "blue " + row_name)
-				red_points := checkParseInt(red_text, "red " + row_name)
+				blue_points := checkParseInt(blue_text, "blue "+row_name)
+				red_points := checkParseInt(red_text, "red "+row_name)
 				assignBreakdownAllianceFields(breakdown, "foulPoints", identity_fn[int], breakdownAllianceFields[int]{
 					blue: blue_points,
-					red: red_points,
+					red:  red_points,
 				})
 				scoreInfo.blue.fouls = blue_points
 				scoreInfo.red.fouls = red_points
 			} else if row_name == "fouls/techs committed" {
 				assignBreakdownAllianceMultipleFields(breakdown, []string{"foulCount", "techFoulCount"}, parseIntWrapper, breakdownAllianceMultipleFields[string]{
 					blue: split_and_strip(blue_text, "•"),
-					red: split_and_strip(red_text, "•"),
+					red:  split_and_strip(red_text, "•"),
 				})
 			} else if row_name == "taxi" {
 				assignBreakdownRobotFields(breakdown, "taxiRobot", boolToYesNo, breakdownRobotFields[bool]{
 					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
-					red: iconsToBools(red_cell, 3, "fa-check", "fa-times"),
+					red:  iconsToBools(red_cell, 3, "fa-check", "fa-times"),
 				})
 			} else if row_name == "cargo points" {
 				validateMatchPhase(row_name)
-				assignBreakdownAllianceFields(breakdown, match_phase + "CargoPoints", identity_fn[int], breakdownAllianceFields[int]{
-					blue: checkParseInt(blue_text, "blue " + match_phase + " cargo points"),
-					red: checkParseInt(red_text, "red " + match_phase + " cargo points"),
+				assignBreakdownAllianceFields(breakdown, match_phase+"CargoPoints", identity_fn[int], breakdownAllianceFields[int]{
+					blue: checkParseInt(blue_text, "blue "+match_phase+" cargo points"),
+					red:  checkParseInt(red_text, "red "+match_phase+" cargo points"),
 				})
 			} else if row_name == "quintet achieved?" {
 				assignBreakdownAllianceFields(breakdown, "quintetAchieved", identity_fn[bool], breakdownAllianceFields[bool]{
 					blue: iconsToBools(blue_cell, 1, "fa-check", "fa-times")[0],
-					red: iconsToBools(red_cell, 1, "fa-check", "fa-times")[0],
+					red:  iconsToBools(red_cell, 1, "fa-check", "fa-times")[0],
 				})
 			} else if row_name == "lower hub cargo scored" || row_name == "upper hub cargo scored" {
 				hub_name := strings.Split(row_name, " ")[0]
@@ -260,21 +260,21 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 			} else if row_name == "endgame" {
 				assignBreakdownRobotFields(breakdown, "endgameRobot", identity_fn[string], breakdownRobotFields[string]{
 					blue: split_and_strip(blue_text, "\n"),
-					red: split_and_strip(red_text, "\n"),
+					red:  split_and_strip(red_text, "\n"),
 				})
 			} else if row_name == "achievement badges" {
 				assignBreakdownRpFromBadges(breakdown, RP_BADGE_NAMES_2022, breakdownAllianceFields[*goquery.Selection]{
 					blue: blue_cell,
-					red: red_cell,
+					red:  red_cell,
 				})
 			} else {
-				breakdown["blue"]["!" + row_name] = blue_text
-				breakdown["red"]["!" + row_name] = red_text
+				breakdown["blue"]["!"+row_name] = blue_text
+				breakdown["red"]["!"+row_name] = red_text
 			}
 		}
 	})
 
-	if (playoff) {
+	if playoff {
 		// set bonus RPs to false since the row is absent
 		assignBreakdownAllianceFieldsConst(breakdown, "rp", 0)
 		for _, field := range RP_BADGE_NAMES_2022 {

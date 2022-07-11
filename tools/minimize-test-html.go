@@ -20,7 +20,7 @@ var STRIP_CLASSES = []string{
 }
 
 func main() {
-	if (len(os.Args) <= 1) {
+	if len(os.Args) <= 1 {
 		fmt.Printf("usage: %s FILENAME\n", os.Args[0])
 		os.Exit(1)
 	}

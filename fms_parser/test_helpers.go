@@ -53,7 +53,7 @@ func testParseSingleMatch(
 
 	parsed_marshaled, _ := json.MarshalIndent(parsed_json, "", "  ")
 	parsed_result := testTbaMatchResult{}
-	json.Unmarshal(parsed_marshaled, &parsed_result);
+	json.Unmarshal(parsed_marshaled, &parsed_result)
 
 	if os.Getenv("TEST_DEBUG") != "" {
 		fmt.Printf("%s", parsed_marshaled)
@@ -81,18 +81,18 @@ func testParseMatchDir(
 ) {
 	all_files, err := ioutil.ReadDir(dirname)
 	if err != nil {
-	    t.Error(err)
-	    return
+		t.Error(err)
+		return
 
 	}
 	for _, file := range all_files {
-	    if file.Mode().IsRegular() && filepath.Ext(file.Name()) == ".html" {
-	        testParseSingleMatch(
-	        	t,
-	        	parser,
-	        	path.Join(dirname, file.Name()),
-	        	path.Join(dirname, strings.Replace(file.Name(), ".html", ".json", 1)),
-	        )
-	    }
+		if file.Mode().IsRegular() && filepath.Ext(file.Name()) == ".html" {
+			testParseSingleMatch(
+				t,
+				parser,
+				path.Join(dirname, file.Name()),
+				path.Join(dirname, strings.Replace(file.Name(), ".html", ".json", 1)),
+			)
+		}
 	}
 }

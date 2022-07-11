@@ -13,19 +13,19 @@ import (
 )
 
 type fmsScoreInfo2019 struct {
-	auto int64
+	auto   int64
 	teleop int64
-	fouls int64
-	total int64
+	fouls  int64
+	total  int64
 
-	baseRP int64  // win-loss-tie RP only
+	baseRP   int64 // win-loss-tie RP only
 	rocketRP bool
-	habRP bool
+	habRP    bool
 
-	hatchPanels int64
+	hatchPanels       int64
 	scoredHatchPanels int64
 
-	fields map[string]int64  // indexed by values of simpleFields2019
+	fields map[string]int64 // indexed by values of simpleFields2019
 }
 
 func makeFmsScoreInfo2019() fmsScoreInfo2019 {
@@ -35,15 +35,15 @@ func makeFmsScoreInfo2019() fmsScoreInfo2019 {
 }
 
 type extraMatchAllianceInfo2019 struct {
-	Dqs []string `json:"dqs"`
-	Surrogates []string `json:"surrogates"`
-	AddRpRocket bool `json:"add_rp_rocket"`
-	AddRpHabClimb bool `json:"add_rp_hab_climb"`
+	Dqs           []string `json:"dqs"`
+	Surrogates    []string `json:"surrogates"`
+	AddRpRocket   bool     `json:"add_rp_rocket"`
+	AddRpHabClimb bool     `json:"add_rp_hab_climb"`
 }
 
 func makeExtraMatchAllianceInfo2019() extraMatchAllianceInfo2019 {
 	return extraMatchAllianceInfo2019{
-		Dqs: make([]string, 0),
+		Dqs:        make([]string, 0),
 		Surrogates: make([]string, 0),
 	}
 }
@@ -73,9 +73,9 @@ func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019
 	nullHatchLikelyLocations := []string{"1", "8", "2", "7", "3", "6"}
 	for i, bay := range nullHatchLikelyLocations {
 		if i < nullHatchPanels {
-			breakdown["preMatchBay" + bay] = K2019_BAY_PANEL
+			breakdown["preMatchBay"+bay] = K2019_BAY_PANEL
 		} else {
-			breakdown["preMatchBay" + bay] = K2019_BAY_CARGO
+			breakdown["preMatchBay"+bay] = K2019_BAY_CARGO
 		}
 	}
 
@@ -83,18 +83,18 @@ func addManualFields2019(breakdown map[string]interface{}, info fmsScoreInfo2019
 }
 
 // map FMS names to API names of basic integer fields
-var simpleFields2019 = map[string]string {
-	"Cargo Points": "cargoPoints",
-	"HAB Climb Points": "habClimbPoints",
-	"Hatch Panel Points": "hatchPanelPoints",
+var simpleFields2019 = map[string]string{
+	"Cargo Points":           "cargoPoints",
+	"HAB Climb Points":       "habClimbPoints",
+	"Hatch Panel Points":     "hatchPanelPoints",
 	"Sandstorm Bonus Points": "sandStormBonusPoints",
-	"Adjustments": "adjustPoints",
+	"Adjustments":            "adjustPoints",
 }
 
 const (
-	K2019_BAY_NONE = "None"
-	K2019_BAY_PANEL = "Panel"
-	K2019_BAY_CARGO = "Cargo"  // preload only
+	K2019_BAY_NONE            = "None"
+	K2019_BAY_PANEL           = "Panel"
+	K2019_BAY_CARGO           = "Cargo" // preload only
 	K2019_BAY_PANEL_AND_CARGO = "PanelAndCargo"
 )
 
@@ -151,7 +151,7 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 	extra_info := make(map[string]extraMatchAllianceInfo2019)
 	extra_info["blue"] = makeExtraMatchAllianceInfo2019()
 	extra_info["red"] = makeExtraMatchAllianceInfo2019()
-	extra_filename := filename[0:len(filename) - len(path.Ext(filename))] + ".extrajson"
+	extra_filename := filename[0:len(filename)-len(path.Ext(filename))] + ".extrajson"
 	extra_raw, err := ioutil.ReadFile(extra_filename)
 	if err == nil {
 		err = json.Unmarshal(extra_raw, &extra_info)
@@ -160,29 +160,29 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		}
 	}
 
-	alliances := map[string]map[string]interface{} {
+	alliances := map[string]map[string]interface{}{
 		"blue": {
-			"teams": make([]string, 3),
+			"teams":      make([]string, 3),
 			"surrogates": extra_info["blue"].Surrogates,
-			"dqs": extra_info["blue"].Dqs,
-			"score": -1,
+			"dqs":        extra_info["blue"].Dqs,
+			"score":      -1,
 		},
 		"red": {
-			"teams": make([]string, 3),
+			"teams":      make([]string, 3),
 			"surrogates": extra_info["red"].Surrogates,
-			"dqs": extra_info["red"].Dqs,
-			"score": -1,
+			"dqs":        extra_info["red"].Dqs,
+			"score":      -1,
 		},
 	}
 
-	breakdown := map[string]map[string]interface{} {
+	breakdown := map[string]map[string]interface{}{
 		"blue": make(map[string]interface{}),
-		"red": make(map[string]interface{}),
+		"red":  make(map[string]interface{}),
 	}
 
 	var scoreInfo = struct {
 		blue fmsScoreInfo2019
-		red fmsScoreInfo2019
+		red  fmsScoreInfo2019
 	}{
 		makeFmsScoreInfo2019(),
 		makeFmsScoreInfo2019(),
@@ -222,12 +222,12 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 	assignRocket := func(alliance_breakdown map[string]interface{}, score_info *fmsScoreInfo2019, parsedRocket []string, loc string) {
 		// modifies alliance_breakdown, score_info
 		// loc: Near | Far
-		alliance_breakdown["topLeftRocket" + loc]  = parsedRocket[0]
-		alliance_breakdown["topRightRocket" + loc] = parsedRocket[1]
-		alliance_breakdown["midLeftRocket" + loc]  = parsedRocket[2]
-		alliance_breakdown["midRightRocket" + loc] = parsedRocket[3]
-		alliance_breakdown["lowLeftRocket" + loc]  = parsedRocket[4]
-		alliance_breakdown["lowRightRocket" + loc] = parsedRocket[5]
+		alliance_breakdown["topLeftRocket"+loc] = parsedRocket[0]
+		alliance_breakdown["topRightRocket"+loc] = parsedRocket[1]
+		alliance_breakdown["midLeftRocket"+loc] = parsedRocket[2]
+		alliance_breakdown["midRightRocket"+loc] = parsedRocket[3]
+		alliance_breakdown["lowLeftRocket"+loc] = parsedRocket[4]
+		alliance_breakdown["lowRightRocket"+loc] = parsedRocket[5]
 
 		complete := true
 		for _, s := range parsedRocket {
@@ -238,13 +238,13 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				score_info.hatchPanels++
 			}
 		}
-		alliance_breakdown["completedRocket" + loc] = complete
+		alliance_breakdown["completedRocket"+loc] = complete
 		if complete {
 			score_info.rocketRP = true
 		}
 	}
 
-	dom.Find("tr").Each(func(i int, s *goquery.Selection){
+	dom.Find("tr").Each(func(i int, s *goquery.Selection) {
 		defer func() {
 			if r := recover(); r != nil {
 				fmt.Printf("Parse error in %s: %s\n", filename, r)
@@ -255,7 +255,7 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		columns := s.Children()
 		if columns.Length() == 3 {
 			var infos [3]string
-			columns.Each(func(ii int, column *goquery.Selection){
+			columns.Each(func(ii int, column *goquery.Selection) {
 				infos[ii] = strings.TrimSpace(column.Text())
 			})
 			identifier := infos[1]
@@ -272,10 +272,10 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				alliances["red"]["score"] = red_score
 				scoreInfo.blue.total = blue_score
 				scoreInfo.red.total = red_score
-				if (blue_score == red_score) {
+				if blue_score == red_score {
 					scoreInfo.blue.baseRP = 1
 					scoreInfo.red.baseRP = 1
-				} else if (blue_score > red_score) {
+				} else if blue_score > red_score {
 					scoreInfo.blue.baseRP = 2
 					scoreInfo.red.baseRP = 0
 				} else {
@@ -339,9 +339,9 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				red := split_and_strip(infos[2], "•")
 				process := func(arr []string) {
 					for i := range arr {
-						if (strings.Contains(arr[i], "Sandstorm")) {
+						if strings.Contains(arr[i], "Sandstorm") {
 							arr[i] = "CrossedHabLineInSandstorm"
-						} else if (strings.Contains(arr[i], "Teleop")) {
+						} else if strings.Contains(arr[i], "Teleop") {
 							arr[i] = "CrossedHabLineInTeleop"
 						} else {
 							arr[i] = "None"
@@ -403,8 +403,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 				assignRocket(breakdown["blue"], &scoreInfo.blue, blue, "Near")
 				assignRocket(breakdown["red"], &scoreInfo.red, red, "Near")
 			} else if apiField, ok := simpleFields2019[identifier]; ok {
-				blue_points := checkParseInt(infos[0], "blue " + apiField)
-				red_points := checkParseInt(infos[2], "red " + apiField)
+				blue_points := checkParseInt(infos[0], "blue "+apiField)
+				red_points := checkParseInt(infos[2], "red "+apiField)
 				breakdown["blue"][apiField] = blue_points
 				breakdown["red"][apiField] = red_points
 				scoreInfo.blue.fields[apiField] = blue_points
@@ -418,8 +418,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 					scoreInfo.red.scoredHatchPanels = red_points / 2
 				}
 			} else {
-				breakdown["blue"]["!" + identifier] = strings.TrimSpace(infos[0])
-				breakdown["red"]["!" + identifier] = strings.TrimSpace(infos[2])
+				breakdown["blue"]["!"+identifier] = strings.TrimSpace(infos[0])
+				breakdown["red"]["!"+identifier] = strings.TrimSpace(infos[2])
 			}
 		}
 	})

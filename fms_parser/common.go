@@ -9,11 +9,11 @@ import (
 )
 
 func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interface{}, error) {
-	if (year == 2018) {
+	if year == 2018 {
 		return parseHTMLtoJSON2018(filename, playoff)
-	} else if (year == 2019) {
+	} else if year == 2019 {
 		return parseHTMLtoJSON2019(filename, playoff)
-	} else if (year == 2022) {
+	} else if year == 2022 {
 		return parseHTMLtoJSON2022(filename, playoff)
 	} else {
 		return nil, fmt.Errorf("ParseHTMLtoJSON: unsupported year: %d", year)
@@ -21,14 +21,14 @@ func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interf
 }
 
 type ExtraMatchInfo struct {
-	MatchCodeOverride *tba.MatchCode `json:"match_code_override"`
-	Red ExtraMatchAllianceInfo `json:"red"`
-	Blue ExtraMatchAllianceInfo `json:"blue"`
+	MatchCodeOverride *tba.MatchCode         `json:"match_code_override"`
+	Red               ExtraMatchAllianceInfo `json:"red"`
+	Blue              ExtraMatchAllianceInfo `json:"blue"`
 }
 
-type ExtraMatchAllianceInfo interface {}
+type ExtraMatchAllianceInfo interface{}
 
-var extraAllianceInfoCtors = map[int]func() ExtraMatchAllianceInfo {
+var extraAllianceInfoCtors = map[int]func() ExtraMatchAllianceInfo{
 	2018: func() ExtraMatchAllianceInfo {
 		return makeExtraMatchAllianceInfo2018()
 	},
@@ -44,15 +44,15 @@ func MakeExtraMatchInfo(year int) (ExtraMatchInfo, error) {
 	if ctor, ok := extraAllianceInfoCtors[year]; ok {
 		return ExtraMatchInfo{
 			MatchCodeOverride: nil,
-			Red: ctor(),
-			Blue: ctor(),
+			Red:               ctor(),
+			Blue:              ctor(),
 		}, nil
 	} else {
 		return ExtraMatchInfo{}, fmt.Errorf("unsupported year: %d", year)
 	}
 }
 
-func split_and_strip(text string, separator string) ([]string) {
+func split_and_strip(text string, separator string) []string {
 	// Split text into parts at separator character. Remove whitespace from parts.
 	// "a • b • c" -> ["a", "b", "c"]
 	parts := strings.Split(strings.TrimSpace(text), separator)
@@ -71,9 +71,9 @@ func iconsToBools(node *goquery.Selection, count int, true_class, false_class st
 	out = make([]bool, count)
 
 	icons.Each(func(i int, s *goquery.Selection) {
-		if (s.HasClass(true_class)) {
+		if s.HasClass(true_class) {
 			out[i] = true
-		} else if (s.HasClass(false_class)) {
+		} else if s.HasClass(false_class) {
 			out[i] = false
 		} else {
 			class, _ := s.Attr("class")
@@ -89,7 +89,7 @@ func identity_fn[T any](in T) T {
 }
 
 func boolToYesNo(in bool) string {
-	if (in) {
+	if in {
 		return "Yes"
 	}
 	return "No"
@@ -97,7 +97,7 @@ func boolToYesNo(in bool) string {
 
 type breakdownAllianceFields[T any] struct {
 	blue T
-	red T
+	red  T
 }
 
 func assignBreakdownAllianceFields[T, T2 any](breakdowns map[string]map[string]interface{}, field string, callback func(T) T2, values breakdownAllianceFields[T]) {
@@ -112,26 +112,26 @@ func assignBreakdownAllianceFieldsConst[T any](breakdowns map[string]map[string]
 
 type breakdownRobotFields[T any] struct {
 	blue []T
-	red []T
+	red  []T
 }
 
 func assignBreakdownRobotFields[T, T2 any](breakdowns map[string]map[string]interface{}, prefix string, callback func(T) T2, values breakdownRobotFields[T]) {
 	for i := 0; i < 3; i++ {
-		breakdowns["blue"][fmt.Sprintf("%s%d", prefix, i + 1)] = callback(values.blue[i])
-		breakdowns["red"][fmt.Sprintf("%s%d", prefix, i + 1)] = callback(values.red[i])
+		breakdowns["blue"][fmt.Sprintf("%s%d", prefix, i+1)] = callback(values.blue[i])
+		breakdowns["red"][fmt.Sprintf("%s%d", prefix, i+1)] = callback(values.red[i])
 	}
 }
 
 type breakdownAllianceMultipleFields[T any] struct {
 	blue []T
-	red []T
+	red  []T
 }
 
 func assignBreakdownAllianceMultipleFields[T, T2 any](breakdowns map[string]map[string]interface{}, fields []string, callback func(value T, alliance string) T2, values breakdownAllianceMultipleFields[T]) {
-	if (len(values.blue) != len(fields)) {
+	if len(values.blue) != len(fields) {
 		panic(fmt.Sprintf("blue length mismatch: expected %d, got %d", len(fields), len(values.blue)))
 	}
-	if (len(values.red) != len(fields)) {
+	if len(values.red) != len(fields) {
 		panic(fmt.Sprintf("red length mismatch: expected %d, got %d", len(fields), len(values.red)))
 	}
 	for i, field := range fields {
@@ -143,7 +143,7 @@ func assignBreakdownAllianceMultipleFields[T, T2 any](breakdowns map[string]map[
 func assignTbaTeams(alliances map[string]map[string]interface{}, teams breakdownRobotFields[string]) {
 	groups := map[string][]string{
 		"blue": teams.blue,
-		"red": teams.red,
+		"red":  teams.red,
 	}
 	for alliance, alliance_teams := range groups {
 		tba_teams := make([]string, len(alliance_teams))
@@ -157,7 +157,7 @@ func assignTbaTeams(alliances map[string]map[string]interface{}, teams breakdown
 func assignBreakdownRpFromBadges(breakdowns map[string]map[string]interface{}, rp_badge_names map[string]string, cells breakdownAllianceFields[*goquery.Selection]) {
 	groups := map[string]*goquery.Selection{
 		"blue": cells.blue,
-		"red": cells.red,
+		"red":  cells.red,
 	}
 	for alliance, cell := range groups {
 		for _, field := range rp_badge_names {
