@@ -29,4 +29,3 @@ for (let row of rankings) {
   row.team_key = row.team_key.replace(/frc/, '');
   console.log(columns.map(c => row[c[1]]).join(','));
 }
-
