@@ -24,6 +24,7 @@
                     <b-form-input
                         :value="getTeam(a - 1, t - 1)"
                         :tabindex="getTabIndex(a - 1, t - 1)"
+                        :class="getCellClass(a - 1, t - 1)"
                         @change="setTeam(a - 1, t - 1, $event)"
                         @blur="emitValue"
                     />
@@ -97,6 +98,23 @@ export default {
                 rowIndex = numAlliances - rowIndex - 1;
             }
             return offset + (numAlliances * teamIndex) + rowIndex;
+        },
+        getCellClass(allianceIndex, teamIndex) {
+            const value = (this.teams[allianceIndex] || [])[teamIndex];
+            if (!value) {
+                return '';
+            }
+            for (let a = 0; a < this.allianceCount; a++) {
+                for (let t = 0; t < this.allianceSize; t++) {
+                    if (a == allianceIndex && t == teamIndex) {
+                        continue;
+                    }
+                    if (this.teams[a][t] == value) {
+                        return 'is-invalid';
+                    }
+                }
+            }
+            return '';
         },
 
         _resizeStorage() {
