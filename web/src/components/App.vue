@@ -648,7 +648,28 @@
                             </option>
                         </b-form-select>
                     </label>
+                    <div class="ml-auto">
+                        <b-button
+                            variant="warning"
+                            :disabled="inAllianceRequest"
+                            @click="fetchAlliances"
+                        >
+                            Fetch from TBA
+                        </b-button>
+                        <b-button
+                            variant="danger"
+                            :disabled="inAllianceRequest"
+                            @click="clearAlliances"
+                        >
+                            Clear
+                        </b-button>
+                    </div>
                 </div>
+
+                <alert
+                    v-model="allianceError"
+                    variant="danger"
+                />
 
                 <alliance-table
                     :alliance-count="eventExtras[selectedEvent].alliance_count"
@@ -656,6 +677,14 @@
                     :value="alliances[selectedEvent]"
                     @input="onAllianceChange"
                 />
+
+                <b-button
+                    variant="warning"
+                    :disabled="inAllianceRequest"
+                    @click="postAlliances"
+                >
+                    Post to TBA
+                </b-button>
             </b-tab>
 
             <b-tab
@@ -1148,6 +1177,8 @@ export default {
         showExistingVideos: false,
 
         alliances: STORED_ALLIANCES,
+        inAllianceRequest: false,
+        allianceError: '',
 
         awards: STORED_AWARDS,
         awardStatus: '',
@@ -2025,11 +2056,41 @@ export default {
         },
 
         onAllianceChange: function(newAlliances) {
-            this.alliances[this.selectedEvent] = newAlliances;
+            this.$set(this.alliances, this.selectedEvent, newAlliances);
             this.saveAlliances();
         },
-        postAlliances: function() {
+        fetchAlliances: async function() {
+            this.inAllianceRequest = true;
+            try {
+                const response = await tbaApiEventRequest(this.selectedEvent, 'alliances');
+                const newAlliances = response.map(a => a.picks.map(t => Number(t.replace('frc', ''))));
+                this.eventExtras[this.selectedEvent].alliance_count = newAlliances.length;
+                this.eventExtras[this.selectedEvent].alliance_size = Math.max(...newAlliances.map(a => a.length));
+                this.$set(this.alliances, this.selectedEvent, newAlliances);
+            }
+            catch (e) {
+                this.allianceError = utils.parseErrorJSON(e);
+            }
+            finally {
+                this.inAllianceRequest = false;
+            }
+        },
+        clearAlliances: function() {
+            this.alliances[this.selectedEvent] = [];
+        },
+        postAlliances: async function() {
             this.saveAlliances();
+            this.inAllianceRequest = true;
+            let payload = this.alliances[this.selectedEvent].map(a => a.map(t => 'frc' + t));
+            try {
+                await sendApiRequest('/api/alliances/upload', this.selectedEvent, payload);
+            }
+            catch (e) {
+                this.allianceError = utils.parseErrorJSON(e);
+            }
+            finally {
+                this.inAllianceRequest = false;
+            }
         },
         saveAlliances: function() {
             if (typeof this.alliances != 'object' || Array.isArray(this.alliances)) {

@@ -53,6 +53,7 @@ export default {
         },
         value: {
             type: Array,
+            default: () => [],
         },
     },
     data: () => ({
@@ -76,7 +77,7 @@ export default {
         },
         setTeam(allianceIndex, teamIndex, value) {
             this._resizeStorage();
-            this.teams[allianceIndex][teamIndex] = value;
+            this.$set(this.teams[allianceIndex], teamIndex, value);
             this.emitValue();
         },
         emitValue() {
@@ -110,9 +111,7 @@ export default {
             for (let a = 0; a < this.allianceCount; a++) {
                 for (let t = 0; t < this.allianceSize; t++) {
                     let team = String((keys[a] || [])[t] || '').replace('frc', '');
-                    if (team) {
-                        this.teams[a][t] = team;
-                    }
+                    this.$set(this.teams[a], t, team);
                 }
             }
         },
