@@ -23,6 +23,7 @@
                 >
                     <b-form-input
                         :value="getTeam(a - 1, t - 1)"
+                        :tabindex="getTabIndex(a - 1, t - 1)"
                         @change="setTeam(a - 1, t - 1, $event)"
                         @blur="emitValue"
                     />
@@ -82,6 +83,20 @@ export default {
         },
         emitValue() {
             this.$emit('input', this._exportTeams());
+        },
+        getTabIndex(allianceIndex, teamIndex) {
+            const offset = 10;
+            if (teamIndex < 2) {
+                return offset + (2 * allianceIndex) + teamIndex;
+            }
+
+            const numAlliances = this.teams.length;
+            let rowIndex = allianceIndex;
+            if (teamIndex == 2) {
+                // reverse order
+                rowIndex = numAlliances - rowIndex - 1;
+            }
+            return offset + (numAlliances * teamIndex) + rowIndex;
         },
 
         _resizeStorage() {
