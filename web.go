@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -453,6 +454,37 @@ func apiFetchReport(w http.ResponseWriter, r *http.Request) {
 	sendJson(w, out)
 }
 
+func apiProxy(w http.ResponseWriter, r *http.Request) {
+	url := r.URL.Query().Get("url")
+	if url == "" {
+		apiPanicBadRequest("url param is required")
+	}
+
+	request, err := http.NewRequest(r.Method, url, r.Body)
+	if err != nil {
+		apiPanicInternal("unable to open proxy request: %v", err)
+	}
+	request.Header = r.Header.Clone()
+	request.Header.Del("Cookie")
+
+	client := http.Client{Timeout: 5 * time.Second}
+	response, err := client.Do(request)
+	if err != nil {
+		apiPanicCode(http.StatusBadGateway, "proxy request failed: %v", err)
+	}
+	response_body, err := ioutil.ReadAll(response.Body)
+
+	for header_name, header_values := range response.Header {
+		for _, header_value := range header_values {
+			w.Header().Set(header_name, header_value)
+		}
+	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	w.WriteHeader(response.StatusCode)
+	w.Write(response_body)
+}
+
 func handleFuncWrapper(r *mux.Router, route string, handler func(w http.ResponseWriter, r *http.Request)) {
 	r.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -506,6 +538,7 @@ func RunWebServer(port int, web_folder string) {
 	handleFuncWrapper(r, "/api/videos/upload", apiUploadVideos)
 	handleFuncWrapper(r, "/api/media/upload", apiUploadMedia)
 	handleFuncWrapper(r, "/api/report/fetch", apiFetchReport)
+	handleFuncWrapper(r, "/api/proxy", apiProxy)
 	r.PathPrefix("/").Handler(http.FileServer(web_files))
 	addr := fmt.Sprintf(":%d", port)
 	logger.Printf("Serving on %s\n", addr)
