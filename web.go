@@ -443,7 +443,7 @@ func apiUploadMedia(w http.ResponseWriter, r *http.Request) {
 func apiFetchReport(w http.ResponseWriter, r *http.Request) {
 	report_type := r.URL.Query().Get("report_type")
 	if report_type == "" {
-		apiPanicInternal("report_type param is required")
+		apiPanicBadRequest("report_type param is required")
 	}
 
 	out, err := downloadReport(report_type)
