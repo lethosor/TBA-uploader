@@ -84,4 +84,18 @@ export default Object.freeze({
         return url;
     },
 
+    makeProxiedAjaxRequest(options, proxyUrl) {
+        options = Object.assign({}, options);  // copy
+        if (proxyUrl) {
+            if (String(options.method).toUpperCase() == 'GET' || String(options.type).toUpperCase() == 'GET') {
+                if (options.data) {
+                    // convert query string manually
+                    options.url += '?' + $.param(options.data);
+                    delete options.data;
+                }
+            }
+            options.url = proxyUrl + '?' + $.param({url: options.url});
+        }
+        return $.ajax(options);
+    },
 });

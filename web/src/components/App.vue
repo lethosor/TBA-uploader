@@ -790,6 +790,13 @@
                         </b-form-checkbox>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <b-form-checkbox v-model="uiOptions.useProxy">
+                            Use server-side proxy for all requests
+                        </b-form-checkbox>
+                    </div>
+                </div>
                 <hr>
                 <h2>FMS options</h2>
                 <p>Options in this section need to be saved by clicking "Save" below. Also note that these can be specified on the command line as well, which is more useful for development.</p>
@@ -1044,19 +1051,19 @@ function sendApiRequest(url, event, body) {
 }
 window.sendApiRequest = sendApiRequest;
 
-function tbaApiEventRequest(event, route) {
+function tbaApiEventRequest(event, route, useProxy) {
     var url = FMS_CONFIG.tba_url + '/api/v3/event/' + event;
     if (route) {
         url += '/' + route;
     }
-    return $.ajax({
+    return utils.makeProxiedAjaxRequest({
         type: 'GET',
         url: url,
         headers: {
             'X-TBA-Auth-Key': localStorage.getItem('readApiKey'),
         },
         cache: false,
-    });
+    }, useProxy ? '/api/proxy' : undefined);
 }
 window.tbaApiEventRequest = tbaApiEventRequest;
 
@@ -1130,6 +1137,7 @@ export default {
 
         uiOptions: $.extend({
             showAllLevels: false,
+            useProxy: true,
         }, utils.safeParseLocalStorageObject('uiOptions')),
         eventExtras: utils.safeParseLocalStorageObject('eventExtras'),
         remapError: '',
@@ -1329,6 +1337,9 @@ export default {
                 this.fmsConfig = data;
             }.bind(this));
         },
+        tbaApiCurrentEventRequest: function(route) {
+            return tbaApiEventRequest(this.selectedEvent, route, this.uiOptions.useProxy);
+        },
 
         addEvent: function() {
             var event = this.addEventUI.event;
@@ -1377,7 +1388,7 @@ export default {
                 this.tbaReadError = 'No TBA Read API key is present, so event data cannot be retrieved from TBA.';
                 return;
             }
-            tbaApiEventRequest(this.selectedEvent).then(function(data) {
+            this.tbaApiCurrentEventRequest().then(function(data) {
                 this.$set(this, 'tbaEventData', data);
                 this.eventExtras[this.selectedEvent].playoff_type = data.playoff_type;
             }.bind(this))
@@ -1596,7 +1607,7 @@ export default {
 
             let tbaMatches = [];
             try {
-                tbaMatches = (await tbaApiEventRequest(this.selectedEvent, 'matches')) || [];
+                tbaMatches = (await this.tbaApiCurrentEventRequest('matches')) || [];
             }
             catch (error) {
                 console.error(error);  // eslint-disable-line no-console
@@ -1977,7 +1988,7 @@ export default {
         fetchVideos: function() {
             this.inVideoRequest = true;
             this.videoError = '';
-            tbaApiEventRequest(this.selectedEvent, 'matches')
+            this.tbaApiCurrentEventRequest('matches')
             .always(function() {
                 this.inVideoRequest = false;
             }.bind(this))
@@ -2062,7 +2073,7 @@ export default {
         fetchAlliances: async function() {
             this.inAllianceRequest = true;
             try {
-                const response = await tbaApiEventRequest(this.selectedEvent, 'alliances');
+                const response = await this.tbaApiCurrentEventRequest('alliances');
                 const newAlliances = response.map(a => a.picks.map(t => Number(t.replace('frc', ''))));
                 this.eventExtras[this.selectedEvent].alliance_count = newAlliances.length;
                 this.eventExtras[this.selectedEvent].alliance_size = Math.max(...newAlliances.map(a => a.length));
@@ -2134,7 +2145,7 @@ export default {
             this.awards[this.selectedEvent] = cleanedAwards;
 
             this.inAwardRequest = true;
-            tbaApiEventRequest(this.selectedEvent, 'alliances')
+            this.tbaApiCurrentEventRequest('alliances')
             .always(function() {
                 this.inAwardRequest = false;
             }.bind(this))
