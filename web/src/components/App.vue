@@ -2166,13 +2166,17 @@ export default {
                             awardName = 'Finalist';
                             awardList = finalistAwards;
                         }
+                        let addAward = function(teamKey) {
+                            awardList.push(makeAward({
+                                team: teamKey.replace('frc', ''),
+                                name: awardName,
+                            }));
+                        };
                         if (awardName) {
-                            alliance.picks.forEach(function(team) {
-                                awardList.push(makeAward({
-                                    team: team.replace('frc', ''),
-                                    name: awardName,
-                                }));
-                            });
+                            alliance.picks.forEach(addAward);
+                            if (alliance.backup && alliance.backup.in) {
+                                addAward(alliance.backup.in);
+                            }
                         }
                     }
                 });
