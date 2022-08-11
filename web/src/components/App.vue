@@ -617,6 +617,78 @@
 
             <b-tab
                 v-if="eventSelected"
+                title="Alliances"
+            >
+                <div class="form-inline mb-2">
+                    <label># Alliances:
+                        <b-form-select
+                            v-model="eventExtras[selectedEvent].alliance_count"
+                            class="ml-1 mr-4"
+                        >
+                            <option
+                                v-for="option in 20"
+                                :key="option"
+                                :value="option"
+                            >
+                                {{ option }}
+                            </option>
+                        </b-form-select>
+                    </label>
+                    <label># Teams per alliance:
+                        <b-form-select
+                            v-model="eventExtras[selectedEvent].alliance_size"
+                            class="ml-1 mr-4"
+                        >
+                            <option
+                                v-for="option in [3, 4]"
+                                :key="option"
+                                :value="option"
+                            >
+                                {{ option }}
+                            </option>
+                        </b-form-select>
+                    </label>
+                    <div class="ml-auto">
+                        <b-button
+                            variant="warning"
+                            :disabled="inAllianceRequest"
+                            @click="fetchAlliances"
+                        >
+                            Fetch from TBA
+                        </b-button>
+                        <b-button
+                            variant="danger"
+                            :disabled="inAllianceRequest"
+                            @click="clearAlliances"
+                        >
+                            Clear
+                        </b-button>
+                    </div>
+                </div>
+
+                <alert
+                    v-model="allianceError"
+                    variant="danger"
+                />
+
+                <alliance-table
+                    :alliance-count="eventExtras[selectedEvent].alliance_count"
+                    :alliance-size="eventExtras[selectedEvent].alliance_size"
+                    :value="alliances[selectedEvent]"
+                    @input="onAllianceChange"
+                />
+
+                <b-button
+                    variant="warning"
+                    :disabled="inAllianceRequest"
+                    @click="postAlliances"
+                >
+                    Post to TBA
+                </b-button>
+            </b-tab>
+
+            <b-tab
+                v-if="eventSelected"
                 title="Awards"
             >
                 <table class="table">
@@ -945,6 +1017,7 @@ import tba from 'src/tba.js';
 import utils from 'src/utils.js';
 
 import Alert from 'components/Alert.vue';
+import AllianceTable from 'components/AllianceTable.vue';
 import Dropzone from 'components/Dropzone.vue';
 import ScoreSummary from 'components/ScoreSummary.vue';
 
@@ -953,6 +1026,7 @@ import 'bootstrap-vue/dist/bootstrap-vue.css';
 import 'src/app.css';
 
 const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
+const STORED_ALLIANCES = utils.safeParseLocalStorageObject('alliances');
 const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
 
 function sendApiRequest(url, event, body) {
@@ -1025,6 +1099,7 @@ const EXTRA_FIELDS = {
 export default {
     components: {
         Alert,
+        AllianceTable,
         BAlert,
         BButton,
         BButtonClose,
@@ -1100,6 +1175,10 @@ export default {
         inVideoRequest: false,
         videoError: '',
         showExistingVideos: false,
+
+        alliances: STORED_ALLIANCES,
+        inAllianceRequest: false,
+        allianceError: '',
 
         awards: STORED_AWARDS,
         awardStatus: '',
@@ -1314,7 +1393,14 @@ export default {
             this.$set(this.eventExtras, event, $.extend({}, {
                 remap_teams: [],
                 playoff_type: null,
+                alliance_count: 8,
+                alliance_size: 3,
             }, this.eventExtras[event]));
+
+            if (!this.alliances[event]) {
+                this.$set(this.alliances, event, []);
+                this.saveAlliances();
+            }
 
             if (!this.awards[event] || !this.awards[event].length) {
                 this.$set(this.awards, event, [makeAward()]);
@@ -1967,6 +2053,53 @@ export default {
             Object.values(this.videos).forEach(function(v) {
                 v.current = utils.cleanYoutubeUrl(v.current);
             });
+        },
+
+        onAllianceChange: function(newAlliances) {
+            this.$set(this.alliances, this.selectedEvent, newAlliances);
+            this.saveAlliances();
+        },
+        fetchAlliances: async function() {
+            this.inAllianceRequest = true;
+            try {
+                const response = await tbaApiEventRequest(this.selectedEvent, 'alliances');
+                const newAlliances = response.map(a => a.picks.map(t => Number(t.replace('frc', ''))));
+                this.eventExtras[this.selectedEvent].alliance_count = newAlliances.length;
+                this.eventExtras[this.selectedEvent].alliance_size = Math.max(...newAlliances.map(a => a.length));
+                this.$set(this.alliances, this.selectedEvent, newAlliances);
+            }
+            catch (e) {
+                this.allianceError = utils.parseErrorJSON(e);
+            }
+            finally {
+                this.inAllianceRequest = false;
+            }
+        },
+        clearAlliances: function() {
+            this.alliances[this.selectedEvent] = [];
+        },
+        postAlliances: async function() {
+            this.saveAlliances();
+            this.inAllianceRequest = true;
+            let payload = this.alliances[this.selectedEvent].map(a => a.map(t => 'frc' + t));
+            try {
+                await sendApiRequest('/api/alliances/upload', this.selectedEvent, payload);
+            }
+            catch (e) {
+                this.allianceError = utils.parseErrorJSON(e);
+            }
+            finally {
+                this.inAllianceRequest = false;
+            }
+        },
+        saveAlliances: function() {
+            if (typeof this.alliances != 'object' || Array.isArray(this.alliances)) {
+                throw new TypeError('alliances is not a map');
+            }
+            if (tba.isValidEventCode(this.selectedEvent) && !Array.isArray(this.alliances[this.selectedEvent])) {
+                throw new TypeError('alliances[' + this.selectedEvent + '] is not an array');
+            }
+            localStorage.setItem('alliances', JSON.stringify(this.alliances));
         },
 
         addAward: function() {
