@@ -1524,6 +1524,9 @@ export default {
                 })).filter(team => Boolean(team.Team));
                 this.teamList = this.teamListTable.map(team => Number(team.Team));
             }
+            catch (e) {
+                this.teamListError = utils.parseErrorText(e);
+            }
             finally {
                 this.inTeamsRequest = false;
             }
