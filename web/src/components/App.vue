@@ -453,6 +453,15 @@
                     Be sure to only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS.
                     <span v-if="isQual">Rankings can be updated at any time if necessary, but will also be updated after posting scores.</span>
                 </p>
+                <div>
+                    <b-form-checkbox
+                        v-model="autoFetchMatches"
+                        name="check-button"
+                        switch
+                    >
+                        Auto upload
+                    </b-form-checkbox>
+                </div>
                 <alert
                     v-model="rankingsError"
                     variant="danger"
@@ -1169,6 +1178,8 @@ export default {
         inMatchAdvanced: false,
         advSelectedMatch: '',
         advMatchError: '',
+        autoFetchMatches: false,
+        autoFetchMatchInterval: null,
 
         inEditMatch: false,
         matchEditing: null,
@@ -1297,6 +1308,15 @@ export default {
                 localStorage.setItem('eventExtras', JSON.stringify(this.eventExtras));
             },
             deep: true,
+        },
+        autoFetchMatches: function() {
+            if (this.autoFetchMatchInterval !== null) {
+                clearInterval(this.autoFetchMatchInterval);
+                this.autoFetchMatchInterval = null;
+            }
+            if (this.autoFetchMatches) {
+                this.autoFetchMatchInterval = setInterval(this.autoFetchMatchCallback.bind(this), 30 * 1000);
+            }
         },
     },
     mounted: function() {
@@ -1656,20 +1676,19 @@ export default {
             }.bind(this));
         },
 
-        fetchMatches: function(all) {
+        fetchMatches: async function(all) {
             if (all && !confirmPurge()) {
                 return;
             }
             this.inMatchRequest = true;
             this.fetchedScorelessMatches = false;
             this.matchError = '';
-            $.get('/api/matches/fetch', {
-                event: this.selectedEvent,
-                level: this.matchLevel,
-                all: all ? '1' : '',
-            }).always(function() {
-                this.inMatchRequest = false;
-            }.bind(this)).then(function(data) {
+            try {
+                let data = await $.get('/api/matches/fetch', {
+                    event: this.selectedEvent,
+                    level: this.matchLevel,
+                    all: all ? '1' : '',
+                });
                 this.pendingMatches = JSON.parse(data);
                 this.pendingMatches.sort(function(a, b) {
                     return Number(a._fms_id.split('-')[0]) - Number(b._fms_id.split('-')[0]);
@@ -1677,24 +1696,45 @@ export default {
                 this.matchSummaries = this.generateMatchSummaries(this.pendingMatches);
                 this.fetchedScorelessMatches = this.checkScorelessMatches(this.pendingMatches);
                 this.unhandledBreakdowns = this.findUnhandledBreakdowns(this.pendingMatches);
-            }.bind(this)).fail(function(res) {
-                this.matchError = res.responseText;
-            }.bind(this));
+            }
+            catch (e) {
+                this.matchError = utils.parseErrorText(e);
+            }
+            finally {
+                this.inMatchRequest = false;
+            }
         },
-        refetchMatches: function() {
+        refetchMatches: async function() {
             var match_ids = this.pendingMatches.map(function(match) {
                 return match._fms_id;
             });
             this.inMatchRequest = true;
             this.matchError = '';
-            sendApiRequest('/api/matches/purge?level=' + this.matchLevel, this.selectedEvent, match_ids)
-            .then(function() {
-                this.fetchMatches(false);
-            }.bind(this))
-            .fail(function(res) {
-                this.matchError = 'Purge: ' + res.responseText;
+            try {
+                await sendApiRequest('/api/matches/purge?level=' + this.matchLevel, this.selectedEvent, match_ids);
+                await this.fetchMatches(false);
+            }
+            catch (e) {
+                this.matchError = 'Purge: ' + utils.parseErrorText(e);
+            }
+            finally {
                 this.inMatchRequest = false;
-            }.bind(this));
+            }
+        },
+        autoFetchMatchCallback: async function() {
+            if (!this.autoFetchMatches) {
+                return;
+            }
+            if (this.pendingMatches && this.pendingMatches.length) {
+                await this.refetchMatches();
+            }
+            await this.fetchMatches();
+            if (this.fetchedScorelessMatches) {
+                return;
+            }
+            if (this.pendingMatches.length) {
+                this.uploadMatches();
+            }
         },
         generateMatchSummaries: function(matches) {
             var rmFRC = function(team) {
