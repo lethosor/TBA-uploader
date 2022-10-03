@@ -2075,6 +2075,7 @@ export default {
         },
         fetchAlliances: async function() {
             this.inAllianceRequest = true;
+            this.allianceError = '';
             try {
                 const response = await this.tbaApiCurrentEventRequest('alliances');
                 const newAlliances = response.map(a => a.picks.map(t => Number(t.replace('frc', ''))));
@@ -2095,6 +2096,7 @@ export default {
         postAlliances: async function() {
             this.saveAlliances();
             this.inAllianceRequest = true;
+            this.allianceError = '';
             let payload = this.alliances[this.selectedEvent].map(a => a.map(t => 'frc' + t));
             try {
                 await sendApiRequest('/api/alliances/upload', this.selectedEvent, payload);
