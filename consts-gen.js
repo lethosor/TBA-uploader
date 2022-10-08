@@ -3,8 +3,10 @@ const fs = require('fs');
 const commandLineArgs = require('command-line-args');
 const JSON5 = require('json5');
 
+const GENERATED_WARNING = '//\n// This file was generated. DO NOT EDIT!\n//\n\n';
+
 function generateGo(consts, { package = 'main' }) {
-    return 'package ' + package + '\n\n' + Object.entries(consts).map(([type, values]) =>
+    return GENERATED_WARNING + 'package ' + package + '\n\n' + Object.entries(consts).map(([type, values]) =>
         'const (\n' + Object.entries(values).map(([key, value]) =>
             `\t${type}_${key} = ${JSON.stringify(value)}\n`
         ).join('') + ')\n\n'
@@ -12,7 +14,7 @@ function generateGo(consts, { package = 'main' }) {
 }
 
 function generateJs(consts) {
-    return Object.entries(consts).map(([type, values]) =>
+    return GENERATED_WARNING + Object.entries(consts).map(([type, values]) =>
         `export const ${type} = Object.freeze(${JSON.stringify(values)});\n`
     ).join('');
 }
