@@ -136,14 +136,14 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 	// Open file
 	r, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening file: %s", filename)
+		return nil, fmt.Errorf("Error opening file: %s: %s", filename, err)
 	}
 	defer r.Close()
 
 	// Read from file
 	dom, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading from file: %s", filename)
+		return nil, fmt.Errorf("Error reading from file: %s: %s", filename, err)
 	}
 
 	all_json := make(map[string]interface{})
