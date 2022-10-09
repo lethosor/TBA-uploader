@@ -269,6 +269,20 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 				apiPanicInternal("failed to parse %s: %s", fname, err)
 			}
 
+			if level == MATCH_LEVEL_MANUAL {
+				defaults := fms_parser.GetDefaultBreakdowns(event_year)
+				if defaults != nil {
+					for _, alliance := range []string{"red", "blue"} {
+						alliance_breakdown := match_info["score_breakdown"].(map[string]map[string]any)[alliance]
+						for key, default_value := range defaults {
+							if _, ok := alliance_breakdown[key]; !ok {
+								alliance_breakdown[key] = default_value
+							}
+						}
+					}
+				}
+			}
+
 			if extra_info.MatchCodeOverride != nil {
 				match_info["comp_level"] = extra_info.MatchCodeOverride.Level
 				match_info["set_number"] = extra_info.MatchCodeOverride.Set
