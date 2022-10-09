@@ -285,7 +285,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 				match_info["match_number"] = match_number
 			}
 
-			match_json, err := json.Marshal(match_info)
+			match_json, err := jsonMarshalOptionalIndent(match_info, level == MATCH_LEVEL_MANUAL, "  ")
 			if err != nil {
 				apiPanicInternal("%s: JSON serialization failed %s", fname, err)
 			}

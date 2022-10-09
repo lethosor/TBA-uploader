@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -42,6 +43,14 @@ func isFile(filename string) bool {
 func isDir(filename string) bool {
 	info, err := os.Stat(filename)
 	return err == nil && info.Mode().IsDir()
+}
+
+func jsonMarshalOptionalIndent(value any, do_indent bool, indent string) ([]byte, error) {
+	if do_indent {
+		return json.MarshalIndent(value, "", indent)
+	} else {
+		return json.Marshal(value)
+	}
 }
 
 func readFromStringGenericMap[T any](m map[string]interface{}, keys ...string) (result T, err error) {
