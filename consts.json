@@ -4,6 +4,7 @@
         "PRACTICE": 1,
         "QUAL": 2,
         "PLAYOFF": 3,
+        "MANUAL": 99,
     },
     "BRACKET_TYPE": {
         "BRACKET_8_TEAM": 0,
