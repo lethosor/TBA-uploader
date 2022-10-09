@@ -409,19 +409,34 @@
                     >
                         <option
                             v-if="uiOptions.showAllLevels"
-                            value="0"
+                            :value="consts.MATCH_LEVEL.MANUAL"
+                        >
+                            Manual
+                        </option>
+                        <option
+                            v-if="uiOptions.showAllLevels"
+                            :value="consts.MATCH_LEVEL.TEST"
                         >
                             Test
                         </option>
                         <option
                             v-if="uiOptions.showAllLevels"
-                            value="1"
+                            :value="consts.MATCH_LEVEL.PRACTICE"
                         >
                             Practice
                         </option>
-                        <option value="2">Qualification</option>
-                        <option value="3">Playoff</option>
+                        <option :value="consts.MATCH_LEVEL.QUAL">Qualification</option>
+                        <option :value="consts.MATCH_LEVEL.PLAYOFF">Playoff</option>
                     </b-form-select>
+                    <b-button
+                        v-if="matchLevel == consts.MATCH_LEVEL.MANUAL"
+                        variant="success"
+                        data-accesskey="c"
+                        :disabled="inMatchRequest"
+                        @click="createManualMatch"
+                    >
+                        Create new match
+                    </b-button>
                     <b-button
                         variant="success"
                         data-accesskey="f"
@@ -508,6 +523,10 @@
                 <alert
                     v-model="matchError"
                     variant="danger"
+                />
+                <alert
+                    v-model="matchMessage"
+                    variant="success"
                 />
                 <div v-if="matchSummaries.length">
                     <h3>Matches to upload ({{ matchSummaries.length }})</h3>
@@ -1124,6 +1143,7 @@ export default {
     },
     data: () => ({
         version: window.VERSION || 'missing version',
+        consts: {MATCH_LEVEL},
         helpHTML: '',
         fmsConfig: window.FMS_CONFIG || {},
         fmsConfigError: '',
@@ -1162,6 +1182,7 @@ export default {
         showAllLevels: false,
         inMatchRequest: false,
         matchError: '',
+        matchMessage: '',
         // pendingMatches: [], // not set yet to avoid Vue binding to this
         matchSummaries: [],
         fetchedScorelessMatches: false,
@@ -1682,6 +1703,11 @@ export default {
             }.bind(this));
         },
         refetchMatches: function() {
+            if (this.matchLevel == MATCH_LEVEL.MANUAL) {
+                this.fetchMatches(false);
+                return;
+            }
+
             var match_ids = this.pendingMatches.map(function(match) {
                 return match._fms_id;
             });
@@ -1846,6 +1872,21 @@ export default {
             .fail(function(res) {
                 this.advMatchError = 'Receipt generation failed: ' + res.responseText;
             }.bind(this));
+        },
+        createManualMatch: async function() {
+            this.inMatchRequest = true;
+            this.matchError = '';
+            this.matchMessage = '';
+            try {
+                const res = await sendApiRequest('/api/matches/create?level=' + this.matchLevel, this.selectedEvent);
+                this.matchMessage = res;
+            }
+            catch (error) {
+                this.matchError = utils.parseErrorText(error);
+            }
+            finally {
+                this.inMatchRequest = false;
+            }
         },
 
         showEditMatch: function(match) {

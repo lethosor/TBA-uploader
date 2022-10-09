@@ -67,7 +67,7 @@ func getRequestLevel(r *http.Request) (int, error) {
 	level, err := strconv.Atoi(r.URL.Query().Get("level"))
 	if err != nil {
 		return -1, err
-	} else if level < 0 || level > 3 {
+	} else if (level < 0 || level > 3) && level != MATCH_LEVEL_MANUAL {
 		return -1, fmt.Errorf("Invalid level: %d", level)
 	} else {
 		return level, nil
@@ -269,6 +269,20 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 				apiPanicInternal("failed to parse %s: %s", fname, err)
 			}
 
+			if level == MATCH_LEVEL_MANUAL {
+				defaults := fms_parser.GetDefaultBreakdowns(event_year)
+				if defaults != nil {
+					for _, alliance := range []string{"red", "blue"} {
+						alliance_breakdown := match_info["score_breakdown"].(map[string]map[string]any)[alliance]
+						for key, default_value := range defaults {
+							if _, ok := alliance_breakdown[key]; !ok {
+								alliance_breakdown[key] = default_value
+							}
+						}
+					}
+				}
+			}
+
 			if extra_info.MatchCodeOverride != nil {
 				match_info["comp_level"] = extra_info.MatchCodeOverride.Level
 				match_info["set_number"] = extra_info.MatchCodeOverride.Set
@@ -285,7 +299,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 				match_info["match_number"] = match_number
 			}
 
-			match_json, err := json.Marshal(match_info)
+			match_json, err := jsonMarshalOptionalIndent(match_info, level == MATCH_LEVEL_MANUAL, "  ")
 			if err != nil {
 				apiPanicInternal("%s: JSON serialization failed %s", fname, err)
 			}
@@ -372,7 +386,7 @@ func apiPurgeMatches(w http.ResponseWriter, r *http.Request) {
 	for _, file := range match_files {
 		if _, in_match_ids := match_ids[strings.Split(file.Name(), ".")[0]]; in_match_ids || all {
 			ext := filepath.Ext(file.Name())
-			if ext == ".html" || ext == ".json" || ext == ".receipt" {
+			if (level != MATCH_LEVEL_MANUAL && (ext == ".html" || ext == ".json")) || ext == ".receipt" {
 				err := os.Remove(path.Join(match_folder, file.Name()))
 				if err != nil {
 					logger.Printf("purge: failed to delete %s: %v\n", file.Name(), err)
@@ -416,6 +430,44 @@ func apiMatchSaveExtra(w http.ResponseWriter, r *http.Request) {
 
 func apiDeleteMatches(w http.ResponseWriter, r *http.Request) {
 	apiTBARequest("matches/delete", w, r)
+}
+
+func apiCreateMatch(w http.ResponseWriter, r *http.Request) {
+	params := checkRequestEventParams(r)
+	level := checkRequestLevel(r)
+	if level != MATCH_LEVEL_MANUAL {
+		apiPanicBadRequest("not supported for this match level")
+	}
+
+	var match_folder = getMatchDownloadPath(level, params.Event)
+	os.MkdirAll(match_folder, os.ModePerm)
+	html_files, err := listFilesWithExtension(match_folder, "html")
+	if err != nil {
+		apiPanicInternal("download folder %s scan failed: %s", match_folder, err)
+	}
+	html_files_set := make(map[string]bool)
+	for _, f := range html_files {
+		html_files_set[f.Name()] = true
+	}
+
+	new_code := ""
+	new_name := ""
+	for i := 1; ; i++ {
+		new_code = fmt.Sprintf("%d-1", i)
+		new_name = new_code + ".html"
+		if _, exists := html_files_set[new_name]; !exists {
+			break
+		}
+	}
+	new_path := path.Join(match_folder, new_name)
+
+	new_file, err := os.Create(new_path)
+	if err != nil {
+		apiPanicInternal("create %s failed: %s", new_path, err)
+	}
+	new_file.Close()
+
+	w.Write([]byte(fmt.Sprintf("Created new match %s. Edit at: %s", new_code, new_path)))
 }
 
 func apiFetchRankings(w http.ResponseWriter, r *http.Request) {
@@ -533,6 +585,7 @@ func RunWebServer(port int, web_folder string) {
 	handleFuncWrapper(r, "/api/matches/extra", apiMatchLoadExtra)
 	handleFuncWrapper(r, "/api/matches/extra/save", apiMatchSaveExtra)
 	handleFuncWrapper(r, "/api/matches/delete", apiDeleteMatches)
+	handleFuncWrapper(r, "/api/matches/create", apiCreateMatch)
 	handleFuncWrapper(r, "/api/rankings/fetch", apiFetchRankings)
 	handleFuncWrapper(r, "/api/rankings/upload", apiUploadRankings)
 	handleFuncWrapper(r, "/api/videos/upload", apiUploadVideos)

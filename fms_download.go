@@ -94,8 +94,22 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
 	// ensure that the matches folder exists even if no matches are fetched
 	matches_dir := path.Join(folder, "matches")
 	backups_dir := path.Join(folder, "backups")
+	var files []string
 	os.MkdirAll(matches_dir, os.ModePerm)
 	os.MkdirAll(backups_dir, os.ModePerm)
+
+	if level == MATCH_LEVEL_MANUAL {
+		html_files, err := listFilesWithExtension(matches_dir, "html")
+		if err != nil {
+			return nil, err
+		}
+		for _, html_file := range html_files {
+			if !fileExists(path.Join(matches_dir, replaceExtension(html_file.Name(), "json"))) {
+				files = append(files, path.Join(matches_dir, html_file.Name()))
+			}
+		}
+		return files, nil
+	}
 
 	filename, ok, err := downloadFile(folder, "match_list.html", url, true)
 	if !ok {
@@ -110,7 +124,7 @@ func downloadMatches(level int, folder string, new_only bool) ([]string, error) 
 	if err != nil {
 		return nil, err
 	}
-	var files []string
+
 	dom.Find("tbody tr").Each(func(i int, row *goquery.Selection) {
 		match_url, ok := row.Find("a").First().Attr("href")
 		if !ok {

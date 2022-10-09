@@ -57,6 +57,49 @@ var RP_BADGE_NAMES_2022 = map[string]string{
 	"Hangar Bonus Ranking Point Achieved": "hangarBonusRankingPoint",
 }
 
+var DEFAULT_BREAKDOWN_VALUES_2022 = map[string]any{
+	"adjustPoints":            0,
+	"autoCargoLowerBlue":      0,
+	"autoCargoLowerFar":       0,
+	"autoCargoLowerNear":      0,
+	"autoCargoLowerRed":       0,
+	"autoCargoPoints":         0,
+	"autoCargoTotal":          0,
+	"autoCargoUpperBlue":      0,
+	"autoCargoUpperFar":       0,
+	"autoCargoUpperNear":      0,
+	"autoCargoUpperRed":       0,
+	"autoPoints":              0,
+	"autoTaxiPoints":          0,
+	"cargoBonusRankingPoint":  false,
+	"endgamePoints":           0,
+	"endgameRobot1":           "None",
+	"endgameRobot2":           "None",
+	"endgameRobot3":           "None",
+	"foulCount":               0,
+	"foulPoints":              0,
+	"hangarBonusRankingPoint": false,
+	"matchCargoTotal":         0,
+	"quintetAchieved":         false,
+	"rp":                      0,
+	"taxiRobot1":              "No",
+	"taxiRobot2":              "No",
+	"taxiRobot3":              "No",
+	"techFoulCount":           0,
+	"teleopCargoLowerBlue":    0,
+	"teleopCargoLowerFar":     0,
+	"teleopCargoLowerNear":    0,
+	"teleopCargoLowerRed":     0,
+	"teleopCargoPoints":       0,
+	"teleopCargoTotal":        0,
+	"teleopCargoUpperBlue":    0,
+	"teleopCargoUpperFar":     0,
+	"teleopCargoUpperNear":    0,
+	"teleopCargoUpperRed":     0,
+	"teleopPoints":            0,
+	"totalPoints":             0,
+}
+
 func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
@@ -65,14 +108,14 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 	// Open file
 	r, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening file: %s", filename)
+		return nil, fmt.Errorf("Error opening file: %s: %s", filename, err)
 	}
 	defer r.Close()
 
 	// Read from file
 	dom, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
-		return nil, fmt.Errorf("Error reading from file: %s", filename)
+		return nil, fmt.Errorf("Error reading from file: %s: %s", filename, err)
 	}
 
 	all_json := make(map[string]interface{})

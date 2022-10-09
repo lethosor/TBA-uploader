@@ -52,6 +52,14 @@ func MakeExtraMatchInfo(year int) (ExtraMatchInfo, error) {
 	}
 }
 
+func GetDefaultBreakdowns(year int) map[string]any {
+	if year == 2022 {
+		return DEFAULT_BREAKDOWN_VALUES_2022
+	} else {
+		return nil
+	}
+}
+
 func split_and_strip(text string, separator string) []string {
 	// Split text into parts at separator character. Remove whitespace from parts.
 	// "a • b • c" -> ["a", "b", "c"]
