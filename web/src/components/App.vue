@@ -1542,7 +1542,7 @@ export default {
                     Team: team['#'],
                     Name: team['Short Name'],
                     Location: team['Location'],
-                })).filter(team => Boolean(team.Team));
+                })).filter(team => Boolean(team.Team) && !isNaN(Number(team.Team)));
                 this.teamList = this.teamListTable.map(team => Number(team.Team));
             }
             catch (e) {
