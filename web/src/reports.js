@@ -5,6 +5,8 @@ Reports.Type = Object.freeze({
     QUAL_SCHEDULE: 'ScheduleReportQualification',
     PLAYOFF_SCHEDULE: 'ScheduleReportPlayoff',
     TEAM_LIST: 'TeamListActiveEvent',
+    QUAL_CYCLE_TIMES: 'CycleTimeReportQualification',
+    PLAYOFF_CYCLE_TIMES: 'CycleTimeReportPlayoff',
 });
 
 let parseCellText = function(cell) {
