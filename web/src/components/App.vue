@@ -1336,7 +1336,7 @@ export default {
                 this.autoFetchMatchInterval = null;
             }
             if (this.autoFetchMatches) {
-                this.autoFetchMatchInterval = setInterval(this.autoFetchMatchCallback.bind(this), 30 * 1000);
+                this.autoFetchMatchInterval = setInterval(this.autoFetchMatchCallback.bind(this), 60 * 1000);
             }
         },
     },
