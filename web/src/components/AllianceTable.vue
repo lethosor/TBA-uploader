@@ -57,6 +57,10 @@ export default {
             type: Array,
             default: () => [],
         },
+        fmsTabOrder: {
+            type: Boolean,
+            default: true,
+        },
     },
     data: () => ({
         teams: [],
@@ -86,18 +90,23 @@ export default {
             this.$emit('input', this._exportTeams());
         },
         getTabIndex(allianceIndex, teamIndex) {
-            const offset = 10;
-            if (teamIndex < 2) {
-                return offset + (2 * allianceIndex) + teamIndex;
-            }
+            const offset = 10;  // if we start at 0, we may overlap with another field
+            if (this.fmsTabOrder) {
+                if (teamIndex < 2) {
+                    return offset + (2 * allianceIndex) + teamIndex;
+                }
 
-            const numAlliances = this.teams.length;
-            let rowIndex = allianceIndex;
-            if (teamIndex == 2) {
-                // reverse order
-                rowIndex = numAlliances - rowIndex - 1;
+                const numAlliances = this.teams.length;
+                let rowIndex = allianceIndex;
+                if (teamIndex == 2) {
+                    // reverse order
+                    rowIndex = numAlliances - rowIndex - 1;
+                }
+                return offset + (numAlliances * teamIndex) + rowIndex;
             }
-            return offset + (numAlliances * teamIndex) + rowIndex;
+            else {
+                return offset + (allianceIndex * this.allianceSize) + teamIndex;
+            }
         },
         getCellClass(allianceIndex, teamIndex) {
             const value = (this.teams[allianceIndex] || [])[teamIndex];

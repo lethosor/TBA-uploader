@@ -693,6 +693,27 @@
                         </b-button>
                     </div>
                 </div>
+                <div class="form-inline">
+                    Tab order:
+                    <b-form-group class="ml-2">
+                        <b-form-radio
+                            v-model="alliancesFmsTabOrder"
+                            inline
+                            name="alliance-tab-order"
+                            :value="true"
+                        >
+                            FMS
+                        </b-form-radio>
+                        <b-form-radio
+                            v-model="alliancesFmsTabOrder"
+                            inline
+                            name="alliance-tab-order"
+                            :value="false"
+                        >
+                            Table
+                        </b-form-radio>
+                    </b-form-group>
+                </div>
 
                 <alert
                     v-model="allianceError"
@@ -703,6 +724,7 @@
                     :alliance-count="eventExtras[selectedEvent].alliance_count"
                     :alliance-size="eventExtras[selectedEvent].alliance_size"
                     :value="alliances[selectedEvent]"
+                    :fms-tab-order="alliancesFmsTabOrder"
                     @input="onAllianceChange"
                 />
 
@@ -1028,7 +1050,9 @@ import {
     BButtonClose,
     BCol,
     BFormCheckbox,
+    BFormGroup,
     BFormInput,
+    BFormRadio,
     BFormSelect,
     BModal,
     BRow,
@@ -1140,7 +1164,9 @@ export default {
         BButtonClose,
         BCol,
         BFormCheckbox,
+        BFormGroup,
         BFormInput,
+        BFormRadio,
         BFormSelect,
         BModal,
         BRow,
@@ -1217,6 +1243,7 @@ export default {
         showExistingVideos: false,
 
         alliances: STORED_ALLIANCES,
+        alliancesFmsTabOrder: true,
         inAllianceRequest: false,
         allianceError: '',
 
