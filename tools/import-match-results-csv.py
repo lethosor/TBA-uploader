@@ -1,5 +1,6 @@
 import argparse
 import csv
+import itertools
 import json
 import os
 
@@ -142,6 +143,32 @@ def assign_breakdown(row, match_result):
         if key_parts[0] in {'red', 'blue'} and key_parts[1] in BREAKDOWN_TYPES_2022:
             match_result['score_breakdown'][key_parts[0]][key_parts[1]] = BREAKDOWN_TYPES_2022[key_parts[1]](value)
 
+
+VALID_HANGAR_RESULTS = set(map(sum, itertools.product((0, 4, 6, 10, 15), repeat=3)))
+
+def validate_match_result(match_result):
+    RP_REQUIRED_FIELDS = ('rp', 'cargoBonusRankingPoint', 'hangarBonusRankingPoint', 'totalPoints')
+    for alliance, other_alliance in itertools.permutations(('red', 'blue'), 2):
+        breakdown = match_result['score_breakdown'][alliance]
+        if all(field in breakdown for field in RP_REQUIRED_FIELDS):
+            expected_rp = 0
+            score_diff = breakdown['totalPoints'] - match_result['score_breakdown'][other_alliance]['totalPoints']
+            if score_diff > 0:
+                expected_rp += 2
+            elif score_diff == 0:
+                expected_rp += 1
+            if breakdown['cargoBonusRankingPoint']:
+                expected_rp += 1
+            if breakdown['hangarBonusRankingPoint']:
+                expected_rp += 1
+            if breakdown['rp'] != expected_rp:
+                raise ValueError('%s: expected rp = %r, got rp = %r' % (alliance, expected_rp, breakdown['rp']))
+
+        if 'endgamePoints' in breakdown:
+            if breakdown['endgamePoints'] not in VALID_HANGAR_RESULTS:
+                raise ValueError('%s: invalid endgamePoints: %r' % (alliance, breakdown['endgamePoints']))
+
+
 all_match_results = {}
 
 with open(args.input_file, newline='') as input_file:
@@ -175,6 +202,11 @@ with open(args.input_file, newline='') as input_file:
 
         assign_teams(row, match_result)
         assign_breakdown(row, match_result)
+
+        try:
+            validate_match_result(match_result)
+        except ValueError as e:
+            raise ValueError('In row %i: %s' % (row_number, e))
 
         all_match_results[fms_id] = match_result
 
