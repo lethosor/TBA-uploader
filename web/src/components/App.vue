@@ -1614,11 +1614,20 @@ export default {
         },
 
         onTeamListUpload: function(event) {
-            this.processTeamList(utils.parseCSVRaw(event.body));
+            try {
+                this.processTeamList(utils.parseCSVRaw(event.body));
+            }
+            catch (e) {
+                this.teamListError = utils.parseErrorText(e);
+            }
         },
 
         processTeamList: function(cells) {
-            this.teamListTable = utils.parseCSVObjects(cells, cells.findIndex(row => row.includes('#'))).map(team => ({
+            const headerRowIndex = cells.findIndex(row => row.includes('#'));
+            if (!cells[headerRowIndex]) {
+                throw 'could not find header row containing "#" header';
+            }
+            this.teamListTable = utils.parseCSVObjects(cells, headerRowIndex).map(team => ({
                 Team: team['#'],
                 Name: team['Short Name'],
                 Location: team['Location'],
