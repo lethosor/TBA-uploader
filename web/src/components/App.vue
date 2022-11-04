@@ -223,44 +223,62 @@
                 v-if="eventSelected"
                 title="Teams"
             >
-                <div class="mb-2">
-                    <b-button
-                        variant="success"
-                        :disabled="inTeamsRequest"
-                        @click="fetchTeamsReport"
+                <b-row class="mb-2">
+                    <b-col
+                        class="my-auto text-center"
+                        sm="auto"
                     >
-                        Fetch FMS report
-                    </b-button>
-
-                    <b-button
-                        v-if="teamList.length"
-                        variant="success"
-                        :disabled="inTeamsRequest"
-                        @click="uploadTeamList"
+                        <b-button
+                            variant="success"
+                            :disabled="inTeamsRequest"
+                            @click="fetchTeamsReport"
+                        >
+                            Fetch FMS report
+                        </b-button>
+                    </b-col>
+                    <b-col
+                        class="my-auto text-center"
+                        sm="auto"
                     >
-                        Upload to TBA
-                    </b-button>
-
-                    <b-button
-                        v-if="teamList.length"
-                        variant="danger"
-                        @click="resetTeamList"
-                    >
-                        Cancel
-                    </b-button>
-                </div>
+                        <i>-or-</i>
+                    </b-col>
+                    <b-col class="my-auto">
+                        <dropzone
+                            ref="scheduleUpload"
+                            title="Upload a team list"
+                            accept="text/csv"
+                            @upload="onTeamListUpload"
+                        />
+                    </b-col>
+                </b-row>
 
                 <alert
                     v-model="teamListError"
                     variant="danger"
                 />
 
-                <div
+                <b-row
                     v-if="teamList.length"
                     class="mb-2"
                 >
-                    {{ teamList.length }} teams
-                </div>
+                    <b-col>{{ teamList.length }} teams</b-col>
+                    <b-col sm="auto">
+                        <b-button
+                            variant="success"
+                            :disabled="inTeamsRequest"
+                            @click="uploadTeamList"
+                        >
+                            Upload to TBA
+                        </b-button>
+
+                        <b-button
+                            variant="danger"
+                            @click="resetTeamList"
+                        >
+                            Cancel
+                        </b-button>
+                    </b-col>
+                </b-row>
 
                 <b-table
                     striped
@@ -1585,12 +1603,7 @@ export default {
             try {
                 const response = await fetchReport(Reports.Type.TEAM_LIST);
                 const cells = Reports.convertToCells(response);
-                this.teamListTable = utils.parseCSVObjects(cells, cells.findIndex(row => row.includes('#'))).map(team => ({
-                    Team: team['#'],
-                    Name: team['Short Name'],
-                    Location: team['Location'],
-                })).filter(team => Boolean(team.Team) && !isNaN(Number(team.Team)));
-                this.teamList = this.teamListTable.map(team => Number(team.Team));
+                this.processTeamList(cells);
             }
             catch (e) {
                 this.teamListError = utils.parseErrorText(e);
@@ -1598,6 +1611,19 @@ export default {
             finally {
                 this.inTeamsRequest = false;
             }
+        },
+
+        onTeamListUpload: function(event) {
+            this.processTeamList(utils.parseCSVRaw(event.body));
+        },
+
+        processTeamList: function(cells) {
+            this.teamListTable = utils.parseCSVObjects(cells, cells.findIndex(row => row.includes('#'))).map(team => ({
+                Team: team['#'],
+                Name: team['Short Name'],
+                Location: team['Location'],
+            })).filter(team => Boolean(team.Team) && !isNaN(Number(team.Team)));
+            this.teamList = this.teamListTable.map(team => Number(team.Team));
         },
 
         uploadTeamList: async function() {
