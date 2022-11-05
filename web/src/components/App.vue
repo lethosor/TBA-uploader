@@ -545,7 +545,7 @@
                             Purge and re-fetch all matches
                         </b-button>
                     </div>
-                    <hr>
+
                     <h4>Rankings Upload</h4>
 
                     <p>
@@ -597,6 +597,12 @@
                             Cancel
                         </b-button>
                     </div>
+
+                    <alert
+                        v-model="rankingsError"
+                        variant="danger"
+                        prefix="Rankings:"
+                    />
 
                     <hr>
                 </div>
