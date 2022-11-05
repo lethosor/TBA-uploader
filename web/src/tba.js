@@ -22,10 +22,15 @@ function RankingReducerAverage(breakdownFields, defaultValue=0) {
         return {
             add(match, alliance) {
                 let matchValue = defaultValue;
-                for (const field of breakdownFields) {
+                for (let field of breakdownFields) {
+                    let mult = 1;
+                    if (field.startsWith('-')) {
+                        mult = -1;
+                        field = field.replace(/^\-/, '');
+                    }
                     const breakdownValue = match.score_breakdown[alliance][field];
                     if (breakdownValue !== undefined) {
-                        matchValue += breakdownValue;
+                        matchValue += mult * breakdownValue;
                     }
                     else {
                         matchValue = defaultValue;
@@ -44,7 +49,7 @@ function RankingReducerAverage(breakdownFields, defaultValue=0) {
 const rankingBreakdownSources = {
     2022: {
         'Ranking Score': RankingReducerAverage('rp'),
-        'Avg Match': RankingReducerAverage('totalPoints'),
+        'Avg Match': RankingReducerAverage(['totalPoints', '-foulPoints']),
         'Avg Hangar': RankingReducerAverage('endgamePoints'),
         'Avg Taxi + Auto Cargo': RankingReducerAverage(['autoTaxiPoints', 'autoCargoPoints']),
     },
