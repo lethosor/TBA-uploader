@@ -161,6 +161,8 @@ def validate_match_result(match_result):
                 expected_rp += 1
             if breakdown['hangarBonusRankingPoint']:
                 expected_rp += 1
+            if match_result['comp_level'] != 'qm':
+                expected_rp = 0  # match FMS
             if breakdown['rp'] != expected_rp:
                 raise ValueError('%s: expected rp = %r, got rp = %r' % (alliance, expected_rp, breakdown['rp']))
 
@@ -200,10 +202,10 @@ with open(args.input_file, newline='') as input_file:
             match_result['alliances'][alliance]['score'] = score
             match_result['score_breakdown'][alliance]['totalPoints'] = score
 
-        assign_teams(row, match_result)
-        assign_breakdown(row, match_result)
-
         try:
+            assign_teams(row, match_result)
+            assign_breakdown(row, match_result)
+
             validate_match_result(match_result)
         except ValueError as e:
             raise ValueError('In row %i: %s' % (row_number, e))
