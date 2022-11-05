@@ -1633,6 +1633,35 @@ export default {
                 this.remapError = utils.parseErrorText(error);
             }.bind(this));
         },
+        _mapTeamKey: function(teamKey, idField, outField) {
+            let prefix = '';
+            if (teamKey.startsWith('frc')) {
+                prefix = 'frc';
+                teamKey = teamKey.replace(/^frc/, '');
+            }
+            for (const mapping of this.eventExtras[this.selectedEvent].remap_teams) {
+                if (mapping[idField] == teamKey && mapping[outField]) {
+                    return prefix + mapping[outField];
+                }
+            }
+            return prefix + teamKey;
+        },
+        mapTeamFMStoTBA: function(teamKey) {
+            return this._mapTeamKey(teamKey, 'fms', 'tba');
+        },
+        mapTeamTBAtoFMS: function(teamKey) {
+            return this._mapTeamKey(teamKey, 'tba', 'fms');
+        },
+        convertMatchTeamKeysTBAtoFMS: function(matches) {
+            for (let match of matches) {
+                for (const alliance of ['red', 'blue']) {
+                    for (const field of ['team_keys', 'surrogate_team_keys', 'dq_team_keys']) {
+                        match.alliances[alliance][field] = match.alliances[alliance][field].map(this.mapTeamTBAtoFMS.bind(this));
+                    }
+                }
+            }
+            return matches;
+        },
 
         canChangePlayoffType: function() {
             if (this.eventExtras[this.selectedEvent].playoff_type === undefined) {
@@ -2217,6 +2246,7 @@ export default {
             this.inUploadRankings = false;
             try {
                 const matchResults = await this.tbaApiCurrentEventRequest('matches');
+                this.convertMatchTeamKeysTBAtoFMS(matchResults);
                 this.rankingsReportData = this.rankingsReportTable = tba.generateRankingsFromMatchResults(matchResults, this.eventYear);
             }
             catch (e) {
