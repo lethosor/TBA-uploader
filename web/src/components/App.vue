@@ -560,6 +560,16 @@
                         This is the normal ranking upload flow - unlikely to work unless the active tournament level in FMS is "Qualification".
                     </p>
 
+                    <p>
+                        <b-button
+                            variant="success"
+                            :disabled="inUploadRankings"
+                            @click="generateRankingsReportFromTBA"
+                        >
+                            Generate rankings report from TBA
+                        </b-button>
+                    </p>
+
                     <dropzone
                         ref="rankingsUploadDropzone"
                         title="Upload a rankings report (not yet tested with a complete report)"
@@ -2177,7 +2187,7 @@ export default {
         },
 
         onRankingsReportUpload: function(event) {
-            this.rankingsError = '';
+            this.resetRankingsReport();
             try {
                 const cells = utils.parseCSVRaw(event.body.toLowerCase());
                 const headerRowIndex = cells.findIndex(row => row.includes('team'));
@@ -2192,8 +2202,23 @@ export default {
                 }));
             }
             catch (e) {
-                console.error(e);
+                console.error(e);   // eslint-disable-line no-console
                 this.rankingsError = utils.parseErrorText(e);
+            }
+        },
+        generateRankingsReportFromTBA: async function() {
+            this.resetRankingsReport();
+            this.inUploadRankings = false;
+            try {
+                const matchResults = await this.tbaApiCurrentEventRequest('matches');
+                this.rankingsReportData = this.rankingsReportTable = tba.generateRankingsFromMatchResults(matchResults, this.eventYear);
+            }
+            catch (e) {
+                console.error(e);   // eslint-disable-line no-console
+                this.rankingsError = utils.parseErrorText(e);
+            }
+            finally {
+                this.inUploadRankings = false;
             }
         },
         uploadRankingsReport: async function() {
