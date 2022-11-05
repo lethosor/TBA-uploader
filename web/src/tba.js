@@ -1,3 +1,10 @@
+function toNumber(value) {
+    if (typeof value == 'string' && !isNaN(Number(value))) {
+        return Number(value);
+    }
+    return value;
+}
+
 const tba = Object.freeze({
     isValidEventCode(event) {
         return event && Boolean(event.match(/^\d+/));
@@ -12,12 +19,12 @@ const tba = Object.freeze({
         common(r) {
             return {
                 team_key: 'frc' + r.team,
-                rank: r.rank,
-                played: r.played,
-                dqs: r.dq,
-                wins: r.wins,
-                losses: r.losses,
-                ties: r.ties,
+                rank: toNumber(r.rank),
+                played: toNumber(r.played),
+                dqs: toNumber(r.dq),
+                wins: toNumber(r.wins),
+                losses: toNumber(r.losses),
+                ties: toNumber(r.ties),
             };
         },
         // keys should match https://github.com/the-blue-alliance/the-blue-alliance/blob/py3/src/backend/common/consts/ranking_sort_orders.py

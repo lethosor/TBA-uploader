@@ -546,6 +546,49 @@
                         </b-button>
                     </div>
                     <hr>
+                    <h4>Rankings Upload</h4>
+
+                    <p>
+                        <b-button
+                            class="mr-2"
+                            variant="info"
+                            :disabled="inUploadRankings"
+                            @click="uploadRankings"
+                        >
+                            Upload rankings (pit display)
+                        </b-button>
+                        This is the normal ranking upload flow - unlikely to work unless the active tournament level in FMS is "Qualification".
+                    </p>
+
+                    <dropzone
+                        ref="rankingsUploadDropzone"
+                        title="Upload a rankings report (not yet tested with a complete report)"
+                        accept="text/csv"
+                        @upload="onRankingsReportUpload"
+                    />
+
+                    <b-table
+                        striped
+                        :items="rankingsReportTable"
+                    />
+
+                    <div v-if="rankingsReportData.length">
+                        <b-button
+                            variant="success"
+                            :disabled="inUploadRankings"
+                            @click="uploadRankingsReport"
+                        >
+                            Upload rankings report
+                        </b-button>
+                        <b-button
+                            variant="danger"
+                            @click="resetRankingsReport"
+                        >
+                            Cancel
+                        </b-button>
+                    </div>
+
+                    <hr>
                 </div>
                 <alert
                     v-model="matchError"
@@ -1254,6 +1297,8 @@ export default {
 
         inUploadRankings: false,
         rankingsError: '',
+        rankingsReportData: [],
+        rankingsReportTable: [],
 
         videos: {},
         inVideoRequest: false,
@@ -2129,6 +2174,53 @@ export default {
                 this.rankingsError = 'fetch failed: ' + res.responseText;
                 this.inUploadRankings = false;
             }.bind(this));
+        },
+
+        onRankingsReportUpload: function(event) {
+            this.rankingsError = '';
+            try {
+                const cells = utils.parseCSVRaw(event.body.toLowerCase());
+                const headerRowIndex = cells.findIndex(row => row.includes('team'));
+                if (!cells[headerRowIndex]) {
+                    throw 'could not find header row containing "Team" header';
+                }
+                this.rankingsReportData = utils.parseCSVObjects(cells, headerRowIndex)
+                    .map(tba.convertToTBARankings[this.eventYear]);
+                this.rankingsReportTable = this.rankingsReportData.map(team => ({
+                    Team: team.team_key.replace('frc', ''),
+                    Rank: team.rank,
+                }));
+            }
+            catch (e) {
+                console.error(e);
+                this.rankingsError = utils.parseErrorText(e);
+            }
+        },
+        uploadRankingsReport: async function() {
+            if (!this.rankingsReportData.length) {
+                this.rankingsError = 'No rankings to upload';
+                return;
+            }
+            this.inUploadRankings = true;
+            this.rankingsError = '';
+            try {
+                await sendApiRequest('/api/rankings/upload', this.selectedEvent, {
+                    breakdowns: tba.RANKING_NAMES[this.eventYear],
+                    rankings: this.rankingsReportData,
+                });
+                this.resetRankingsReport();
+            }
+            catch (e) {
+                this.rankingsError = utils.parseErrorText(e);
+            }
+            finally {
+                this.inUploadRankings = false;
+            }
+        },
+        resetRankingsReport: function() {
+            this.rankingsReportData = [];
+            this.rankingsReportTable = [];
+            this.rankingsError = '';
         },
 
         fetchVideos: function() {
