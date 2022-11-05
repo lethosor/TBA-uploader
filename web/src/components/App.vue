@@ -486,7 +486,7 @@
                     Be sure to only fetch (or re-fetch) matches <strong>after</strong> scores have been posted in FMS.
                     <span v-if="isQual">Rankings can be updated at any time if necessary, but will also be updated after posting scores.</span>
                 </p>
-                <div>
+                <div v-if="isQual || isPlayoff">
                     <b-form-checkbox
                         v-model="autoFetchMatches"
                         name="check-button"
@@ -1901,6 +1901,9 @@ export default {
         },
         autoFetchMatchCallback: async function() {
             if (!this.autoFetchMatches) {
+                return;
+            }
+            if (!(this.isQual || this.isPlayoff)) {
                 return;
             }
             if (this.pendingMatches && this.pendingMatches.length) {
