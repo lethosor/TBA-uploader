@@ -223,44 +223,62 @@
                 v-if="eventSelected"
                 title="Teams"
             >
-                <div class="mb-2">
-                    <b-button
-                        variant="success"
-                        :disabled="inTeamsRequest"
-                        @click="fetchTeamsReport"
+                <b-row class="mb-2">
+                    <b-col
+                        class="my-auto text-center"
+                        sm="auto"
                     >
-                        Fetch FMS report
-                    </b-button>
-
-                    <b-button
-                        v-if="teamList.length"
-                        variant="success"
-                        :disabled="inTeamsRequest"
-                        @click="uploadTeamList"
+                        <b-button
+                            variant="success"
+                            :disabled="inTeamsRequest"
+                            @click="fetchTeamsReport"
+                        >
+                            Fetch FMS report
+                        </b-button>
+                    </b-col>
+                    <b-col
+                        class="my-auto text-center"
+                        sm="auto"
                     >
-                        Upload to TBA
-                    </b-button>
-
-                    <b-button
-                        v-if="teamList.length"
-                        variant="danger"
-                        @click="resetTeamList"
-                    >
-                        Cancel
-                    </b-button>
-                </div>
+                        <i>-or-</i>
+                    </b-col>
+                    <b-col class="my-auto">
+                        <dropzone
+                            ref="teamListUploadDropzone"
+                            title="Upload a team list"
+                            accept="text/csv"
+                            @upload="onTeamListUpload"
+                        />
+                    </b-col>
+                </b-row>
 
                 <alert
                     v-model="teamListError"
                     variant="danger"
                 />
 
-                <div
+                <b-row
                     v-if="teamList.length"
                     class="mb-2"
                 >
-                    {{ teamList.length }} teams
-                </div>
+                    <b-col>{{ teamList.length }} teams</b-col>
+                    <b-col sm="auto">
+                        <b-button
+                            variant="success"
+                            :disabled="inTeamsRequest"
+                            @click="uploadTeamList"
+                        >
+                            Upload to TBA
+                        </b-button>
+
+                        <b-button
+                            variant="danger"
+                            @click="resetTeamList"
+                        >
+                            Cancel
+                        </b-button>
+                    </b-col>
+                </b-row>
 
                 <b-table
                     striped
@@ -527,6 +545,65 @@
                             Purge and re-fetch all matches
                         </b-button>
                     </div>
+
+                    <h4>Rankings Upload</h4>
+
+                    <p>
+                        <b-button
+                            class="mr-2"
+                            variant="info"
+                            :disabled="inUploadRankings"
+                            @click="uploadRankings"
+                        >
+                            Upload rankings (pit display)
+                        </b-button>
+                        This is the normal ranking upload flow - unlikely to work unless the active tournament level in FMS is "Qualification".
+                    </p>
+
+                    <p>
+                        <b-button
+                            variant="success"
+                            :disabled="inUploadRankings"
+                            @click="generateRankingsReportFromTBA"
+                        >
+                            Generate rankings report from TBA
+                        </b-button>
+                    </p>
+
+                    <dropzone
+                        ref="rankingsUploadDropzone"
+                        title="Upload a rankings report (not yet tested with a complete report)"
+                        accept="text/csv"
+                        @upload="onRankingsReportUpload"
+                    />
+
+                    <b-table
+                        striped
+                        :items="rankingsReportTable"
+                    />
+
+                    <div v-if="rankingsReportData.length">
+                        <b-button
+                            variant="success"
+                            :disabled="inUploadRankings"
+                            @click="uploadRankingsReport"
+                        >
+                            Upload rankings report
+                        </b-button>
+                        <b-button
+                            variant="danger"
+                            @click="resetRankingsReport"
+                        >
+                            Cancel
+                        </b-button>
+                    </div>
+
+                    <alert
+                        v-model="rankingsError"
+                        variant="danger"
+                        prefix="Rankings:"
+                    />
+
                     <hr>
                 </div>
                 <alert
@@ -1236,6 +1313,8 @@ export default {
 
         inUploadRankings: false,
         rankingsError: '',
+        rankingsReportData: [],
+        rankingsReportTable: [],
 
         videos: {},
         inVideoRequest: false,
@@ -1554,6 +1633,35 @@ export default {
                 this.remapError = utils.parseErrorText(error);
             }.bind(this));
         },
+        _mapTeamKey: function(teamKey, idField, outField) {
+            let prefix = '';
+            if (teamKey.startsWith('frc')) {
+                prefix = 'frc';
+                teamKey = teamKey.replace(/^frc/, '');
+            }
+            for (const mapping of this.eventExtras[this.selectedEvent].remap_teams) {
+                if (mapping[idField] == teamKey && mapping[outField]) {
+                    return prefix + mapping[outField];
+                }
+            }
+            return prefix + teamKey;
+        },
+        mapTeamFMStoTBA: function(teamKey) {
+            return this._mapTeamKey(teamKey, 'fms', 'tba');
+        },
+        mapTeamTBAtoFMS: function(teamKey) {
+            return this._mapTeamKey(teamKey, 'tba', 'fms');
+        },
+        convertMatchTeamKeysTBAtoFMS: function(matches) {
+            for (let match of matches) {
+                for (const alliance of ['red', 'blue']) {
+                    for (const field of ['team_keys', 'surrogate_team_keys', 'dq_team_keys']) {
+                        match.alliances[alliance][field] = match.alliances[alliance][field].map(this.mapTeamTBAtoFMS.bind(this));
+                    }
+                }
+            }
+            return matches;
+        },
 
         canChangePlayoffType: function() {
             if (this.eventExtras[this.selectedEvent].playoff_type === undefined) {
@@ -1585,12 +1693,7 @@ export default {
             try {
                 const response = await fetchReport(Reports.Type.TEAM_LIST);
                 const cells = Reports.convertToCells(response);
-                this.teamListTable = utils.parseCSVObjects(cells, cells.findIndex(row => row.includes('#'))).map(team => ({
-                    Team: team['#'],
-                    Name: team['Short Name'],
-                    Location: team['Location'],
-                })).filter(team => Boolean(team.Team) && !isNaN(Number(team.Team)));
-                this.teamList = this.teamListTable.map(team => Number(team.Team));
+                this.processTeamList(cells);
             }
             catch (e) {
                 this.teamListError = utils.parseErrorText(e);
@@ -1598,6 +1701,28 @@ export default {
             finally {
                 this.inTeamsRequest = false;
             }
+        },
+
+        onTeamListUpload: function(event) {
+            try {
+                this.processTeamList(utils.parseCSVRaw(event.body));
+            }
+            catch (e) {
+                this.teamListError = utils.parseErrorText(e);
+            }
+        },
+
+        processTeamList: function(cells) {
+            const headerRowIndex = cells.findIndex(row => row.includes('#'));
+            if (!cells[headerRowIndex]) {
+                throw 'could not find header row containing "#" header';
+            }
+            this.teamListTable = utils.parseCSVObjects(cells, headerRowIndex).map(team => ({
+                Team: team['#'],
+                Name: team['Short Name'],
+                Location: team['Location'],
+            })).filter(team => Boolean(team.Team) && !isNaN(Number(team.Team)));
+            this.teamList = this.teamListTable.map(team => Number(team.Team));
         },
 
         uploadTeamList: async function() {
@@ -2094,6 +2219,69 @@ export default {
                 this.rankingsError = 'fetch failed: ' + res.responseText;
                 this.inUploadRankings = false;
             }.bind(this));
+        },
+
+        onRankingsReportUpload: function(event) {
+            this.resetRankingsReport();
+            try {
+                const cells = utils.parseCSVRaw(event.body.toLowerCase());
+                const headerRowIndex = cells.findIndex(row => row.includes('team'));
+                if (!cells[headerRowIndex]) {
+                    throw 'could not find header row containing "Team" header';
+                }
+                this.rankingsReportData = utils.parseCSVObjects(cells, headerRowIndex)
+                    .map(tba.convertToTBARankings[this.eventYear]);
+                this.rankingsReportTable = this.rankingsReportData.map(team => ({
+                    Team: team.team_key.replace('frc', ''),
+                    Rank: team.rank,
+                }));
+            }
+            catch (e) {
+                console.error(e);   // eslint-disable-line no-console
+                this.rankingsError = utils.parseErrorText(e);
+            }
+        },
+        generateRankingsReportFromTBA: async function() {
+            this.resetRankingsReport();
+            this.inUploadRankings = false;
+            try {
+                const matchResults = await this.tbaApiCurrentEventRequest('matches');
+                this.convertMatchTeamKeysTBAtoFMS(matchResults);
+                this.rankingsReportData = this.rankingsReportTable = tba.generateRankingsFromMatchResults(matchResults, this.eventYear);
+            }
+            catch (e) {
+                console.error(e);   // eslint-disable-line no-console
+                this.rankingsError = utils.parseErrorText(e);
+            }
+            finally {
+                this.inUploadRankings = false;
+            }
+        },
+        uploadRankingsReport: async function() {
+            if (!this.rankingsReportData.length) {
+                this.rankingsError = 'No rankings to upload';
+                return;
+            }
+            this.inUploadRankings = true;
+            this.rankingsError = '';
+            try {
+                await sendApiRequest('/api/rankings/upload', this.selectedEvent, {
+                    breakdowns: tba.RANKING_NAMES[this.eventYear],
+                    rankings: this.rankingsReportData,
+                });
+                this.resetRankingsReport();
+            }
+            catch (e) {
+                this.rankingsError = utils.parseErrorText(e);
+            }
+            finally {
+                this.inUploadRankings = false;
+            }
+        },
+        resetRankingsReport: function() {
+            this.rankingsReportData = [];
+            this.rankingsReportTable = [];
+            this.rankingsError = '';
         },
 
         fetchVideos: function() {

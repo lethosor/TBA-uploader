@@ -2,7 +2,7 @@ function parseGenericResponseError(res) {
     if (parseInt(res.status) >= 400) {
         return 'Connection failed with code ' + res.status;
     }
-    if (res.readyState === 0 || res.statusText.toLowerCase() == 'error') {
+    if (res.readyState === 0 || (typeof res.statusText == 'string' && res.statusText.toLowerCase() == 'error')) {
         return 'Connection failed with unspecified error';
     }
     return String(res);
