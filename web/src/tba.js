@@ -13,7 +13,7 @@ interface for ranking reducers:
 }
 */
 
-function RankingReducerAverage(breakdownFields, defaultValue=0) {
+function RankingReducerAverage(breakdownFields, defaultValue=-1) {
     if (!Array.isArray(breakdownFields)) {
         breakdownFields = [breakdownFields];
     }
@@ -21,12 +21,12 @@ function RankingReducerAverage(breakdownFields, defaultValue=0) {
         const matchValues = [];
         return {
             add(match, alliance) {
-                let matchValue = defaultValue;
+                let matchValue = 0;
                 for (let field of breakdownFields) {
                     let mult = 1;
                     if (field.startsWith('-')) {
                         mult = -1;
-                        field = field.replace(/^\-/, '');
+                        field = field.replace(/^-/, '');
                     }
                     const breakdownValue = match.score_breakdown[alliance][field];
                     if (breakdownValue !== undefined) {
