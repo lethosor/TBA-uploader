@@ -244,7 +244,7 @@
                     </b-col>
                     <b-col class="my-auto">
                         <dropzone
-                            ref="scheduleUpload"
+                            ref="teamListUploadDropzone"
                             title="Upload a team list"
                             accept="text/csv"
                             @upload="onTeamListUpload"
