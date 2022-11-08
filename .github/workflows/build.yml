@@ -75,7 +75,7 @@ jobs:
           path: ${{steps.release.outputs.output_prefix}}-linux64.zip
       - name: Publish release
         uses: softprops/action-gh-release@v1
-        if: ${{ matrix.upload }} && startsWith(github.ref, 'refs/tags/v')
+        if: ${{ matrix.upload && startsWith(github.ref, 'refs/tags/v') }}
         with:
           files: |
             ${{steps.release.outputs.output_prefix}}-*.zip
