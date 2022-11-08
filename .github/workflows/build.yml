@@ -17,6 +17,7 @@ jobs:
       matrix:
         include:
           - go-version: '1.18'
+            allow-upload: true
             allow-release: true
         go-version:
           - '1.19'
@@ -51,10 +52,10 @@ jobs:
           version="$(grep Version: release.log | sed 's/Version:\s*//')"
           suffix=
           if [[ "${{ matrix.allow-release }}" != "true" ]]; then
-            suffix="-${{ matrix.go-version }}"
+            suffix="-go${{ matrix.go-version }}"
           fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "output_prefix=bin/release/$version/TBA-uploader-$version$suffix" >> "$GITHUB_OUTPUT"
+          echo "version=$version$suffix" >> "$GITHUB_OUTPUT"
+          echo "output_prefix=bin/release/$version/TBA-uploader-$version" >> "$GITHUB_OUTPUT"
       - name: Upload artifact (win32)
         if: ${{ matrix.allow-upload }}
         uses: actions/upload-artifact@v3
