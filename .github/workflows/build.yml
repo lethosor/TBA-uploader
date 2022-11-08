@@ -53,8 +53,8 @@ jobs:
           if [[ "${{ matrix.allow-release }}" != "true" ]]; then
             suffix="-${{ matrix.go-version }}"
           fi
-          echo "::set-output name=version::$version"
-          echo "::set-output name=output_prefix::bin/release/$version/TBA-uploader-$version$suffix"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "output_prefix=bin/release/$version/TBA-uploader-$version$suffix" >> "$GITHUB_OUTPUT"
       - name: Upload artifact (win32)
         if: ${{ matrix.allow-upload }}
         uses: actions/upload-artifact@v3
