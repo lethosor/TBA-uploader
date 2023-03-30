@@ -20,7 +20,7 @@ echo "Build folder: $rel_dir"
 
 echo "Generating assets..."
 node consts-gen.js consts.json --output-go consts.go --output-js web/src/consts.js
-yarn run --silent build --display errors-only
+yarn run --silent build --stats errors-only
 cp README.md web/dist/
 
 build_release() {
