@@ -21,7 +21,7 @@ module.exports = {
             {
                 test: /\.js$/,
                 loader: 'babel-loader',
-                query: {
+                options: {
                     presets: ['@babel/env'],
                     overrides: [{
                         test: './node_modules/bootstrap-vue/esm/icons/icons.js',
