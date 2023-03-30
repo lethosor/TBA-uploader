@@ -127,6 +127,12 @@ const tba = Object.freeze({
             "Avg Hangar",
             "Avg Taxi + Auto Cargo",
         ],
+        2023: [
+            "Ranking Score",
+            "Avg Match",
+            "Avg Charge Station",
+            "Avg Auto",
+        ],
     }),
 
     generateRankingsFromMatchResults: function(matchResults, year) {
