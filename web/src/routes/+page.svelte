@@ -2,6 +2,7 @@
 	import Counter from './Counter.svelte';
 	import welcome from '$lib/images/svelte-welcome.webp';
 	import welcome_fallback from '$lib/images/svelte-welcome.png';
+	import { getApiBaseUrl } from '$lib/api';
 </script>
 
 <svelte:head>
@@ -22,7 +23,7 @@
 	</h1>
 
 	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
+		API URL: <code>{getApiBaseUrl()}</code>
 	</h2>
 
 	<Counter />
