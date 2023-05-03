@@ -1,0 +1,52 @@
+body {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.hidden {
+    display: none;
+}
+
+.form-inline, .tab-content {
+    margin-top: 0.5rem;
+}
+
+.form-inline .form-control, .form-inline .btn {
+    margin: 0 0.5rem;
+}
+
+.warning {
+    color: #f60;
+}
+
+.raw-message {
+    white-space: pre-wrap;
+}
+
+select.custom-select {
+    margin-right: 0.5rem;
+}
+
+td.red {
+    background-color: #fdd;
+}
+
+td.red.score {
+    background-color: #fbb;
+}
+
+td.blue {
+    background-color: #ddf;
+}
+
+td.blue.score {
+    background-color: #bbf;
+}
+
+td.surrogate span {
+    border-bottom: 1px dotted;
+}
+
+td.dq {
+    text-decoration: line-through;
+}
