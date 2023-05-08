@@ -1,0 +1,5 @@
+// for gopls
+
+go 1.18
+
+use ./server
