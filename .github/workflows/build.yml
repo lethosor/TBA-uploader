@@ -1,0 +1,32 @@
+name: Build
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    name: Build (Go ${{ matrix.go-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version:
+          - '1.18'
+          - '1.20'
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Build server
+        working-directory: server
+        run: go build
+      - name: Test server
+        working-directory: server
+        run: go test
+      - name: Vet server
+        working-directory: server
+        run: go vet
