@@ -1335,7 +1335,7 @@ export default {
             return Object.keys(BRACKET_TYPE).map((key) => ({
                 value: BRACKET_TYPE[key],
                 text: BRACKET_NAME[key],
-            }));
+            })).sort((a, b) => a.text.localeCompare(b.text));
         },
         eventSelected: function() {
             return !!this.selectedEvent && !this.inAddEvent;
