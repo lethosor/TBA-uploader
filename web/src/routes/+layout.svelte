@@ -1,6 +1,13 @@
 <script>
+	import '../app.postcss';
 	import Header from './Header.svelte';
 	import './styles.css';
+
+
+	// from https://www.skeleton.dev/docs/get-started (manual)
+	import '../theme.css';
+	import '@skeletonlabs/skeleton/styles/skeleton.css';
+	import '../app.postcss';
 </script>
 
 <div class="app">
