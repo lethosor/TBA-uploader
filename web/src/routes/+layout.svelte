@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AppShell, AppBar, Drawer, drawerStore } from '@skeletonlabs/skeleton';
+	import { AppShell, AppBar, Drawer, drawerStore, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { page } from '$app/stores';
 	import { pageNameFromPath } from '$lib/nav';
@@ -43,6 +43,7 @@
 				</div>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
+				<LightSwitch />
 				<a class="btn btn-sm" href="/settings">Settings</a>
 				<a class="btn btn-sm" href="/help">Help</a>
 			</svelte:fragment>
