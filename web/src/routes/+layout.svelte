@@ -40,7 +40,7 @@
 							</svg>
 						</span>
 					</button>
-					<strong class="text-xl">TBA Uploader</strong>
+					<strong class="text-xl"><a href="/">TBA Uploader</a></strong>
 				</div>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">

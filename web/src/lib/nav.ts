@@ -1,12 +1,17 @@
 type NavLink = {
     readonly path: string,
     readonly name: string,
+    readonly hideFromSidebar?: boolean,
 };
 
 export const ALL_PAGES : NavLink[] = [
     {path: '/setup', name: 'Event Setup'},
     {path: '/awards', name: 'Awards'},
+    {path: '/settings', name: 'Settings', hideFromSidebar: true},
+    {path: '/help', name: 'Help', hideFromSidebar: true},
 ];
+
+export const SIDEBAR_PAGES = ALL_PAGES.filter(p => !p.hideFromSidebar);
 
 export const PAGES_BY_PATH : {string: NavLink} = Object.fromEntries(ALL_PAGES.map(p => [p.path, p]));
 
