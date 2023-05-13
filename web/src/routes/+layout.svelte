@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { pageNameFromPath } from '$lib/nav';
 
 	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
 	import { Drawer, drawerStore } from '@skeletonlabs/skeleton';
@@ -54,6 +55,8 @@
 	</svelte:fragment>
 	<!-- Page Route Content -->
 	<div class="container p-10 space-y-4">
+		<h2>{pageNameFromPath($page.url.pathname)}</h2>
+		<hr />
 		<slot />
 	</div>
 </AppShell>
