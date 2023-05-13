@@ -2,3 +2,6 @@ fms_data*/
 TBA-uploader
 TBA-uploader.exe
 tba-uploader.log
+
+# for air
+tmp/
