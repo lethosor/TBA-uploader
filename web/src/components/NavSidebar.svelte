@@ -2,7 +2,7 @@
     import { drawerStore } from '@skeletonlabs/skeleton';
 
     import { page } from '$app/stores';
-    import { SIDEBAR_PAGES } from '$lib/nav';
+    import { HEADER_PAGES, SIDEBAR_PAGES } from '$lib/nav';
 
     function drawerClose(): void {
         drawerStore.close();
@@ -20,6 +20,16 @@
                     {page.name}
                 </a>
                 {/if}
+            </li>
+        {/each}
+    </ul>
+    <ul class="lg:hidden">
+        <br/>
+        {#each HEADER_PAGES as page (page.path)}
+            <li>
+                <a href={page.path} class={page.path == activePath ? 'bg-primary-active-token' : null} on:click={drawerClose}>
+                    {page.name}
+                </a>
             </li>
         {/each}
     </ul>

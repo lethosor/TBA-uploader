@@ -2,7 +2,7 @@
 	import { AppShell, AppBar, Drawer, drawerStore, LightSwitch } from '@skeletonlabs/skeleton';
 
 	import { page } from '$app/stores';
-	import { pageNameFromPath } from '$lib/nav';
+	import { pageNameFromPath, HEADER_PAGES } from '$lib/nav';
 
 	import NavSidebar from '$components/NavSidebar.svelte';
 
@@ -44,8 +44,9 @@
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
 				<LightSwitch />
-				<a class="btn btn-sm" href="/settings">Settings</a>
-				<a class="btn btn-sm" href="/help">Help</a>
+				{#each HEADER_PAGES as page (page.path)}
+				<a class="btn btn-sm" href={page.path}>{page.name}</a>
+				{/each}
 			</svelte:fragment>
 		</AppBar>
 	</svelte:fragment>
