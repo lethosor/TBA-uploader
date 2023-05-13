@@ -2,11 +2,12 @@ type NavLink = {
     readonly path: string,
     readonly name: string,
     readonly hideFromSidebar?: boolean,
+    readonly requiresEvent?: boolean,
 };
 
 export const ALL_PAGES : NavLink[] = [
     {path: '/setup', name: 'Event Setup'},
-    {path: '/awards', name: 'Awards'},
+    {path: '/awards', name: 'Awards', requiresEvent: true},
     {path: '/settings', name: 'Settings', hideFromSidebar: true},
     {path: '/help', name: 'Help', hideFromSidebar: true},
 ];

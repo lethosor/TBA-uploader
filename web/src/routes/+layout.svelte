@@ -1,9 +1,8 @@
 <script lang="ts">
+	import { AppShell, AppBar, Drawer, drawerStore } from '@skeletonlabs/skeleton';
+
 	import { page } from '$app/stores';
 	import { pageNameFromPath } from '$lib/nav';
-
-	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
-	import { Drawer, drawerStore } from '@skeletonlabs/skeleton';
 
 	import NavSidebar from '$components/NavSidebar.svelte';
 
