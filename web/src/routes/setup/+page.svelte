@@ -1,6 +1,7 @@
 <script lang="ts">
     import { TabGroup, Tab } from '@skeletonlabs/skeleton';
 
+    import Button from '$components/Button.svelte';
     import Link from '$components/Link.svelte';
 
     let setupTabId = 0;
@@ -45,8 +46,8 @@ input {
                 <input class="input" title="Input (text)" type="text" placeholder="API Key" bind:value={readApiKey} />
             </label>
             <p>
-                <button type="button" class="btn variant-filled-success" disabled={readApiKey == ''} on:click={saveReadApiKey}>Save</button>
-                <button type="button" class="btn variant-filled float-right" on:click={() => readApiKey = ''}>Clear</button>
+                <Button color="success" disabled={readApiKey == ''} on:click={saveReadApiKey}>Save</Button>
+                <Button class="float-right" on:click={() => readApiKey = ''}>Clear</Button>
             </p>
         {:else if setupTabId === 1}
             <label class="label">
@@ -64,8 +65,8 @@ input {
                 <input class="input" title="Input (text)" type="text" placeholder="Auth secret" bind:value={writeAuthSecret} />
             </label>
             <p>
-                <button type="button" class="btn variant-filled-success" disabled={!eventKeyValid}>Save</button>
-                <button type="button" class="btn variant-filled float-right">Reset</button>
+                <Button color="success" disabled={!eventKeyValid}>Save</Button>
+                <Button class="float-right">Reset</Button>
             </p>
         {/if}
         </div>
