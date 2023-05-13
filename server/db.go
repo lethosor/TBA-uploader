@@ -6,6 +6,7 @@ import (
     "io/ioutil"
     "os"
     "path"
+    "path/filepath"
     "regexp"
 )
 
@@ -31,21 +32,29 @@ func dbValidateKey(key string) error {
     return nil
 }
 
-func dbGetEntryPath(key string) string {
+func dbNormalizeKey(key string) (string, error) {
+    err := dbValidateKey(key)
+    if err != nil {
+        return "", err
+    }
+    return path.Clean(key), nil
+}
+
+// private - key should be normalized
+func _dbGetEntryPath(key string) string {
     if db_base_path == "" {
         panic("DB base path not set")
     }
-
-    return path.Join(db_base_path, path.Clean(key)) + ".json"
+    return path.Join(db_base_path, path.Clean(key))
 }
 
 func dbReadEntry(key string) ([]byte, error) {
-    err := dbValidateKey(key)
+    key, err := dbNormalizeKey(key)
     if err != nil {
         return nil, err
     }
 
-    entry_path := dbGetEntryPath(key)
+    entry_path := _dbGetEntryPath(key)
     if !isFile(entry_path) {
         return nil, fmt.Errorf("key not found: %s", key)
     }
@@ -55,24 +64,61 @@ func dbReadEntry(key string) ([]byte, error) {
         return nil, fmt.Errorf("read failed: %s: %w", key, err)
     }
 
-    if !json.Valid(value) {
+    if filepath.Ext(key) == ".json" && !json.Valid(value) {
         return nil, fmt.Errorf("invalid JSON at key: %s", key)
     }
 
     return value, nil
 }
 
+func dbListPrefix(prefix string) ([]string, error) {
+    prefix, err := dbNormalizeKey(prefix)
+    if err != nil {
+        return nil, err
+    }
+
+    results := []string{}
+
+    files, err := os.ReadDir(_dbGetEntryPath(prefix))
+    if err != nil {
+        return results, nil
+    }
+
+    for _, file := range files {
+        if file.Type().IsRegular() {
+            results = append(results, path.Join(prefix, file.Name()))
+        }
+    }
+
+    return results, nil
+}
+
+func dbReadAllPrefix(prefix string) (results map[string][]byte, errors map[string]error, err error) {
+    keys, err := dbListPrefix(prefix)
+    if err != nil {
+        return
+    }
+
+    results = make(map[string][]byte)
+    errors = make(map[string]error)
+
+    for _, key := range keys {
+        results[key], errors[key] = dbReadEntry(key)
+    }
+    return
+}
+
 func dbWriteEntry(key string, value []byte) error {
-    err := dbValidateKey(key)
+    key, err := dbNormalizeKey(key)
     if err != nil {
         return err
     }
 
-    if !json.Valid(value) {
+    if filepath.Ext(key) == ".json" && !json.Valid(value) {
         return fmt.Errorf("invalid JSON for key: %s", key)
     }
 
-    entry_path := dbGetEntryPath(key)
+    entry_path := _dbGetEntryPath(key)
 
     err = os.MkdirAll(path.Dir(entry_path), DEFAULT_DIR_PERMISSION)
     if err != nil {
