@@ -21,6 +21,11 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: ${{ matrix.go-version }}
+      - name: (STUB) Generate assets
+        working-directory: server
+        run: |
+          mkdir -p tmp/assets/web
+          touch tmp/assets/web/not_built
       - name: Build server
         working-directory: server
         run: go build
