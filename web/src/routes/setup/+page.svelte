@@ -1,6 +1,9 @@
 <script lang="ts">
     import { TabGroup, Tab } from '@skeletonlabs/skeleton';
 
+    import { getFormContext } from '$lib/FormContext';
+    import FormContextProvider from '$lib/FormContextProvider.svelte';
+
     import Button from '$components/Button.svelte';
     import Link from '$components/Link.svelte';
 
@@ -16,11 +19,13 @@
     $: eventDescription = eventKey ? `event: ${eventKey}` : '';
     $: eventKeyValid = eventKey.match(/^\d{4}[a-z]{3,7}$/) != null;
 
+    let formContext = getFormContext();
     function saveReadApiKey() {
-        setTimeout(() => {
+        formContext.withSubmit(async () => {
+            await new Promise((r) => setTimeout(r, 500));
             readApiKeyValid = true;
             setupTabId = 1;
-        }, 500);
+        });
     }
 </script>
 
@@ -39,7 +44,7 @@ input {
     <svelte:fragment slot="panel">
         <div class="space-y-3">
         {#if setupTabId === 0}
-        <!-- <div class="card p-4 w-full text-token space-y-4"> -->
+        <FormContextProvider bind:context={formContext}>
             <label class="label">
                 <p>Enter a TBA API key.</p>
                 <p>You can create a key at <Link href="https://www.thebluealliance.com/account"/></p>
@@ -49,7 +54,9 @@ input {
                 <Button color="success" disabled={readApiKey == ''} on:click={saveReadApiKey}>Save</Button>
                 <Button class="float-right" on:click={() => readApiKey = ''}>Clear</Button>
             </p>
+        </FormContextProvider>
         {:else if setupTabId === 1}
+        <FormContextProvider bind:context={formContext}>
             <label class="label">
                 <p>Enter the event key (e.g. <code>2023cmptx</code>)</p>
                 <input class="input" title="Input (text)" type="text" placeholder="Event key" bind:value={eventKey} />
@@ -65,9 +72,10 @@ input {
                 <input class="input" title="Input (text)" type="text" placeholder="Auth secret" bind:value={writeAuthSecret} />
             </label>
             <p>
-                <Button color="success" disabled={!eventKeyValid}>Save</Button>
+                <Button color="success" disabled={!eventKeyValid} on:click={saveReadApiKey}>Save</Button>
                 <Button class="float-right">Reset</Button>
             </p>
+        </FormContextProvider>
         {/if}
         </div>
     </svelte:fragment>
