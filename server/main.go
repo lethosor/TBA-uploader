@@ -4,7 +4,6 @@ import (
     "flag"
     "fmt"
     "io"
-    "io/fs"
     "log"
     "net/http"
     "os"
@@ -26,15 +25,6 @@ func logInit(log_path string) {
     logger.Printf("*** TBA-uploader start ***\n")
     logger.Printf("Version: %s\n", Version)
     logger.Printf("Logging to %s\n", log_path)
-}
-
-func init() {
-    var err error
-    webPath := ASSETS_BASE_PATH + "web"
-    fsWeb, err = fs.Sub(fsWebEmbedded, webPath)
-    if err != nil {
-        panic(fmt.Sprintf("missing assets at path: %s", webPath))
-    }
 }
 
 func main() {
