@@ -1,8 +1,8 @@
 <script lang="ts">
-    export let color;
+    export let color = "";
     export let variant = "filled";
     export let disabled = false;
-    let classProp;
+    let classProp = "";
     export {classProp as class};
 
     $: classes = ["btn", `variant-${variant}${color ? '-' + color : ''}`, classProp];
