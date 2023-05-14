@@ -4,6 +4,7 @@ import (
     "flag"
     "fmt"
     "io"
+    "io/fs"
     "log"
     "net/http"
     "os"
@@ -27,6 +28,15 @@ func logInit(log_path string) {
     logger.Printf("Logging to %s\n", log_path)
 }
 
+func init() {
+    var err error
+    webPath := ASSETS_BASE_PATH + "web"
+    fsWeb, err = fs.Sub(fsWebEmbedded, webPath)
+    if err != nil {
+        panic(fmt.Sprintf("missing assets at path: %s", webPath))
+    }
+}
+
 func main() {
     self_exe_path, err := os.Executable()
     if err != nil {
@@ -46,7 +56,8 @@ func main() {
 
     mux := http.NewServeMux()
     apiRegisterHandlers(mux, "/api")
+    mux.Handle("/", http.FileServer(http.FS(fsWeb)))
 
-    log.Printf("Listening on port %d", *port)
-    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), mux))
+    logger.Printf("Listening on port %d", *port)
+    logger.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), mux))
 }
