@@ -59,17 +59,17 @@ input {
         <FormContextProvider bind:context={formContext}>
             <label class="label">
                 <p>Enter the event key (e.g. <code>2023cmptx</code>)</p>
-                <input class="input" title="Input (text)" type="text" placeholder="Event key" bind:value={eventKey} />
+                <input class="input" title="Event key" type="text" placeholder="Event key" bind:value={eventKey} />
             </label>
             <p class={eventKeyValid ? '' : 'text-error-500'}>{eventDescription}&nbsp;</p>
             <p>Enter the event write keys. You can find these at <Link href="https://www.thebluealliance.com/account"/></p>
             <label class="label">
                 <span>Auth ID:</span>
-                <input class="input" title="Input (text)" type="text" placeholder="Auth ID" bind:value={writeAuthId} />
+                <input class="input" title="Auth ID" type="text" placeholder="Auth ID" bind:value={writeAuthId} />
             </label>
             <label class="label">
                 <span>Auth secret:</span>
-                <input class="input" title="Input (text)" type="text" placeholder="Auth secret" bind:value={writeAuthSecret} />
+                <input class="input" title="Auth secret" type="text" placeholder="Auth secret" bind:value={writeAuthSecret} />
             </label>
             <p>
                 <Button color="success" disabled={!eventKeyValid} on:click={saveReadApiKey}>Save</Button>
