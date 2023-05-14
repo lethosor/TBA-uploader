@@ -6,10 +6,10 @@ type NavLink = {
 };
 
 export const ALL_PAGES : NavLink[] = [
-    {path: '/setup', name: 'Event Setup'},
-    {path: '/awards', name: 'Awards', requiresEvent: true},
-    {path: '/settings', name: 'Settings', hideFromSidebar: true},
-    {path: '/help', name: 'Help', hideFromSidebar: true},
+    {path: '/setup/', name: 'Event Setup'},
+    {path: '/awards/', name: 'Awards', requiresEvent: true},
+    {path: '/settings/', name: 'Settings', hideFromSidebar: true},
+    {path: '/help/', name: 'Help', hideFromSidebar: true},
 ];
 
 export const SIDEBAR_PAGES = ALL_PAGES.filter(p => !p.hideFromSidebar);
