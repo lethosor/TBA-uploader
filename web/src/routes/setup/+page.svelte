@@ -1,6 +1,10 @@
 <script lang="ts">
+    import { getContext, setContext, onMount } from 'svelte';
     import { TabGroup, Tab } from '@skeletonlabs/skeleton';
 
+    import * as state from '$routes/state';
+
+    import { tbaRead } from '$lib/api';
     import { getFormContext } from '$lib/FormContext';
     import FormContextProvider from '$lib/FormContextProvider.svelte';
 
@@ -16,17 +20,38 @@
     let writeAuthId = '';
     let writeAuthSecret = '';
 
+    const selectedEventStore = getContext(state.SELECTED_EVENT_KEY);
+    $: eventKey = $selectedEventStore;
+
     $: eventDescription = eventKey ? `event: ${eventKey}` : '';
-    $: eventKeyValid = eventKey.match(/^\d{4}[a-z]{3,7}$/) != null;
+    $: eventKeyValid = eventKey && eventKey.match(/^\d{4}[a-z]{3,7}$/) != null;
 
     let formContext = getFormContext();
+
     function saveReadApiKey() {
         formContext.withSubmit(async () => {
-            await new Promise((r) => setTimeout(r, 500));
+            await tbaRead({key: readApiKey, route: 'status'});
+            localStorage.readKeyTmp = readApiKey;
             readApiKeyValid = true;
             setupTabId = 1;
         });
     }
+
+    function saveEventKeys() {
+        formContext.withSubmit(async () => {
+            await new Promise((r) => setTimeout(r, 500));
+            $selectedEventStore = eventKey;
+        });
+    }
+
+    onMount(() => {
+        // todo: move to proper storage
+        if (localStorage.readKeyTmp) {
+            readApiKey = localStorage.readKeyTmp;
+            readApiKeyValid = true;
+            setupTabId = 1;
+        }
+    });
 </script>
 
 <style>
@@ -72,7 +97,7 @@ input {
                 <input class="input" title="Auth secret" type="text" placeholder="Auth secret" bind:value={writeAuthSecret} />
             </label>
             <p>
-                <Button color="success" disabled={!eventKeyValid} on:click={saveReadApiKey}>Save</Button>
+                <Button color="success" disabled={!eventKeyValid} on:click={saveEventKeys}>Save</Button>
                 <Button class="float-right">Reset</Button>
             </p>
         </FormContextProvider>

@@ -1,10 +1,23 @@
 <script lang="ts">
-	import { AppShell, AppBar, Drawer, drawerStore, LightSwitch } from '@skeletonlabs/skeleton';
+	import { getContext, setContext } from 'svelte';
+	import { get } from 'svelte/store';
+	import {
+		AppBar,
+		AppShell,
+		Drawer,
+		drawerStore,
+		LightSwitch,
+		localStorageStore,
+	} from '@skeletonlabs/skeleton';
 
 	import { page } from '$app/stores';
+	import { apiSettingsStore, makeTbaApiClient } from '$lib/api';
 	import { pageNameFromPath, HEADER_PAGES } from '$lib/nav';
 
+	import Link from '$components/Link.svelte';
 	import NavSidebar from '$components/NavSidebar.svelte';
+
+	import * as state from '$routes/state';
 
 	// from https://www.skeleton.dev/docs/get-started (manual)
 	import '../theme.css';
@@ -14,6 +27,15 @@
 	function drawerOpen(): void {
 		drawerStore.open({});
 	}
+
+	const selectedEventStore = localStorageStore('selectedEvent');
+	setContext(state.SELECTED_EVENT_KEY, selectedEventStore);
+	$: selectedEventKey = $selectedEventStore;
+
+	$: setContext(state.TBA_CLIENT_KEY, makeTbaApiClient({
+		event: selectedEventKey,
+		key: '',
+	}));
 </script>
 
 <!-- Drawer -->
@@ -39,7 +61,12 @@
 							</svg>
 						</span>
 					</button>
-					<strong class="text-xl"><a href="/">TBA Uploader</a></strong>
+					<strong class="text-xl">
+						<a href="/">TBA Uploader</a>
+					</strong>
+					{#if selectedEventKey}
+					&nbsp;(<Link href={$apiSettingsStore.tbaUrl + '/event/' + selectedEventKey}>{selectedEventKey}</Link>)
+					{/if}
 				</div>
 			</svelte:fragment>
 			<svelte:fragment slot="trail">
