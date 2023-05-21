@@ -9,6 +9,7 @@
     import { getFormContext } from '$lib/FormContext';
     import FormContextProvider from '$lib/FormContextProvider.svelte';
 
+    import Alert from '$components/Alert.svelte';
     import Button from '$components/Button.svelte';
     import Link from '$components/Link.svelte';
 
@@ -21,6 +22,8 @@
     let writeAuthId = '';
     let writeAuthSecret = '';
 
+    let setupError = '';
+
     const selectedEventStore = getContext(state.SELECTED_EVENT_KEY) as Writable<string>;
     $: eventKey = $selectedEventStore;
 
@@ -31,15 +34,24 @@
 
     function saveReadApiKey() {
         formContext.withSubmit(async () => {
-            await tbaRead({key: readApiKey, route: 'status'});
-            localStorage.readKeyTmp = readApiKey;
-            readApiKeyValid = true;
-            setupTabId = 1;
+            try {
+                setupError = '';
+                await tbaRead({key: readApiKey, route: 'team/frc1'});
+                localStorage.readKeyTmp = readApiKey;
+                readApiKeyValid = true;
+                setupTabId = 1;
+            }
+            catch (e) {
+                setupError = String(e);
+                readApiKeyValid = false;
+                setupTabId = 0;
+            }
         });
     }
 
     function saveEventKeys() {
         formContext.withSubmit(async () => {
+            setupError = '';
             await new Promise((r) => setTimeout(r, 500));
             $selectedEventStore = eventKey;
         });
@@ -69,6 +81,7 @@ input {
     <!-- Tab Panels --->
     <svelte:fragment slot="panel">
         <div class="space-y-3">
+        <Alert bind:text={setupError} class="variant-filled-error"/>
         {#if setupTabId === 0}
         <FormContextProvider bind:context={formContext}>
             <label class="label">
