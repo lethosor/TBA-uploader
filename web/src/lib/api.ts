@@ -59,6 +59,7 @@ type TBAWriteParams = {
     event: string;
     authId: string;
     authSecret: string;
+    route: string;
     body: TBAWriteBody;
 };
 

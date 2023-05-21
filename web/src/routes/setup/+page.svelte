@@ -1,5 +1,6 @@
 <script lang="ts">
     import { getContext, setContext, onMount } from 'svelte';
+    import type { Writable } from 'svelte/store';
     import { TabGroup, Tab } from '@skeletonlabs/skeleton';
 
     import * as state from '$routes/state';
@@ -20,7 +21,7 @@
     let writeAuthId = '';
     let writeAuthSecret = '';
 
-    const selectedEventStore = getContext(state.SELECTED_EVENT_KEY);
+    const selectedEventStore = getContext(state.SELECTED_EVENT_KEY) as Writable<string>;
     $: eventKey = $selectedEventStore;
 
     $: eventDescription = eventKey ? `event: ${eventKey}` : '';

@@ -28,13 +28,15 @@
 		drawerStore.open({});
 	}
 
-	const selectedEventStore = localStorageStore('selectedEvent');
+	const selectedEventStore = localStorageStore('selectedEvent', '');
 	setContext(state.SELECTED_EVENT_KEY, selectedEventStore);
 	$: selectedEventKey = $selectedEventStore;
 
 	$: setContext(state.TBA_CLIENT_KEY, makeTbaApiClient({
 		event: selectedEventKey,
-		key: '',
+		readKey: '',
+		authId: '',
+		authSecret: '',
 	}));
 </script>
 

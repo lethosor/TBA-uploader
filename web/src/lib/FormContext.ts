@@ -3,18 +3,24 @@
 
 import { getContext } from 'svelte';
 import { writable } from 'svelte/store';
+import type { Writable } from 'svelte/store';
 
 export const FORM_CONTEXT_KEY = Symbol('FormContext');
 
 type FormContext = {
     inSubmit: boolean;
+    inSubmitDepth: number;
 };
 
-export function makeFormContext(): FormContext {
+type FormContextStore = Writable<FormContext> & {
+    withSubmit: (callback: () => Promise<void>) => void;
+};
+
+export function makeFormContext(): FormContextStore {
     const store = writable({
         inSubmit: false,
         inSubmitDepth: 0,
-    });
+    }) as FormContextStore;
 
     store.withSubmit = async (callback) => {
         try {
@@ -36,6 +42,6 @@ export function makeFormContext(): FormContext {
     return store;
 }
 
-export function getFormContext() {
+export function getFormContext(): FormContextStore {
     return getContext(FORM_CONTEXT_KEY);
 }

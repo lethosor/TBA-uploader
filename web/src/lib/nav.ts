@@ -15,7 +15,7 @@ export const ALL_PAGES : NavLink[] = [
 export const SIDEBAR_PAGES = ALL_PAGES.filter(p => !p.hideFromSidebar);
 export const HEADER_PAGES = ALL_PAGES.filter(p => p.hideFromSidebar);
 
-export const PAGES_BY_PATH : {string: NavLink} = Object.fromEntries(ALL_PAGES.map(p => [p.path, p]));
+export const PAGES_BY_PATH : {[key: string]: NavLink} = Object.fromEntries(ALL_PAGES.map(p => [p.path, p]));
 
 export function pageNameFromPath(path: string): string {
     return PAGES_BY_PATH[path] ? PAGES_BY_PATH[path].name : '';
