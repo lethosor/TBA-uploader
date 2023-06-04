@@ -3,6 +3,7 @@ package main
 import (
     "encoding/json"
     "fmt"
+    "io/fs"
     "io/ioutil"
     "os"
     "path"
@@ -71,7 +72,7 @@ func dbReadEntry(key string) ([]byte, error) {
     return value, nil
 }
 
-func dbListPrefix(prefix string) ([]string, error) {
+func _dbListPrefixIfMatching(prefix string, match func(fs.DirEntry) bool) ([]string, error) {
     prefix, err := dbNormalizeKey(prefix)
     if err != nil {
         return nil, err
@@ -85,12 +86,24 @@ func dbListPrefix(prefix string) ([]string, error) {
     }
 
     for _, file := range files {
-        if file.Type().IsRegular() {
+        if match(file) {
             results = append(results, path.Join(prefix, file.Name()))
         }
     }
 
     return results, nil
+}
+
+func dbListPrefix(prefix string) ([]string, error) {
+    return _dbListPrefixIfMatching(prefix, func(file fs.DirEntry) bool {
+        return file.Type().IsRegular()
+    })
+}
+
+func dbListSubprefixes(prefix string) ([]string, error) {
+    return _dbListPrefixIfMatching(prefix, func(file fs.DirEntry) bool {
+        return file.Type().IsDir()
+    })
 }
 
 func dbReadAllPrefix(prefix string) (results map[string][]byte, errors map[string]error, err error) {

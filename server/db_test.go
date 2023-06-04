@@ -92,14 +92,17 @@ func TestDbReadPrefix(t *testing.T) {
 	assert.NoError(t, dbWriteEntry("a/2.json", []byte("[2]")))
 	assert.NoError(t, dbWriteEntry("b/3.json", []byte("[3]")))
 
-	checkList := func(prefix string, expected_keys []string) {
-		keys, err := dbListPrefix(prefix)
+	checkList := func(list_fn func(string) ([]string, error), prefix string, expected_keys []string) {
+		keys, err := list_fn(prefix)
 		assert.NoError(t, err, "prefix %s", prefix)
 		assert.Equal(t, expected_keys, keys, "prefix %s", prefix)
 	}
-	checkList("a", []string{"a/1.txt", "a/2.json"})
-	checkList("/a", []string{"/a/1.txt", "/a/2.json"})
-	checkList("//a", []string{"/a/1.txt", "/a/2.json"})
+	checkList(dbListPrefix, "a", []string{"a/1.txt", "a/2.json"})
+	checkList(dbListPrefix, "/a", []string{"/a/1.txt", "/a/2.json"})
+	checkList(dbListPrefix, "//a", []string{"/a/1.txt", "/a/2.json"})
+	checkList(dbListPrefix, "b", []string{"b/3.json"})
+	checkList(dbListSubprefixes, "a", []string{})
+	checkList(dbListSubprefixes, "a/1.txt", []string{})
 
 	checkReadAll := func(prefix string, expected map[string]interface{}) {
 		results, errors, err := dbReadAllPrefix(prefix)
