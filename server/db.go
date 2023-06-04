@@ -72,13 +72,15 @@ func dbReadEntry(key string) ([]byte, error) {
     return value, nil
 }
 
-func _dbListPrefixIfMatching(prefix string, match func(fs.DirEntry) bool) ([]string, error) {
-    prefix, err := dbNormalizeKey(prefix)
-    if err != nil {
-        return nil, err
+func _dbListPrefixIfMatching(prefix string, match func(fs.DirEntry) bool) (results []string, err error) {
+    if prefix != "" {
+        prefix, err = dbNormalizeKey(prefix)
+        if err != nil {
+            return nil, err
+        }
     }
 
-    results := []string{}
+    results = []string{}
 
     files, err := os.ReadDir(_dbGetEntryPath(prefix))
     if err != nil {
