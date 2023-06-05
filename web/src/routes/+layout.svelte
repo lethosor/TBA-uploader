@@ -81,7 +81,7 @@
 	</svelte:fragment>
 	<!-- Left Sidebar Slot -->
 	<svelte:fragment slot="sidebarLeft">
-		<NavSidebar />
+		<NavSidebar isEventSelected={Boolean(selectedEventKey)} />
 	</svelte:fragment>
 	<!-- Page Route Content -->
 	<div class="container p-10 space-y-4">

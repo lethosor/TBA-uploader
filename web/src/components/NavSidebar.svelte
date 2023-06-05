@@ -4,6 +4,8 @@
     import { page } from '$app/stores';
     import { HEADER_PAGES, SIDEBAR_PAGES } from '$lib/nav';
 
+    export let isEventSelected = false;
+
     function drawerClose(): void {
         drawerStore.close();
     }
@@ -15,7 +17,7 @@
     <ul>
         {#each SIDEBAR_PAGES as page (page.path)}
             <li>
-                {#if !page.requiresEvent}
+                {#if !page.requiresEvent || isEventSelected}
                 <a href={page.path} class={page.path == activePath ? 'bg-primary-active-token' : null} on:click={drawerClose}>
                     {page.name}
                 </a>
