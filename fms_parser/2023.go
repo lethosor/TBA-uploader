@@ -51,6 +51,16 @@ func addManualFields2023(breakdown map[string]interface{}, info fmsScoreInfo2023
 	}
 }
 
+const (
+	K2023_COMMUNITY_BOTTOM = "Bottom"
+	K2023_COMMUNITY_MIDDLE = "Middle"
+	K2023_COMMUNITY_TOP    = "Top"
+
+	K2023_COMMUNITY_NONE = "None"
+	K2023_COMMUNITY_CUBE = "Cube"
+	K2023_COMMUNITY_CONE = "Cone"
+)
+
 // map FMS names (lowercase) to API names of basic integer fields
 var simpleIntFields2023 = map[string]string{
 	"coop game piece count": "coopGamePieceCount",
@@ -79,6 +89,71 @@ var simpleIconFields2023 = map[string]string{
 }
 
 var DEFAULT_BREAKDOWN_VALUES_2023 = map[string]any{}
+
+const COMMUNITY_ROW_LENGTH = 9
+
+type Community2023 struct {
+	pieces             map[string][]string
+	link_start_indexes map[string][]int
+}
+
+func makeCommunity2023() *Community2023 {
+	return &Community2023{
+		pieces:             make(map[string][]string),
+		link_start_indexes: make(map[string][]int),
+	}
+}
+
+func (self Community2023) isComplete() bool {
+	for _, k := range []string{K2023_COMMUNITY_BOTTOM, K2023_COMMUNITY_MIDDLE, K2023_COMMUNITY_TOP} {
+		row, ok := self.pieces[k]
+		if !ok {
+			return false
+		}
+		if len(row) != COMMUNITY_ROW_LENGTH {
+			return false
+		}
+	}
+	return true
+}
+
+func (self Community2023) parseCommunityRow(key string, cell *goquery.Selection) {
+	icons := cell.Find("span.icon")
+	if icons.Length() != COMMUNITY_ROW_LENGTH {
+		panic(fmt.Sprintf("unexpected community row icon count: %d", icons.Length()))
+	}
+
+	pieces := make([]string, COMMUNITY_ROW_LENGTH)
+
+	icons.Each(func(i int, icon *goquery.Selection) {
+		svg := icon.Find("svg")
+		piece := ""
+		if svg.HasClass("bi-dot") {
+			piece = K2023_COMMUNITY_NONE
+		} else if svg.HasClass("bi-box") {
+			piece = K2023_COMMUNITY_CUBE
+		} else if svg.HasClass("bi-cone") {
+			piece = K2023_COMMUNITY_CONE
+		}
+		if piece == "" {
+			panic(fmt.Sprintf("unknown community icon: %s", svg.AttrOr("class", "")))
+		}
+		pieces[i] = piece
+
+		has_game_piece := (piece == K2023_COMMUNITY_CUBE || piece == K2023_COMMUNITY_CONE)
+		_ = has_game_piece
+	})
+
+	self.pieces[key] = pieces
+}
+
+func (self Community2023) assignPiecesToBreakdown(breakdown map[string]interface{}, field string) {
+	community := make(map[string][]string)
+	for key, pieces := range self.pieces {
+		community[key[0:1]] = pieces
+	}
+	breakdown[field] = community
+}
 
 func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
@@ -164,6 +239,21 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 		return match_phase
 	}
 
+	var cur_community struct {
+		blue *Community2023
+		red  *Community2023
+	}
+	communityRowToKey := func(row_name string) string {
+		if row_name == "bottom" {
+			return K2023_COMMUNITY_BOTTOM
+		} else if row_name == "middle" {
+			return K2023_COMMUNITY_MIDDLE
+		} else if row_name == "top" {
+			return K2023_COMMUNITY_TOP
+		}
+		panic("invalid community row name: " + row_name)
+	}
+
 	dom.Find("tr").Each(func(i int, s *goquery.Selection) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -173,11 +263,25 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 		}()
 
 		columns := s.Children()
-		if columns.Length() == 3 {
-			row_name := strings.ToLower(strings.TrimSpace(columns.Eq(0).Text()))
-			if row_name == "" || row_name == "match score item" {
-				return // continue
+		if columns.Length() < 1 {
+			return // continue
+		}
+
+		row_name := strings.ToLower(strings.TrimSpace(columns.Eq(0).Text()))
+		if row_name == "" || row_name == "match score item" {
+			return // continue
+		}
+
+		if row_name == "community" {
+			if cur_community.red != nil {
+				panic("found community before end ")
 			}
+			cur_community.blue = makeCommunity2023()
+			cur_community.red = makeCommunity2023()
+			return // continue
+		}
+
+		if columns.Length() == 3 {
 			if row_name == "mobility" {
 				match_phase = "auto"
 			}
@@ -189,6 +293,20 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 
 			parseIntWrapper := func(s, alliance string) int {
 				return checkParseInt(s, alliance+" "+row_name)
+			}
+
+			if cur_community.red != nil {
+				cur_community.blue.parseCommunityRow(communityRowToKey(row_name), blue_cell)
+				cur_community.red.parseCommunityRow(communityRowToKey(row_name), red_cell)
+
+				if cur_community.red.isComplete() {
+					api_field := match_phase + "Community"
+					cur_community.blue.assignPiecesToBreakdown(breakdown["blue"], api_field)
+					cur_community.red.assignPiecesToBreakdown(breakdown["red"], api_field)
+					cur_community.blue = nil
+					cur_community.red = nil
+				}
+				return // continue
 			}
 
 			// Handle each data row
