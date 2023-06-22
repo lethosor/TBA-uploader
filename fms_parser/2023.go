@@ -17,6 +17,9 @@ type fmsScoreInfo2023 struct {
 	teleop int
 	fouls  int
 	total  int
+	// year-specific:
+	auto_charge_station   int
+	teleop_charge_station int
 }
 
 func makeFmsScoreInfo2023() fmsScoreInfo2023 {
@@ -24,10 +27,11 @@ func makeFmsScoreInfo2023() fmsScoreInfo2023 {
 }
 
 type extraMatchAllianceInfo2023 struct {
-	Dqs         []string `json:"dqs"`
-	Surrogates  []string `json:"surrogates"`
-	G405Penalty bool     `json:"g405_penalty"`
-	H111Penalty bool     `json:"h111_penalty"`
+	Dqs        []string `json:"dqs"`
+	Surrogates []string `json:"surrogates"`
+	// year-specific:
+	G405Penalty bool `json:"g405_penalty"`
+	H111Penalty bool `json:"h111_penalty"`
 }
 
 func makeExtraMatchAllianceInfo2023() extraMatchAllianceInfo2023 {
@@ -38,6 +42,8 @@ func makeExtraMatchAllianceInfo2023() extraMatchAllianceInfo2023 {
 }
 
 func addManualFields2023(breakdown map[string]interface{}, info fmsScoreInfo2023, extra extraMatchAllianceInfo2023, playoff bool) {
+	breakdown["totalChargeStationPoints"] = info.auto_charge_station + info.teleop_charge_station
+
 	if _, ok := breakdown["adjustPoints"]; !ok {
 		// adjust should be negative when total = 0
 		breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
@@ -271,10 +277,19 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 				})
 			} else if row_name == "charge station points" {
 				api_field := matchPhaseWithEndGame() + "ChargeStationPoints"
+				blue_points := checkParseInt(blue_text, "blue "+row_name)
+				red_points := checkParseInt(red_text, "red "+row_name)
 				assignBreakdownAllianceFields[int](breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
-					blue: checkParseInt(blue_text, "blue "+row_name),
-					red:  checkParseInt(red_text, "red "+row_name),
+					blue: blue_points,
+					red:  red_points,
 				})
+				if match_phase == "auto" {
+					scoreInfo.blue.auto_charge_station = blue_points
+					scoreInfo.red.auto_charge_station = red_points
+				} else {
+					scoreInfo.blue.teleop_charge_station = blue_points
+					scoreInfo.red.teleop_charge_station = red_points
+				}
 			} else if row_name == "charge station" {
 				api_field_prefix := matchPhaseWithEndGame() + "ChargeStationRobot"
 				assignBreakdownRobotFields(breakdown, api_field_prefix, identity_fn[string], breakdownRobotFields[string]{
