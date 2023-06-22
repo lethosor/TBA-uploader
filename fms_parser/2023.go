@@ -20,6 +20,7 @@ type fmsScoreInfo2023 struct {
 	// year-specific:
 	auto_charge_station   int
 	teleop_charge_station int
+	link                  int
 }
 
 func makeFmsScoreInfo2023() fmsScoreInfo2023 {
@@ -46,7 +47,7 @@ func addManualFields2023(breakdown map[string]interface{}, info fmsScoreInfo2023
 
 	if _, ok := breakdown["adjustPoints"]; !ok {
 		// adjust should be negative when total = 0
-		breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls
+		breakdown["adjustPoints"] = info.total - info.auto - info.teleop - info.fouls - info.link
 	}
 }
 
@@ -55,7 +56,6 @@ var simpleIntFields2023 = map[string]string{
 	"coop game piece count": "coopGamePieceCount",
 	"mobility points":       "autoMobilityPoints",
 	"endgame park points":   "endGameParkPoints",
-	"link points":           "linkPoints",
 	"adjustments":           "adjustPoints",
 }
 
@@ -265,15 +265,15 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 				})
 
 				// begin year-specific
-			} else if row_name == "mobility" {
-				assignBreakdownRobotFields(breakdown, "mobilityRobot", boolToYesNo, breakdownRobotFields[bool]{
-					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
-					red:  iconsToBools(red_cell, 3, "fa-check", "fa-times"),
-				})
 			} else if api_field, ok := simpleIconFields2023[row_name]; ok {
 				assignBreakdownAllianceFields[bool](breakdown, api_field, identity_fn[bool], breakdownAllianceFields[bool]{
 					blue: iconToBool(blue_cell.Find("i"), "fa-check", "fa-times"),
 					red:  iconToBool(red_cell.Find("i"), "fa-check", "fa-times"),
+				})
+			} else if row_name == "mobility" {
+				assignBreakdownRobotFields(breakdown, "mobilityRobot", boolToYesNo, breakdownRobotFields[bool]{
+					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
+					red:  iconsToBools(red_cell, 3, "fa-check", "fa-times"),
 				})
 			} else if row_name == "charge station points" {
 				api_field := matchPhaseWithEndGame() + "ChargeStationPoints"
@@ -296,6 +296,15 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 					blue: split_and_strip(blue_text, "\n"),
 					red:  split_and_strip(red_text, "\n"),
 				})
+			} else if row_name == "link points" {
+				blue_points := checkParseInt(blue_text, "blue "+row_name)
+				red_points := checkParseInt(red_text, "red "+row_name)
+				assignBreakdownAllianceFields(breakdown, "linkPoints", identity_fn[int], breakdownAllianceFields[int]{
+					blue: blue_points,
+					red:  red_points,
+				})
+				scoreInfo.blue.link = blue_points
+				scoreInfo.red.link = red_points
 			} else {
 				breakdown["blue"]["!"+row_name] = blue_text
 				breakdown["red"]["!"+row_name] = red_text
