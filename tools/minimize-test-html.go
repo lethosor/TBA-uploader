@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
+	"regexp"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -17,6 +17,17 @@ var STRIP_CLASSES = []string{
 	"row",
 	"text-center",
 	"text-uppercase",
+}
+
+var STRIP_ATTRS = []string{
+	"data-bs-toggle",
+	"fill",
+	"viewBox",
+	"xmlns",
+}
+
+var STRIP_REGEXPS = []regexp.Regexp{
+	*regexp.MustCompile("(?m)^\\s+"),
 }
 
 func main() {
@@ -34,12 +45,19 @@ func main() {
 
 	doc, err := goquery.NewDocumentFromReader(reader)
 	table := doc.Find("table").First()
+	table.Find("svg path").Remove()
 	table.Find("*").RemoveClass(STRIP_CLASSES...)
-	table.Find("*").RemoveAttr("data-bs-toggle")
+	for _, attr := range STRIP_ATTRS {
+		table.Find("*").RemoveAttr(attr)
+	}
 	table.Find("img").RemoveAttr("src")
 	table.RemoveAttr("class")
 
 	html, err := goquery.OuterHtml(table)
-	html = strings.Replace(html, "\t", "", -1)
+	for _, re := range STRIP_REGEXPS {
+		html = re.ReplaceAllString(html, "")
+	}
+	html += "\n"
+	html = regexp.MustCompile("\n+").ReplaceAllString(html, "\n")
 	fmt.Print(html)
 }
