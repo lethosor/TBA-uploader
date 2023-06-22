@@ -66,6 +66,7 @@ var simpleStringFields2023 = map[string]string{
 }
 
 var simpleIconFields2023 = map[string]string{
+	"docked?":                    "autoDocked",
 	"activation bonus?":          "activationBonusAchieved",
 	"sustainability bonus?":      "sustainabilityBonusAchieved",
 	"coopertition criteria met?": "coopertitionCriteriaMet",
@@ -267,6 +268,12 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 				assignBreakdownAllianceFields[bool](breakdown, api_field, identity_fn[bool], breakdownAllianceFields[bool]{
 					blue: iconToBool(blue_cell.Find("i"), "fa-check", "fa-times"),
 					red:  iconToBool(red_cell.Find("i"), "fa-check", "fa-times"),
+				})
+			} else if row_name == "charge station points" {
+				api_field := matchPhaseWithEndGame() + "ChargeStationPoints"
+				assignBreakdownAllianceFields[int](breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
+					blue: checkParseInt(blue_text, "blue "+row_name),
+					red:  checkParseInt(red_text, "red "+row_name),
 				})
 			} else if row_name == "charge station" {
 				api_field_prefix := matchPhaseWithEndGame() + "ChargeStationRobot"
