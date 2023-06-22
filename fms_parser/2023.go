@@ -124,6 +124,7 @@ func (self Community2023) parseCommunityRow(key string, cell *goquery.Selection)
 	}
 
 	pieces := make([]string, COMMUNITY_ROW_LENGTH)
+	link_members := make([]bool, COMMUNITY_ROW_LENGTH)
 
 	icons.Each(func(i int, icon *goquery.Selection) {
 		svg := icon.Find("svg")
@@ -139,10 +140,15 @@ func (self Community2023) parseCommunityRow(key string, cell *goquery.Selection)
 			panic(fmt.Sprintf("unknown community icon: %s", svg.AttrOr("class", "")))
 		}
 		pieces[i] = piece
-
-		has_game_piece := (piece == K2023_COMMUNITY_CUBE || piece == K2023_COMMUNITY_CONE)
-		_ = has_game_piece
+		link_members[i] = icon.HasClass("community-img-link")
 	})
+
+	for i := 0; i < COMMUNITY_ROW_LENGTH; i++ {
+		if link_members[i] {
+			self.link_start_indexes[key] = append(self.link_start_indexes[key], i)
+			i += 2
+		}
+	}
 
 	self.pieces[key] = pieces
 }
@@ -153,6 +159,25 @@ func (self Community2023) assignPiecesToBreakdown(breakdown map[string]interface
 		community[key[0:1]] = pieces
 	}
 	breakdown[field] = community
+}
+
+func (self Community2023) assignLinksToBreakdown(breakdown map[string]interface{}, field string) {
+	links := make([]interface{}, 0)
+	// match FMS order
+	for _, row := range []string{K2023_COMMUNITY_BOTTOM, K2023_COMMUNITY_MIDDLE, K2023_COMMUNITY_TOP} {
+		adjusted_row := row
+		if row == K2023_COMMUNITY_MIDDLE {
+			adjusted_row = "Mid" // why
+		}
+
+		for _, start_index := range self.link_start_indexes[row] {
+			links = append(links, map[string]interface{}{
+				"row":   adjusted_row,
+				"nodes": []int{start_index, start_index + 1, start_index + 2},
+			})
+		}
+	}
+	breakdown[field] = links
 }
 
 func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{}, error) {
@@ -303,6 +328,10 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 					api_field := match_phase + "Community"
 					cur_community.blue.assignPiecesToBreakdown(breakdown["blue"], api_field)
 					cur_community.red.assignPiecesToBreakdown(breakdown["red"], api_field)
+					if match_phase == "teleop" {
+						cur_community.blue.assignLinksToBreakdown(breakdown["blue"], "links")
+						cur_community.red.assignLinksToBreakdown(breakdown["red"], "links")
+					}
 					cur_community.blue = nil
 					cur_community.red = nil
 				}
