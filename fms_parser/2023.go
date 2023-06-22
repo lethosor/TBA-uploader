@@ -45,7 +45,7 @@ func addManualFields2023(breakdown map[string]interface{}, info fmsScoreInfo2023
 }
 
 // map FMS names (lowercase) to API names of basic integer fields
-var simpleFields2023 = map[string]string{
+var simpleIntFields2023 = map[string]string{
 	"coop game piece count": "coopGamePieceCount",
 	"mobility points":       "autoMobilityPoints",
 	"endgame park points":   "endGameParkPoints",
@@ -55,9 +55,14 @@ var simpleFields2023 = map[string]string{
 
 // Map FMS names (lowercase) to API name suffixes of basic integer fields.
 // The match phase ("auto" or "teleop") will be prepended to the API names as appropriate.
-var simpleMatchPhaseFields2023 = map[string]string{
+var simpleIntMatchPhaseFields2023 = map[string]string{
 	"game piece count":  "GamePieceCount",
 	"game piece points": "GamePiecePoints",
+}
+
+var simpleStringFields2023 = map[string]string{
+	"auto charge station":    "autoBridgeState",
+	"endgame charge station": "endGameBridgeState",
 }
 
 var simpleIconFields2023 = map[string]string{
@@ -180,12 +185,17 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 			}
 
 			// Handle each data row
-			if api_field, ok := simpleFields2023[row_name]; ok {
+			if api_field, ok := simpleStringFields2023[row_name]; ok {
+				assignBreakdownAllianceFields(breakdown, api_field, identity_fn[string], breakdownAllianceFields[string]{
+					blue: blue_text,
+					red:  red_text,
+				})
+			} else if api_field, ok := simpleIntFields2023[row_name]; ok {
 				assignBreakdownAllianceFields(breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
 					blue: checkParseInt(blue_text, "blue "+api_field),
 					red:  checkParseInt(red_text, "red "+api_field),
 				})
-			} else if api_field_suffix, ok := simpleMatchPhaseFields2023[row_name]; ok {
+			} else if api_field_suffix, ok := simpleIntMatchPhaseFields2023[row_name]; ok {
 				api_field := match_phase + api_field_suffix
 				assignBreakdownAllianceFields(breakdown, api_field, identity_fn[int], breakdownAllianceFields[int]{
 					blue: checkParseInt(blue_text, "blue "+api_field),
