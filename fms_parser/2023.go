@@ -60,53 +60,13 @@ var simpleMatchPhaseFields2023 = map[string]string{
 	"game piece points": "GamePiecePoints",
 }
 
-var RP_BADGE_NAMES_2023 = map[string]string{
-	"Cargo Bonus Ranking Point Achieved":  "cargoBonusRankingPoint",
-	"Hangar Bonus Ranking Point Achieved": "hangarBonusRankingPoint",
+var simpleIconFields2023 = map[string]string{
+	"activation bonus?":          "activationBonusAchieved",
+	"sustainability bonus?":      "sustainabilityBonusAchieved",
+	"coopertition criteria met?": "coopertitionCriteriaMet",
 }
 
-var DEFAULT_BREAKDOWN_VALUES_2023 = map[string]any{
-	"adjustPoints":            0,
-	"autoCargoLowerBlue":      0,
-	"autoCargoLowerFar":       0,
-	"autoCargoLowerNear":      0,
-	"autoCargoLowerRed":       0,
-	"autoCargoPoints":         0,
-	"autoCargoTotal":          0,
-	"autoCargoUpperBlue":      0,
-	"autoCargoUpperFar":       0,
-	"autoCargoUpperNear":      0,
-	"autoCargoUpperRed":       0,
-	"autoPoints":              0,
-	"autoTaxiPoints":          0,
-	"cargoBonusRankingPoint":  false,
-	"endgamePoints":           0,
-	"endgameRobot1":           "None",
-	"endgameRobot2":           "None",
-	"endgameRobot3":           "None",
-	"foulCount":               0,
-	"foulPoints":              0,
-	"hangarBonusRankingPoint": false,
-	"matchCargoTotal":         0,
-	"quintetAchieved":         false,
-	"rp":                      0,
-	"taxiRobot1":              "No",
-	"taxiRobot2":              "No",
-	"taxiRobot3":              "No",
-	"techFoulCount":           0,
-	"teleopCargoLowerBlue":    0,
-	"teleopCargoLowerFar":     0,
-	"teleopCargoLowerNear":    0,
-	"teleopCargoLowerRed":     0,
-	"teleopCargoPoints":       0,
-	"teleopCargoTotal":        0,
-	"teleopCargoUpperBlue":    0,
-	"teleopCargoUpperFar":     0,
-	"teleopCargoUpperNear":    0,
-	"teleopCargoUpperRed":     0,
-	"teleopPoints":            0,
-	"totalPoints":             0,
-}
+var DEFAULT_BREAKDOWN_VALUES_2023 = map[string]any{}
 
 func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
@@ -288,6 +248,11 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 				})
 
 				// begin year-specific
+			} else if api_field, ok := simpleIconFields2023[row_name]; ok {
+				assignBreakdownAllianceFields[bool](breakdown, api_field, identity_fn[bool], breakdownAllianceFields[bool]{
+					blue: iconToBool(blue_cell.Find("i"), "fa-check", "fa-times"),
+					red:  iconToBool(red_cell.Find("i"), "fa-check", "fa-times"),
+				})
 			} else if row_name == "charge station" {
 				api_field_prefix := matchPhaseWithEndGame() + "ChargeStationRobot"
 				assignBreakdownRobotFields(breakdown, api_field_prefix, identity_fn[string], breakdownRobotFields[string]{
@@ -304,9 +269,10 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 	if playoff {
 		// set bonus RPs to false since the row is absent
 		assignBreakdownAllianceFieldsConst(breakdown, "rp", 0)
-		for _, field := range RP_BADGE_NAMES_2023 {
-			assignBreakdownAllianceFieldsConst(breakdown, field, false)
-		}
+		// TODO: figure out which fields are constant for playoffs
+		// for _, field := range RP_BADGE_NAMES_2023 {
+		// 	assignBreakdownAllianceFieldsConst(breakdown, field, false)
+		// }
 	}
 
 	addManualFields2023(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)

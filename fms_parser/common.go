@@ -71,6 +71,17 @@ func split_and_strip(text string, separator string) []string {
 	return result
 }
 
+func iconToBool(node *goquery.Selection, true_class, false_class string) bool {
+	if node.HasClass(true_class) {
+		return true
+	} else if node.HasClass(false_class) {
+		return false
+	} else {
+		class, _ := node.Attr("class")
+		panic(fmt.Sprintf("icon has unexpected classes: \"%s\"", class))
+	}
+}
+
 func iconsToBools(node *goquery.Selection, count int, true_class, false_class string) (out []bool) {
 	icons := node.Find("i")
 	if icons.Length() != count {
@@ -79,14 +90,7 @@ func iconsToBools(node *goquery.Selection, count int, true_class, false_class st
 	out = make([]bool, count)
 
 	icons.Each(func(i int, s *goquery.Selection) {
-		if s.HasClass(true_class) {
-			out[i] = true
-		} else if s.HasClass(false_class) {
-			out[i] = false
-		} else {
-			class, _ := s.Attr("class")
-			panic(fmt.Sprintf("icon has unexpected classes: \"%s\"", class))
-		}
+		out[i] = iconToBool(s, true_class, false_class)
 	})
 
 	return out
