@@ -460,12 +460,8 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 	})
 
 	if playoff {
-		// set bonus RPs to false since the row is absent
+		// set "rp" to 0 since the row is absent
 		assignBreakdownAllianceFieldsConst(breakdown, "rp", 0)
-		// TODO: figure out which fields are constant for playoffs
-		// for _, field := range RP_BADGE_NAMES_2023 {
-		// 	assignBreakdownAllianceFieldsConst(breakdown, field, false)
-		// }
 	}
 
 	addManualFields2023(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
