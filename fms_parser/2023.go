@@ -248,6 +248,11 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 				})
 
 				// begin year-specific
+			} else if row_name == "mobility" {
+				assignBreakdownRobotFields(breakdown, "mobilityRobot", boolToYesNo, breakdownRobotFields[bool]{
+					blue: iconsToBools(blue_cell, 3, "fa-check", "fa-times"),
+					red:  iconsToBools(red_cell, 3, "fa-check", "fa-times"),
+				})
 			} else if api_field, ok := simpleIconFields2023[row_name]; ok {
 				assignBreakdownAllianceFields[bool](breakdown, api_field, identity_fn[bool], breakdownAllianceFields[bool]{
 					blue: iconToBool(blue_cell.Find("i"), "fa-check", "fa-times"),
