@@ -44,7 +44,7 @@ func main() {
 	}
 
 	doc, err := goquery.NewDocumentFromReader(reader)
-	table := doc.Find("table").First()
+	table := doc.Find("table:has(*)").First()
 	table.Find("svg path").Remove()
 	table.Find("*").RemoveClass(STRIP_CLASSES...)
 	for _, attr := range STRIP_ATTRS {
