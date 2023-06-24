@@ -30,9 +30,11 @@ func makeFmsScoreInfo2023() fmsScoreInfo2023 {
 type extraMatchAllianceInfo2023 struct {
 	Dqs        []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
+
 	// year-specific:
-	G405Penalty bool `json:"g405_penalty"`
-	H111Penalty bool `json:"h111_penalty"`
+	// TODO: may not need these at all
+	// G405Penalty bool `json:"g405_penalty"`
+	// H111Penalty bool `json:"h111_penalty"`
 }
 
 func makeExtraMatchAllianceInfo2023() extraMatchAllianceInfo2023 {
@@ -63,10 +65,11 @@ const (
 
 // map FMS names (lowercase) to API names of basic integer fields
 var simpleIntFields2023 = map[string]string{
-	"coop game piece count": "coopGamePieceCount",
-	"mobility points":       "autoMobilityPoints",
-	"endgame park points":   "endGameParkPoints",
-	"adjustments":           "adjustPoints",
+	"coop game piece count":  "coopGamePieceCount",
+	"mobility points":        "autoMobilityPoints",
+	"endgame park points":    "endGameParkPoints",
+	"extra game piece count": "extraGamePieceCount", // new for championship
+	"adjustments":            "adjustPoints",
 }
 
 // Map FMS names (lowercase) to API name suffixes of basic integer fields.
@@ -452,6 +455,12 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 				})
 				scoreInfo.blue.link = blue_points
 				scoreInfo.red.link = red_points
+
+				// begin new championship fields
+			} else if row_name == "penalties" {
+				// unclear how to parse these yet
+				assignBreakdownAllianceFieldsConst[bool](breakdown, "g405Penalty", false)
+				assignBreakdownAllianceFieldsConst[bool](breakdown, "h111Penalty", false)
 			} else {
 				breakdown["blue"]["!"+row_name] = blue_text
 				breakdown["red"]["!"+row_name] = red_text
