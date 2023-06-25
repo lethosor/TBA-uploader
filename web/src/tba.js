@@ -53,6 +53,12 @@ const rankingBreakdownSources = {
         'Avg Hangar': RankingReducerAverage('endgamePoints'),
         'Avg Taxi + Auto Cargo': RankingReducerAverage(['autoTaxiPoints', 'autoCargoPoints']),
     },
+    2023: {
+        'Ranking Score': RankingReducerAverage('rp'),
+        'Avg Match': RankingReducerAverage(['totalPoints', '-foulPoints']),
+        'Avg Charge Station': RankingReducerAverage('totalChargeStationPoints'),
+        'Avg Auto': RankingReducerAverage('autoPoints'),
+    },
 };
 
 const tba = Object.freeze({
