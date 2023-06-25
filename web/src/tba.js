@@ -39,6 +39,9 @@ function RankingReducerAverage(breakdownFields, defaultValue=-1) {
                 }
                 matchValues.push(matchValue);
             },
+            addConst(value) {
+                matchValues.push(value);
+            },
             get() {
                 return matchValues.reduce((a, b) => (a + b), 0) / matchValues.length;
             },
@@ -52,6 +55,12 @@ const rankingBreakdownSources = {
         'Avg Match': RankingReducerAverage(['totalPoints', '-foulPoints']),
         'Avg Hangar': RankingReducerAverage('endgamePoints'),
         'Avg Taxi + Auto Cargo': RankingReducerAverage(['autoTaxiPoints', 'autoCargoPoints']),
+    },
+    2023: {
+        'Ranking Score': RankingReducerAverage('rp'),
+        'Avg Match': RankingReducerAverage(['totalPoints', '-foulPoints']),
+        'Avg Charge Station': RankingReducerAverage('totalChargeStationPoints'),
+        'Avg Auto': RankingReducerAverage('autoPoints'),
     },
 };
 
@@ -102,6 +111,14 @@ const tba = Object.freeze({
                 "Avg Match": r.sort2,
                 "Avg Hangar": r.sort3,
                 "Avg Taxi + Auto Cargo": r.sort4,
+            });
+        },
+        2023: function(r) {
+            return Object.assign(tba.convertToTBARankings.common(r), {
+                "Ranking Score": r.sort1,
+                "Avg Match": r.sort2,
+                "Avg Charge Station": r.sort3,
+                "Avg Auto": r.sort4,
             });
         },
     }),
@@ -171,6 +188,11 @@ const tba = Object.freeze({
             return out;
         };
 
+        const roundRankingValue = function(val) {
+            // round down to 2 decimal places
+            return Math.floor(val * 100) / 100;
+        };
+
         const teamRankingReducers = {};
         const rankings = {};
         for (const match of matchResults) {
@@ -193,35 +215,50 @@ const tba = Object.freeze({
 
                 if (teamEntry.dq) {
                     rankings[teamKey].dqs++;
-                    continue;
+                    // before 2023, DQs did not count towards rankings at all
+                    if (year < 2023) {
+                        continue;
+                    }
                 }
                 if (teamEntry.surrogate) {
                     continue;
                 }
 
-                rankings[teamKey].played++;
+                // starting in 2023, DQs still count towards the number of played matches, but do not count towards W-L-T records
+                if (year >= 2023 || !teamEntry.dq) {
+                    rankings[teamKey].played++;
+                }
 
-                const scoreDiff = match.alliances[teamEntry.alliance].score -
-                    match.alliances[teamEntry.alliance == 'red' ? 'blue' : 'red'].score;
-                if (scoreDiff > 0) {
-                    rankings[teamKey].wins++;
-                }
-                else if (scoreDiff < 0) {
-                    rankings[teamKey].losses++;
-                }
-                else {
-                    rankings[teamKey].ties++;
+                if (!teamEntry.dq) {
+                    const scoreDiff = match.alliances[teamEntry.alliance].score -
+                        match.alliances[teamEntry.alliance == 'red' ? 'blue' : 'red'].score;
+                    if (scoreDiff > 0) {
+                        rankings[teamKey].wins++;
+                    }
+                    else if (scoreDiff < 0) {
+                        rankings[teamKey].losses++;
+                    }
+                    else {
+                        rankings[teamKey].ties++;
+                    }
                 }
 
                 for (const reducer of Object.values(teamRankingReducers[teamKey])) {
-                    reducer.add(match, teamEntry.alliance, teamKey);
+                    if (teamEntry.dq) {
+                        if (year >= 2023) {
+                            reducer.addConst(0);
+                        }
+                    }
+                    else {
+                        reducer.add(match, teamEntry.alliance, teamKey);
+                    }
                 }
             }
         }
 
         for (const [teamKey, reducers] of Object.entries(teamRankingReducers)) {
             for (const [name, r] of Object.entries(reducers)) {
-                rankings[teamKey][name] = r.get();
+                rankings[teamKey][name] = roundRankingValue(r.get());
             }
         }
 

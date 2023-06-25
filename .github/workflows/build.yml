@@ -2,9 +2,7 @@ name: Build
 on:
   push:
     branches:
-      - master
-      - ci
-      - 'ci-*'
+      - '*'
     tags:
       - 'v*'
   pull_request:

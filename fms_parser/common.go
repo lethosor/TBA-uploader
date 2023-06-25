@@ -15,6 +15,8 @@ func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interf
 		return parseHTMLtoJSON2019(filename, playoff)
 	} else if year == 2022 {
 		return parseHTMLtoJSON2022(filename, playoff)
+	} else if year == 2023 {
+		return parseHTMLtoJSON2023(filename, playoff)
 	} else {
 		return nil, fmt.Errorf("ParseHTMLtoJSON: unsupported year: %d", year)
 	}
@@ -37,6 +39,9 @@ var extraAllianceInfoCtors = map[int]func() ExtraMatchAllianceInfo{
 	},
 	2022: func() ExtraMatchAllianceInfo {
 		return makeExtraMatchAllianceInfo2022()
+	},
+	2023: func() ExtraMatchAllianceInfo {
+		return makeExtraMatchAllianceInfo2023()
 	},
 }
 
@@ -71,6 +76,17 @@ func split_and_strip(text string, separator string) []string {
 	return result
 }
 
+func iconToBool(node *goquery.Selection, true_class, false_class string) bool {
+	if node.HasClass(true_class) {
+		return true
+	} else if node.HasClass(false_class) {
+		return false
+	} else {
+		class, _ := node.Attr("class")
+		panic(fmt.Sprintf("icon has unexpected classes: \"%s\"", class))
+	}
+}
+
 func iconsToBools(node *goquery.Selection, count int, true_class, false_class string) (out []bool) {
 	icons := node.Find("i")
 	if icons.Length() != count {
@@ -79,14 +95,7 @@ func iconsToBools(node *goquery.Selection, count int, true_class, false_class st
 	out = make([]bool, count)
 
 	icons.Each(func(i int, s *goquery.Selection) {
-		if s.HasClass(true_class) {
-			out[i] = true
-		} else if s.HasClass(false_class) {
-			out[i] = false
-		} else {
-			class, _ := s.Attr("class")
-			panic(fmt.Sprintf("icon has unexpected classes: \"%s\"", class))
-		}
+		out[i] = iconToBool(s, true_class, false_class)
 	})
 
 	return out

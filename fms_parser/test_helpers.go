@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 )
 
 type testTbaAllianceTeams struct {
@@ -59,19 +59,10 @@ func testParseSingleMatch(
 		fmt.Printf("%s", parsed_marshaled)
 	}
 
-	deep.MaxDiff = 100
+	assert.Equalf(t, tba_result.Alliances.Blue["team_keys"], parsed_result.Alliances.Blue["teams"], "blue team keys")
+	assert.Equalf(t, tba_result.Alliances.Red["team_keys"], parsed_result.Alliances.Red["teams"], "red team keys")
 
-	// write API expects "teams", but read API returns "team_keys"
-	if diff := deep.Equal(parsed_result.Alliances.Blue["teams"], tba_result.Alliances.Blue["team_keys"]); diff != nil {
-		t.Errorf("%s: blue alliance does not match: %s", fms_html_path, diff)
-	}
-	if diff := deep.Equal(parsed_result.Alliances.Red["teams"], tba_result.Alliances.Red["team_keys"]); diff != nil {
-		t.Errorf("%s: red alliance does not match: %s", fms_html_path, diff)
-	}
-
-	if diff := deep.Equal(parsed_result.ScoreBreakdown, tba_result.ScoreBreakdown); diff != nil {
-		t.Errorf("%s: breakdown does not match: %s", fms_html_path, diff)
-	}
+	assert.Equalf(t, tba_result.ScoreBreakdown, parsed_result.ScoreBreakdown, "score breakdown")
 }
 
 func testParseMatchDir(
