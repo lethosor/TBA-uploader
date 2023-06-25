@@ -1230,6 +1230,7 @@ const EXTRA_FIELDS = {
         add_rp_hab_climb: false,
     },
     2022: {},
+    2023: {},
 };
 
 export default {
