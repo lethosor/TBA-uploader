@@ -215,19 +215,12 @@ const tba = Object.freeze({
 
                 if (teamEntry.dq) {
                     rankings[teamKey].dqs++;
-                    // before 2023, DQs did not count towards rankings at all
-                    if (year < 2023) {
-                        continue;
-                    }
                 }
                 if (teamEntry.surrogate) {
                     continue;
                 }
 
-                // starting in 2023, DQs still count towards the number of played matches, but do not count towards W-L-T records
-                if (year >= 2023 || !teamEntry.dq) {
-                    rankings[teamKey].played++;
-                }
+                rankings[teamKey].played++;
 
                 if (!teamEntry.dq) {
                     const scoreDiff = match.alliances[teamEntry.alliance].score -
@@ -245,9 +238,7 @@ const tba = Object.freeze({
 
                 for (const reducer of Object.values(teamRankingReducers[teamKey])) {
                     if (teamEntry.dq) {
-                        if (year >= 2023) {
-                            reducer.addConst(0);
-                        }
+                        reducer.addConst(0);
                     }
                     else {
                         reducer.add(match, teamEntry.alliance, teamKey);
