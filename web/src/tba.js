@@ -185,6 +185,11 @@ const tba = Object.freeze({
             return out;
         };
 
+        const roundRankingValue = function(val) {
+            // round down to 2 decimal places
+            return Math.floor(val * 100) / 100;
+        };
+
         const teamRankingReducers = {};
         const rankings = {};
         for (const match of matchResults) {
@@ -235,7 +240,7 @@ const tba = Object.freeze({
 
         for (const [teamKey, reducers] of Object.entries(teamRankingReducers)) {
             for (const [name, r] of Object.entries(reducers)) {
-                rankings[teamKey][name] = r.get();
+                rankings[teamKey][name] = roundRankingValue(r.get());
             }
         }
 
