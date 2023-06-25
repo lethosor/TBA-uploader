@@ -104,6 +104,14 @@ const tba = Object.freeze({
                 "Avg Taxi + Auto Cargo": r.sort4,
             });
         },
+        2023: function(r) {
+            return Object.assign(tba.convertToTBARankings.common(r), {
+                "Ranking Score": r.sort1,
+                "Avg Match": r.sort2,
+                "Avg Charge Station": r.sort3,
+                "Avg Auto": r.sort4,
+            });
+        },
     }),
 
     RANKING_NAMES: Object.freeze({
