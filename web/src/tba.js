@@ -39,6 +39,9 @@ function RankingReducerAverage(breakdownFields, defaultValue=-1) {
                 }
                 matchValues.push(matchValue);
             },
+            addConst(value) {
+                matchValues.push(value);
+            },
             get() {
                 return matchValues.reduce((a, b) => (a + b), 0) / matchValues.length;
             },
@@ -212,28 +215,43 @@ const tba = Object.freeze({
 
                 if (teamEntry.dq) {
                     rankings[teamKey].dqs++;
-                    continue;
+                    // before 2023, DQs did not count towards rankings at all
+                    if (year < 2023) {
+                        continue;
+                    }
                 }
                 if (teamEntry.surrogate) {
                     continue;
                 }
 
-                rankings[teamKey].played++;
+                // starting in 2023, DQs still count towards the number of played matches, but do not count towards W-L-T records
+                if (year >= 2023 || !teamEntry.dq) {
+                    rankings[teamKey].played++;
+                }
 
-                const scoreDiff = match.alliances[teamEntry.alliance].score -
-                    match.alliances[teamEntry.alliance == 'red' ? 'blue' : 'red'].score;
-                if (scoreDiff > 0) {
-                    rankings[teamKey].wins++;
-                }
-                else if (scoreDiff < 0) {
-                    rankings[teamKey].losses++;
-                }
-                else {
-                    rankings[teamKey].ties++;
+                if (!teamEntry.dq) {
+                    const scoreDiff = match.alliances[teamEntry.alliance].score -
+                        match.alliances[teamEntry.alliance == 'red' ? 'blue' : 'red'].score;
+                    if (scoreDiff > 0) {
+                        rankings[teamKey].wins++;
+                    }
+                    else if (scoreDiff < 0) {
+                        rankings[teamKey].losses++;
+                    }
+                    else {
+                        rankings[teamKey].ties++;
+                    }
                 }
 
                 for (const reducer of Object.values(teamRankingReducers[teamKey])) {
-                    reducer.add(match, teamEntry.alliance, teamKey);
+                    if (teamEntry.dq) {
+                        if (year >= 2023) {
+                            reducer.addConst(0);
+                        }
+                    }
+                    else {
+                        reducer.add(match, teamEntry.alliance, teamKey);
+                    }
                 }
             }
         }
