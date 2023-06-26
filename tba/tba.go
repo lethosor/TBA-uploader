@@ -58,6 +58,14 @@ var playoffRounds = map[int][]playoffRoundInfo{
 		{level: "sf", sets: 1, matches_per_set: 15},
 		{level: "f", sets: 1, matches_per_set: 6},
 	},
+	BRACKET_TYPE_DOUBLE_ELIM_8_TEAM: {
+		{level: "sf", sets: 13, matches_per_set: 1},
+		{level: "f", sets: 1, matches_per_set: 6},
+	},
+	BRACKET_TYPE_DOUBLE_ELIM_4_TEAM: {
+		{level: "sf", sets: 5, matches_per_set: 1},
+		{level: "f", sets: 1, matches_per_set: 6},
+	},
 	BRACKET_TYPE_CUSTOM: {},
 }
 

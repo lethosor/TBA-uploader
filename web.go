@@ -90,6 +90,15 @@ func checkRequestQueryParam(r *http.Request, param string) string {
 	return res
 }
 
+func checkRequestQueryParamInt(r *http.Request, param string) int {
+	str_val := checkRequestQueryParam(r, param)
+	res, err := strconv.Atoi(str_val)
+	if err != nil {
+		apiPanicBadRequest("invalid integer for parameter %s: %v", param, err)
+	}
+	return res
+}
+
 func parseEventYear(event string) int {
 	var year int
 	fmt.Sscanf(event, "%d", &year)
@@ -226,6 +235,7 @@ func apiUploadMatches(w http.ResponseWriter, r *http.Request) {
 func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 	download_all := (r.URL.Query().Get("all") != "")
 	level := checkRequestLevel(r)
+	playoff_type := checkRequestQueryParamInt(r, "playoff_type")
 	var event_year = parseEventYear(r.URL.Query().Get("event"))
 	var match_folder = getMatchDownloadPath(level, r.URL.Query().Get("event"))
 	var files []string
@@ -289,7 +299,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 				match_info["match_number"] = extra_info.MatchCodeOverride.Match
 			} else if level == MATCH_LEVEL_PLAYOFF {
 				// playoffs
-				code := tba.GetPlayoffCode(BRACKET_TYPE_BRACKET_8_TEAM, match_number)
+				code := tba.GetPlayoffCode(playoff_type, match_number)
 				match_info["comp_level"] = code.Level
 				match_info["set_number"] = code.Set
 				match_info["match_number"] = code.Match
