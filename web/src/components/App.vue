@@ -1861,6 +1861,7 @@ export default {
                 let data = await $.get('/api/matches/fetch', {
                     event: this.selectedEvent,
                     level: this.matchLevel,
+                    playoff_type: this.eventPlayoffType,
                     all: all ? '1' : '',
                 });
                 this.pendingMatches = JSON.parse(data);
