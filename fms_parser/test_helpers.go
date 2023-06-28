@@ -59,10 +59,10 @@ func testParseSingleMatch(
 		fmt.Printf("%s", parsed_marshaled)
 	}
 
-	assert.Equalf(t, tba_result.Alliances.Blue["team_keys"], parsed_result.Alliances.Blue["teams"], "blue team keys")
-	assert.Equalf(t, tba_result.Alliances.Red["team_keys"], parsed_result.Alliances.Red["teams"], "red team keys")
+	assert.Equalf(t, tba_result.Alliances.Blue["team_keys"], parsed_result.Alliances.Blue["teams"], "blue team keys of %s", fms_html_path)
+	assert.Equalf(t, tba_result.Alliances.Red["team_keys"], parsed_result.Alliances.Red["teams"], "red team keys of %s", fms_html_path)
 
-	assert.Equalf(t, tba_result.ScoreBreakdown, parsed_result.ScoreBreakdown, "score breakdown")
+	assert.Equalf(t, tba_result.ScoreBreakdown, parsed_result.ScoreBreakdown, "score breakdown of %s", fms_html_path)
 }
 
 func testParseMatchDir(
