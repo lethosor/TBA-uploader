@@ -188,3 +188,15 @@ func assignBreakdownRpFromBadges(breakdowns map[string]map[string]interface{}, r
 		})
 	}
 }
+
+func assignPenaltyFields(breakdowns map[string]map[string]interface{}, penalty_fields map[string]string, cells breakdownAllianceFields[*goquery.Selection]) {
+	groups := map[string]*goquery.Selection{
+		"blue": cells.blue,
+		"red":  cells.red,
+	}
+	for alliance, cell := range groups {
+		for penalty_name, field := range penalty_fields {
+			breakdowns[alliance][field] = strings.Contains(cell.Text(), penalty_name)
+		}
+	}
+}

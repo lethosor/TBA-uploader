@@ -30,11 +30,6 @@ func makeFmsScoreInfo2023() fmsScoreInfo2023 {
 type extraMatchAllianceInfo2023 struct {
 	Dqs        []string `json:"dqs"`
 	Surrogates []string `json:"surrogates"`
-
-	// year-specific:
-	// TODO: may not need these at all
-	// G405Penalty bool `json:"g405_penalty"`
-	// H111Penalty bool `json:"h111_penalty"`
 }
 
 func makeExtraMatchAllianceInfo2023() extraMatchAllianceInfo2023 {
@@ -89,6 +84,11 @@ var simpleIconFields2023 = map[string]string{
 	"activation bonus?":          "activationBonusAchieved",
 	"sustainability bonus?":      "sustainabilityBonusAchieved",
 	"coopertition criteria met?": "coopertitionCriteriaMet",
+}
+
+var penaltyFields2023 = map[string]string{
+	"G405": "g405Penalty",
+	"H111": "h111Penalty",
 }
 
 var DEFAULT_BREAKDOWN_VALUES_2023 = map[string]any{}
@@ -458,9 +458,10 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 
 				// begin new championship fields
 			} else if row_name == "penalties" {
-				// unclear how to parse these yet
-				assignBreakdownAllianceFieldsConst[bool](breakdown, "g405Penalty", false)
-				assignBreakdownAllianceFieldsConst[bool](breakdown, "h111Penalty", false)
+				assignPenaltyFields(breakdown, penaltyFields2023, breakdownAllianceFields[*goquery.Selection]{
+					blue: blue_cell,
+					red:  red_cell,
+				})
 			} else {
 				breakdown["blue"]["!"+row_name] = blue_text
 				breakdown["red"]["!"+row_name] = red_text
