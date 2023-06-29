@@ -1933,6 +1933,10 @@ export default {
             }
         },
         handleMatchesFromFieldStateChange: async function(fieldState) {
+            if (!this.selectedEvent) {
+                return;
+            }
+
             if (fieldState == FIELD_STATE.WaitingForPostResults) {
                 await this.fetchMatches();
             } else if (
