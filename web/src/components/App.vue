@@ -9,6 +9,12 @@
                 >{{ selectedEvent }}</a>
             </span>
         </h2>
+        <b-card
+            no-body
+            :class="'text-center text-light mb-1 ' + fieldStateClass"
+        >
+            {{ fieldStateMessage }}
+        </b-card>
 
         <b-tabs v-model="selectedTab">
             <b-tab title="Event setup">
@@ -1125,6 +1131,7 @@ import {
     BAlert,
     BButton,
     BButtonClose,
+    BCard,
     BCol,
     BFormCheckbox,
     BFormGroup,
@@ -1242,6 +1249,7 @@ export default {
         BAlert,
         BButton,
         BButtonClose,
+        BCard,
         BCol,
         BFormCheckbox,
         BFormGroup,
@@ -1412,6 +1420,18 @@ export default {
                 });
                 return cells;
             });
+        },
+        fieldStateClass() {
+            if (this.lastFieldState) {
+                if (this.lastFieldState == FIELD_STATE.MatchCancelled) {
+                    return 'bg-danger';
+                }
+                return (utils.isFieldStateInMatch(this.lastFieldState)) ? 'bg-success' : 'bg-primary';
+            }
+            return 'bg-secondary';
+        },
+        fieldStateMessage() {
+            return this.lastFieldState ? utils.describeFieldState(this.lastFieldState) : 'No Field Status Available';
         },
     },
     watch: {
