@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -556,6 +557,7 @@ func handleFuncWrapper(r *mux.Router, route string, handler func(w http.Response
 					w.WriteHeader(err.code)
 					w.Write([]byte(err.message))
 				default:
+					logger.Printf("Internal error: %v\n%s", r, debug.Stack())
 					w.WriteHeader(http.StatusInternalServerError)
 					w.Write([]byte(fmt.Sprintf("Unknown internal error: %v", err)))
 				}
