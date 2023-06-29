@@ -237,7 +237,7 @@
                     >
                         <b-button
                             variant="success"
-                            :disabled="inTeamsRequest"
+                            :disabled="inTeamsRequest || isMatchRunning"
                             @click="fetchTeamsReport"
                         >
                             Fetch FMS report
@@ -330,7 +330,7 @@
                         <br>
                         <b-button
                             variant="success"
-                            @click="fetchScheduleReport"
+                            @click="fetchScheduleReport || isMatchRunning"
                         >
                             Fetch FMS report
                         </b-button>
@@ -465,7 +465,7 @@
                     <b-button
                         variant="success"
                         data-accesskey="f"
-                        :disabled="inMatchRequest"
+                        :disabled="inMatchRequest || isMatchRunning"
                         @click="fetchMatches(false)"
                     >
                         Fetch new matches
@@ -482,7 +482,7 @@
                         variant="info"
                         class="ml-auto"
                         data-accesskey="r"
-                        :disabled="inUploadRankings"
+                        :disabled="inUploadRankings || isMatchRunning"
                         @click="uploadRankings"
                     >
                         Upload rankings
@@ -546,7 +546,7 @@
                     <div>
                         <b-button
                             variant="danger"
-                            :disabled="inMatchRequest"
+                            :disabled="inMatchRequest || isMatchRunning"
                             @click="fetchMatches(true)"
                         >
                             Purge and re-fetch all matches
@@ -559,7 +559,7 @@
                         <b-button
                             class="mr-2"
                             variant="info"
-                            :disabled="inUploadRankings"
+                            :disabled="inUploadRankings || isMatchRunning"
                             @click="uploadRankings"
                         >
                             Upload rankings (pit display)
@@ -640,7 +640,7 @@
                         data-accesskey="e"
                         accesskey="e"
                         title="[e]"
-                        :disabled="inMatchRequest"
+                        :disabled="inMatchRequest || isMatchRunning"
                         @click="refetchMatches"
                     >
                         Re-fetch scores
@@ -937,6 +937,14 @@
                             Use server-side proxy for all requests
                         </b-form-checkbox>
                     </div>
+                </div>
+                <div class="row mb-2 form-inline">
+                    <b-button
+                        variant="danger"
+                        @click="lastFieldState=null"
+                    >
+                        Reset field status
+                    </b-button> if buttons are disabled due to status being stuck in a match
                 </div>
                 <hr>
                 <h2>FMS options</h2>
@@ -1441,6 +1449,9 @@ export default {
         },
         fieldStateMessage() {
             return this.lastFieldState ? utils.describeFieldState(this.lastFieldState) : 'No Field Status Available';
+        },
+        isMatchRunning() {
+            return this.lastFieldState && utils.isFieldStateInMatch(this.lastFieldState);
         },
     },
     watch: {
