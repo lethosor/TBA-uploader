@@ -16,11 +16,14 @@ import (
 	"nhooyr.io/websocket"
 )
 
+var ws_global_mutex sync.Mutex
 var ws_global_state map[string]interface{}
 var ws_global_server *chatServer
 
 func wsStateInit(r *mux.Router, prefix string) {
+	ws_global_mutex.Lock()
 	ws_global_state = make(map[string]interface{})
+	ws_global_mutex.Unlock()
 	ws_global_server = newChatServer()
 	ws_global_server.logf = func(f string, v ...interface{}) {
 		logger.Printf("WS.Global: "+f, v...)
@@ -38,11 +41,13 @@ func wsStatePostMessage(w http.ResponseWriter, r *http.Request) {
 		apiPanicBadRequest("invalid json: %v", err)
 	}
 
+	ws_global_mutex.Lock()
 	for k, v := range msg {
 		ws_global_state[k] = v
 	}
-
 	body, err = json.Marshal(ws_global_state)
+	ws_global_mutex.Unlock()
+
 	if err != nil {
 		apiPanicInternal("could not serialize message body: %v", err)
 	}
@@ -177,7 +182,9 @@ func (cs *chatServer) subscribe(ctx context.Context, c *websocket.Conn, remote_a
 	cs.addSubscriber(s)
 	defer cs.deleteSubscriber(s)
 
+	ws_global_mutex.Lock()
 	initial_state, _ := json.Marshal(ws_global_state)
+	ws_global_mutex.Unlock()
 	s.msgs <- initial_state
 
 	for {
