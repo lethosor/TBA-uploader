@@ -10,6 +10,7 @@
             </span>
         </h2>
         <b-card
+            v-if="uiOptions.showFieldState"
             no-body
             :class="'text-center text-light mb-1 ' + fieldStateClass"
         >
@@ -925,6 +926,13 @@
                 </div>
                 <div class="row">
                     <div class="col-sm-12">
+                        <b-form-checkbox v-model="uiOptions.showFieldState">
+                            Show field status (requires integration)
+                        </b-form-checkbox>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
                         <b-form-checkbox v-model="uiOptions.useProxy">
                             Use server-side proxy for all requests
                         </b-form-checkbox>
@@ -1284,6 +1292,7 @@ export default {
 
         uiOptions: $.extend({
             showAllLevels: false,
+            showFieldState: true,
             useProxy: true,
         }, utils.safeParseLocalStorageObject('uiOptions')),
         eventExtras: utils.safeParseLocalStorageObject('eventExtras'),
