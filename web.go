@@ -602,6 +602,7 @@ func RunWebServer(port int, web_folder string) {
 	handleFuncWrapper(r, "/api/media/upload", apiUploadMedia)
 	handleFuncWrapper(r, "/api/report/fetch", apiFetchReport)
 	handleFuncWrapper(r, "/api/proxy", apiProxy)
+	wsStateInit(r, "/ws")
 	r.PathPrefix("/").Handler(http.FileServer(web_files))
 	addr := fmt.Sprintf(":%d", port)
 	logger.Printf("Serving on %s\n", addr)

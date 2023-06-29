@@ -1149,6 +1149,7 @@ import {
 } from 'src/consts.js';
 import Reports from 'src/reports.js';
 import Schedule from 'src/schedule.js';
+import SocketConnection from 'src/SocketConnection.js';
 import tba from 'src/tba.js';
 import utils from 'src/utils.js';
 
@@ -1261,6 +1262,8 @@ export default {
         fmsConfig: window.FMS_CONFIG || {},
         fmsConfigError: '',
         selectedTab: utils.safeParseLocalStorageInteger('lastTab', 0),
+        sock: SocketConnection(),
+
         events: Object.keys(STORED_EVENTS).sort(),
         selectedEvent: localStorage.getItem('selectedEvent') || '',
         addEventUI: makeAddEventUI(),
@@ -1452,6 +1455,8 @@ export default {
             this.initEvent(this.selectedEvent);
             this.fetchEventData();
         }
+
+        this.sock.setUrl('ws://' + location.host + '/ws/state/subscribe');
 
         $.get('/README.md', function(readme) {
             // remove first line (header)
