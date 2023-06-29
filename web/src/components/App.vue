@@ -1960,9 +1960,8 @@ export default {
             if (fieldState == FIELD_STATE.WaitingForPostResults) {
                 await this.fetchMatches();
             } else if (
-                fieldState == FIELD_STATE.WaitingForPrestart ||
                 fieldState == FIELD_STATE.TournamentLevelComplete ||
-                this.lastFieldState == FIELD_STATE.WaitingForPostResults
+                (fieldState == FIELD_STATE.WaitingForPrestart && this.lastFieldState == FIELD_STATE.WaitingForPostResults)
             ) {
                 if (!this.autoUploadMatches) {
                     return;
