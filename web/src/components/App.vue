@@ -426,6 +426,7 @@
 
             <b-tab
                 v-if="eventSelected"
+                ref="matchPlayTab"
                 title="Match play"
             >
                 <div class="form-inline">
@@ -1954,6 +1955,9 @@ export default {
         },
         handleMatchesFromFieldStateChange: async function(fieldState) {
             if (!this.selectedEvent) {
+                return;
+            }
+            if (!app.$refs.matchPlayTab.tabClasses[0].active) {
                 return;
             }
 
