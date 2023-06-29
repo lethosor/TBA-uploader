@@ -488,7 +488,7 @@
                 </p>
                 <div v-if="isQual || isPlayoff">
                     <b-form-checkbox
-                        v-model="autoFetchMatches"
+                        v-model="autoUploadMatches"
                         name="check-button"
                         switch
                     >
@@ -1145,6 +1145,7 @@ import api from 'src/api.js';
 import {
     BRACKET_NAME,
     BRACKET_TYPE,
+    FIELD_STATE,
     MATCH_LEVEL,
 } from 'src/consts.js';
 import Reports from 'src/reports.js';
@@ -1262,7 +1263,9 @@ export default {
         fmsConfig: window.FMS_CONFIG || {},
         fmsConfigError: '',
         selectedTab: utils.safeParseLocalStorageInteger('lastTab', 0),
+
         sock: SocketConnection(),
+        lastFieldState: null,
 
         events: Object.keys(STORED_EVENTS).sort(),
         selectedEvent: localStorage.getItem('selectedEvent') || '',
@@ -1306,8 +1309,7 @@ export default {
         inMatchAdvanced: false,
         advSelectedMatch: '',
         advMatchError: '',
-        autoFetchMatches: false,
-        autoFetchMatchInterval: null,
+        autoUploadMatches: false,
 
         inEditMatch: false,
         matchEditing: null,
@@ -1440,15 +1442,6 @@ export default {
             },
             deep: true,
         },
-        autoFetchMatches: function() {
-            if (this.autoFetchMatchInterval !== null) {
-                clearInterval(this.autoFetchMatchInterval);
-                this.autoFetchMatchInterval = null;
-            }
-            if (this.autoFetchMatches) {
-                this.autoFetchMatchInterval = setInterval(this.autoFetchMatchCallback.bind(this), 60 * 1000);
-            }
-        },
     },
     mounted: function() {
         if (this.selectedEvent) {
@@ -1457,6 +1450,12 @@ export default {
         }
 
         this.sock.setUrl('ws://' + location.host + '/ws/state/subscribe');
+        this.sock.on('message', (event) => {
+            const data = JSON.parse(event.data);
+            if (data.field_state !== undefined) {
+                this.onFieldStateUpdate(data.field_state);
+            }
+        });
 
         $.get('/README.md', function(readme) {
             // remove first line (header)
@@ -1492,6 +1491,13 @@ export default {
         },
         tbaApiCurrentEventRequest: function(route) {
             return tbaApiEventRequest(this.selectedEvent, route, this.uiOptions.useProxy);
+        },
+
+        onFieldStateUpdate: async function(fieldState) {
+            if (fieldState != this.lastFieldState) {
+                this.handleMatchesFromFieldStateChange(fieldState);
+            }
+            this.lastFieldState = fieldState;
         },
 
         addEvent: function() {
@@ -1906,22 +1912,28 @@ export default {
                 this.inMatchRequest = false;
             }
         },
-        autoFetchMatchCallback: async function() {
-            if (!this.autoFetchMatches) {
-                return;
-            }
-            if (!(this.isQual || this.isPlayoff)) {
-                return;
-            }
-            if (this.pendingMatches && this.pendingMatches.length) {
-                await this.refetchMatches();
-            }
-            await this.fetchMatches();
-            if (this.fetchedScorelessMatches) {
-                return;
-            }
-            if (this.pendingMatches.length) {
-                this.uploadMatches();
+        handleMatchesFromFieldStateChange: async function(fieldState) {
+            if (fieldState == FIELD_STATE.WaitingForPostResults) {
+                await this.fetchMatches();
+            } else if (
+                fieldState == FIELD_STATE.WaitingForPrestart ||
+                fieldState == FIELD_STATE.TournamentLevelComplete ||
+                this.lastFieldState == FIELD_STATE.WaitingForPostResults
+            ) {
+                if (!this.autoUploadMatches) {
+                    return;
+                }
+                if (!(this.isQual || this.isPlayoff)) {
+                    // requires manual match code override
+                    return;
+                }
+                if (this.fetchedScorelessMatches) {
+                    return;
+                }
+
+                if (this.pendingMatches.length) {
+                    this.uploadMatches();
+                }
             }
         },
         generateMatchSummaries: function(matches) {

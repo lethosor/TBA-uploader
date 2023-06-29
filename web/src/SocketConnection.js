@@ -11,7 +11,6 @@ export default function SocketConnection(url) {
     };
 
     function triggerEvent(type, data) {
-        console.log(type, data);
         for (const handler of state.eventHandlers[type]) {
             handler(data);
         }
@@ -19,7 +18,7 @@ export default function SocketConnection(url) {
 
     function connect() {
         if (state.socket) {
-            console.warn('already have a socket');
+            console.warn('already have a socket');  // eslint-disable-line no-console
             return;
         }
         state.socket = new WebSocket(state.url);
@@ -55,7 +54,6 @@ export default function SocketConnection(url) {
             state.eventHandlers[type].push(handler);
         },
         setUrl: function(url) {
-            console.log('setUrl', url);
             if (url != state.url) {
                 state.url = url;
                 reconnect();
