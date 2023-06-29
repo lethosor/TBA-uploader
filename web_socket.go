@@ -22,7 +22,9 @@ var ws_global_server *chatServer
 func wsStateInit(r *mux.Router, prefix string) {
 	ws_global_state = make(map[string]interface{})
 	ws_global_server = newChatServer()
-	ws_global_server.logf = log.New(logger.Writer(), "WS.Global", logger.Flags()).Printf
+	ws_global_server.logf = func(f string, v ...interface{}) {
+		logger.Printf("WS.Global: "+f, v...)
+	}
 
 	handleFuncWrapper(r, prefix+"/state/post", wsStatePostMessage)
 	handleFuncWrapper(r, prefix+"/state/subscribe", wsStateSubscribe)
@@ -78,6 +80,7 @@ type chatServer struct {
 
 	subscribersMu sync.Mutex
 	subscribers   map[*subscriber]struct{}
+	next_id       int
 }
 
 // newChatServer constructs a chatServer with the defaults.
@@ -117,7 +120,7 @@ func (cs *chatServer) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer c.Close(websocket.StatusInternalError, "")
 
-	err = cs.subscribe(r.Context(), c)
+	err = cs.subscribe(r.Context(), c, r.RemoteAddr)
 	if errors.Is(err, context.Canceled) {
 		return
 	}
@@ -158,8 +161,12 @@ func (cs *chatServer) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 //
 // It uses CloseRead to keep reading from the connection to process control
 // messages and cancel the context if the connection drops.
-func (cs *chatServer) subscribe(ctx context.Context, c *websocket.Conn) error {
+func (cs *chatServer) subscribe(ctx context.Context, c *websocket.Conn, remote_addr string) error {
 	ctx = c.CloseRead(ctx)
+
+	id := cs.next_id
+	cs.next_id++
+	cs.logf("conn %d open: %s", id, remote_addr)
 
 	s := &subscriber{
 		msgs: make(chan []byte, cs.subscriberMessageBuffer),
@@ -178,9 +185,11 @@ func (cs *chatServer) subscribe(ctx context.Context, c *websocket.Conn) error {
 		case msg := <-s.msgs:
 			err := writeTimeout(ctx, time.Second*5, c, msg)
 			if err != nil {
+				cs.logf("conn %d close: write failed: %v", id, err)
 				return err
 			}
 		case <-ctx.Done():
+			cs.logf("conn %d close: context closed: %v", id, ctx.Err())
 			return ctx.Err()
 		}
 	}
