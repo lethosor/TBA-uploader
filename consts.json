@@ -19,6 +19,7 @@
         "BRACKET_2_TEAM": 9,
         "DOUBLE_ELIM_8_TEAM": 10,
         "DOUBLE_ELIM_4_TEAM": 11,
+        "DOUBLE_ELIM_7_TEAM": 1001,
     },
     "BRACKET_NAME": {
         "BRACKET_8_TEAM": "Elimination Bracket (8 Alliances)",
@@ -33,5 +34,6 @@
         "BRACKET_2_TEAM": "Elimination Bracket (2 Alliances)",
         "DOUBLE_ELIM_8_TEAM": "Double Elimination Bracket (8 Alliances)",
         "DOUBLE_ELIM_4_TEAM": "Double Elimination Bracket (4 Alliances)",
+        "DOUBLE_ELIM_7_TEAM": "Double Elimination Bracket (7 Alliances)",
     },
 }

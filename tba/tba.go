@@ -66,6 +66,10 @@ var playoffRounds = map[int][]playoffRoundInfo{
 		{level: "sf", sets: 5, matches_per_set: 1},
 		{level: "f", sets: 1, matches_per_set: 6},
 	},
+	BRACKET_TYPE_DOUBLE_ELIM_7_TEAM: {
+		{level: "sf", sets: 11, matches_per_set: 1},
+		{level: "f", sets: 1, matches_per_set: 6},
+	},
 	BRACKET_TYPE_CUSTOM: {},
 }
 
@@ -96,4 +100,12 @@ func GetBracket(bracket_type int) Bracket {
 		cachedBrackets[bracket_type] = bracket
 	}
 	return bracket
+}
+
+func GetKnownBrackets() map[int]Bracket {
+	brackets := make(map[int]Bracket)
+	for k := range playoffRounds {
+		brackets[k] = GetBracket(k)
+	}
+	return brackets
 }

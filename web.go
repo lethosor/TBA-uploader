@@ -158,14 +158,7 @@ func jsFMSConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func jsBrackets(w http.ResponseWriter, r *http.Request) {
-	brackets := make(map[int]tba.Bracket)
-	// todo: figure out proper bounds
-	for i := 0; i < 100; i++ {
-		bracket := tba.GetBracket(i)
-		if bracket != nil {
-			brackets[i] = bracket
-		}
-	}
+	brackets := tba.GetKnownBrackets()
 
 	out, err := json.Marshal(brackets)
 	if err != nil {
