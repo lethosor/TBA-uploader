@@ -9,6 +9,13 @@
                 >{{ selectedEvent }}</a>
             </span>
         </h2>
+        <b-card
+            v-if="uiOptions.showFieldState"
+            no-body
+            :class="'text-center text-light mb-1 ' + fieldStateClass"
+        >
+            {{ fieldStateMessage }}
+        </b-card>
 
         <b-tabs v-model="selectedTab">
             <b-tab title="Event setup">
@@ -230,7 +237,7 @@
                     >
                         <b-button
                             variant="success"
-                            :disabled="inTeamsRequest"
+                            :disabled="inTeamsRequest || isMatchRunning"
                             @click="fetchTeamsReport"
                         >
                             Fetch FMS report
@@ -323,7 +330,7 @@
                         <br>
                         <b-button
                             variant="success"
-                            @click="fetchScheduleReport"
+                            @click="fetchScheduleReport || isMatchRunning"
                         >
                             Fetch FMS report
                         </b-button>
@@ -419,6 +426,7 @@
 
             <b-tab
                 v-if="eventSelected"
+                ref="matchPlayTab"
                 title="Match play"
             >
                 <div class="form-inline">
@@ -458,7 +466,7 @@
                     <b-button
                         variant="success"
                         data-accesskey="f"
-                        :disabled="inMatchRequest"
+                        :disabled="inMatchRequest || isMatchRunning"
                         @click="fetchMatches(false)"
                     >
                         Fetch new matches
@@ -475,7 +483,7 @@
                         variant="info"
                         class="ml-auto"
                         data-accesskey="r"
-                        :disabled="inUploadRankings"
+                        :disabled="inUploadRankings || isMatchRunning"
                         @click="uploadRankings"
                     >
                         Upload rankings
@@ -488,7 +496,7 @@
                 </p>
                 <div v-if="isQual || isPlayoff">
                     <b-form-checkbox
-                        v-model="autoFetchMatches"
+                        v-model="autoUploadMatches"
                         name="check-button"
                         switch
                     >
@@ -539,7 +547,7 @@
                     <div>
                         <b-button
                             variant="danger"
-                            :disabled="inMatchRequest"
+                            :disabled="inMatchRequest || isMatchRunning"
                             @click="fetchMatches(true)"
                         >
                             Purge and re-fetch all matches
@@ -552,7 +560,7 @@
                         <b-button
                             class="mr-2"
                             variant="info"
-                            :disabled="inUploadRankings"
+                            :disabled="inUploadRankings || isMatchRunning"
                             @click="uploadRankings"
                         >
                             Upload rankings (pit display)
@@ -633,7 +641,7 @@
                         data-accesskey="e"
                         accesskey="e"
                         title="[e]"
-                        :disabled="inMatchRequest"
+                        :disabled="inMatchRequest || isMatchRunning"
                         @click="refetchMatches"
                     >
                         Re-fetch scores
@@ -919,10 +927,25 @@
                 </div>
                 <div class="row">
                     <div class="col-sm-12">
+                        <b-form-checkbox v-model="uiOptions.showFieldState">
+                            Show field status (requires integration)
+                        </b-form-checkbox>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
                         <b-form-checkbox v-model="uiOptions.useProxy">
                             Use server-side proxy for all requests
                         </b-form-checkbox>
                     </div>
+                </div>
+                <div class="row mb-2 form-inline">
+                    <b-button
+                        variant="danger"
+                        @click="lastFieldState=null"
+                    >
+                        Reset field status
+                    </b-button> if buttons are disabled due to status being stuck in a match
                 </div>
                 <hr>
                 <h2>FMS options</h2>
@@ -1125,6 +1148,7 @@ import {
     BAlert,
     BButton,
     BButtonClose,
+    BCard,
     BCol,
     BFormCheckbox,
     BFormGroup,
@@ -1145,10 +1169,12 @@ import api from 'src/api.js';
 import {
     BRACKET_NAME,
     BRACKET_TYPE,
+    FIELD_STATE,
     MATCH_LEVEL,
 } from 'src/consts.js';
 import Reports from 'src/reports.js';
 import Schedule from 'src/schedule.js';
+import SocketConnection from 'src/SocketConnection.js';
 import tba from 'src/tba.js';
 import utils from 'src/utils.js';
 
@@ -1240,6 +1266,7 @@ export default {
         BAlert,
         BButton,
         BButtonClose,
+        BCard,
         BCol,
         BFormCheckbox,
         BFormGroup,
@@ -1261,6 +1288,10 @@ export default {
         fmsConfig: window.FMS_CONFIG || {},
         fmsConfigError: '',
         selectedTab: utils.safeParseLocalStorageInteger('lastTab', 0),
+
+        sock: SocketConnection(),
+        lastFieldState: null,
+
         events: Object.keys(STORED_EVENTS).sort(),
         selectedEvent: localStorage.getItem('selectedEvent') || '',
         addEventUI: makeAddEventUI(),
@@ -1270,6 +1301,7 @@ export default {
 
         uiOptions: $.extend({
             showAllLevels: false,
+            showFieldState: true,
             useProxy: true,
         }, utils.safeParseLocalStorageObject('uiOptions')),
         eventExtras: utils.safeParseLocalStorageObject('eventExtras'),
@@ -1303,8 +1335,7 @@ export default {
         inMatchAdvanced: false,
         advSelectedMatch: '',
         advMatchError: '',
-        autoFetchMatches: false,
-        autoFetchMatchInterval: null,
+        autoUploadMatches: false,
 
         inEditMatch: false,
         matchEditing: null,
@@ -1408,6 +1439,21 @@ export default {
                 return cells;
             });
         },
+        fieldStateClass() {
+            if (this.lastFieldState) {
+                if (this.lastFieldState == FIELD_STATE.MatchCancelled) {
+                    return 'bg-danger';
+                }
+                return (utils.isFieldStateInMatch(this.lastFieldState)) ? 'bg-success' : 'bg-primary';
+            }
+            return 'bg-secondary';
+        },
+        fieldStateMessage() {
+            return this.lastFieldState ? utils.describeFieldState(this.lastFieldState) : 'No Field Status Available';
+        },
+        isMatchRunning() {
+            return this.lastFieldState && utils.isFieldStateInMatch(this.lastFieldState);
+        },
     },
     watch: {
         selectedTab: function(tab) {
@@ -1437,21 +1483,20 @@ export default {
             },
             deep: true,
         },
-        autoFetchMatches: function() {
-            if (this.autoFetchMatchInterval !== null) {
-                clearInterval(this.autoFetchMatchInterval);
-                this.autoFetchMatchInterval = null;
-            }
-            if (this.autoFetchMatches) {
-                this.autoFetchMatchInterval = setInterval(this.autoFetchMatchCallback.bind(this), 60 * 1000);
-            }
-        },
     },
     mounted: function() {
         if (this.selectedEvent) {
             this.initEvent(this.selectedEvent);
             this.fetchEventData();
         }
+
+        this.sock.setUrl('ws://' + location.host + '/ws/state/subscribe');
+        this.sock.on('message', (event) => {
+            const data = JSON.parse(event.data);
+            if (data.field_state !== undefined) {
+                this.onFieldStateUpdate(data.field_state);
+            }
+        });
 
         $.get('/README.md', function(readme) {
             // remove first line (header)
@@ -1487,6 +1532,13 @@ export default {
         },
         tbaApiCurrentEventRequest: function(route) {
             return tbaApiEventRequest(this.selectedEvent, route, this.uiOptions.useProxy);
+        },
+
+        onFieldStateUpdate: async function(fieldState) {
+            if (fieldState != this.lastFieldState) {
+                this.handleMatchesFromFieldStateChange(fieldState);
+            }
+            this.lastFieldState = fieldState;
         },
 
         addEvent: function() {
@@ -1901,22 +1953,34 @@ export default {
                 this.inMatchRequest = false;
             }
         },
-        autoFetchMatchCallback: async function() {
-            if (!this.autoFetchMatches) {
+        handleMatchesFromFieldStateChange: async function(fieldState) {
+            if (!this.selectedEvent) {
                 return;
             }
-            if (!(this.isQual || this.isPlayoff)) {
+            if (!app.$refs.matchPlayTab.tabClasses[0].active) {
                 return;
             }
-            if (this.pendingMatches && this.pendingMatches.length) {
-                await this.refetchMatches();
-            }
-            await this.fetchMatches();
-            if (this.fetchedScorelessMatches) {
-                return;
-            }
-            if (this.pendingMatches.length) {
-                this.uploadMatches();
+
+            if (fieldState == FIELD_STATE.WaitingForPostResults) {
+                await this.fetchMatches();
+            } else if (
+                fieldState == FIELD_STATE.TournamentLevelComplete ||
+                (fieldState == FIELD_STATE.WaitingForPrestart && this.lastFieldState == FIELD_STATE.WaitingForPostResults)
+            ) {
+                if (!this.autoUploadMatches) {
+                    return;
+                }
+                if (!(this.isQual || this.isPlayoff)) {
+                    // requires manual match code override
+                    return;
+                }
+                if (this.fetchedScorelessMatches) {
+                    return;
+                }
+
+                if (this.pendingMatches.length) {
+                    this.uploadMatches();
+                }
             }
         },
         generateMatchSummaries: function(matches) {

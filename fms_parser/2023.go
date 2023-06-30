@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"runtime/debug"
 	"strconv"
 	"strings"
 
@@ -285,7 +286,7 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 	dom.Find("tr").Each(func(i int, s *goquery.Selection) {
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Printf("Parse error in %s: %s\n", filename, r)
+				fmt.Printf("Parse error in %s: %s\n%s", filename, r, debug.Stack())
 				parse_errors = append(parse_errors, fmt.Sprint(r))
 			}
 		}()

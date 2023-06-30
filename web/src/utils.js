@@ -1,3 +1,5 @@
+import { FIELD_STATE } from './consts';
+
 function parseGenericResponseError(res) {
     if (parseInt(res.status) >= 400) {
         return 'Connection failed with code ' + res.status;
@@ -8,7 +10,7 @@ function parseGenericResponseError(res) {
     return String(res);
 }
 
-export default Object.freeze({
+const utils = Object.freeze({
     safeParseLocalStorageObject(key) {
         var res;
         try {
@@ -98,4 +100,43 @@ export default Object.freeze({
         }
         return $.ajax(options);
     },
+
+    FIELD_STATE_MESSAGES: Object.freeze({
+        [FIELD_STATE.WaitingForPrestart]:   "Ready to Pre-Start",
+        [FIELD_STATE.WaitingForPrestartTO]: "Ready to Pre-Start?",
+        [FIELD_STATE.Prestarting]: "Pre-Starting",
+        [FIELD_STATE.PrestartingTO]: "Pre-Starting?",
+        [FIELD_STATE.WaitingForSetAudience]: "Pre-Start Complete. Waiting for Audience Display",
+        [FIELD_STATE.WaitingForSetAudienceTO]: "Pre-Start Complete? Waiting for Audience Display",
+        [FIELD_STATE.WaitingForMatchPreview]: "Pre-Start Complete. Waiting for Match Preview",
+        [FIELD_STATE.WaitingForMatchPreviewTO]: "Pre-Start Complete? Waiting for Match Preview",
+        [FIELD_STATE.WaitingForMatchReady]: "Waiting for Teams",
+        [FIELD_STATE.WaitingForMatchStart]: "Match Ready",
+        [FIELD_STATE.GameSpecific]: "Sending Game-Specific Data",
+        [FIELD_STATE.MatchAuto]: "Match Running (Auto)",
+        [FIELD_STATE.MatchTransition]: "Match Transitioning",
+        [FIELD_STATE.MatchTeleop]: "Match Running (Teleop)",
+        [FIELD_STATE.WaitingForCommit]: "Match Over. Waiting for Commit",
+        [FIELD_STATE.WaitingForPostResults]: "Match Over. Waiting for Post-Result",
+        [FIELD_STATE.TournamentLevelComplete]: "Tournament Level Complete",
+        [FIELD_STATE.MatchCancelled]: "Match Aborted",
+    }),
+
+    describeFieldState(fieldState) {
+        if (fieldState === undefined) {
+            return "Unknown";
+        }
+        return utils.FIELD_STATE_MESSAGES[fieldState] || ("Unknown: " + fieldState);
+    },
+
+    isFieldStateInMatch(fieldState) {
+        return Boolean({
+            [FIELD_STATE.GameSpecific]: true,
+            [FIELD_STATE.MatchAuto]: true,
+            [FIELD_STATE.MatchTransition]: true,
+            [FIELD_STATE.MatchTeleop]: true,
+        }[fieldState]);
+    },
 });
+
+export default utils;
