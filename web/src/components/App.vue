@@ -330,7 +330,7 @@
                         <br>
                         <b-button
                             variant="success"
-                            :disabled="isMatchRunning"
+                            :disabled="inScheduleRequest || isMatchRunning"
                             @click="fetchScheduleReport"
                         >
                             Fetch FMS report
