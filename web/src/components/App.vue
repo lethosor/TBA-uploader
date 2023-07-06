@@ -734,6 +734,15 @@
                 title="Alliances"
             >
                 <div class="form-inline mb-2">
+                    <b-button
+                        variant="success"
+                        :disabled="inAllianceRequest || isMatchRunning"
+                        @click="fetchAllianceReport"
+                    >
+                        Fetch from FMS
+                    </b-button>
+                </div>
+                <div class="form-inline mb-2">
                     <label># Alliances:
                         <b-form-select
                             v-model="eventExtras[selectedEvent].alliance_count"
@@ -2439,15 +2448,30 @@ export default {
             this.$set(this.alliances, this.selectedEvent, newAlliances);
             this.saveAlliances();
         },
-        fetchAlliances: async function() {
+        fetchAllianceReport: async function() {
             this.inAllianceRequest = true;
             this.allianceError = '';
             try {
-                const response = await this.tbaApiCurrentEventRequest('alliances');
-                const newAlliances = response.map(a => a.picks.map(t => Number(t.replace('frc', ''))));
-                this.eventExtras[this.selectedEvent].alliance_count = newAlliances.length;
-                this.eventExtras[this.selectedEvent].alliance_size = Math.max(...newAlliances.map(a => a.length));
-                this.$set(this.alliances, this.selectedEvent, newAlliances);
+                const response = await fetchReport(Reports.Type.PLAYOFF_RANKINGS);
+                const cells = Reports.convertToCells(response);
+                const headerRowIndex = cells.findIndex(row => row.includes('Alliance'));
+                if (!cells[headerRowIndex]) {
+                    throw 'could not find header row containing "Alliance" header';
+                }
+                const rows = utils.parseCSVObjects(cells, headerRowIndex);
+                const newAlliances = [];
+                for (const row of rows) {
+                    if (!row.Teams) {
+                        continue;
+                    }
+                    const allianceNumber = row.Alliance.match(/A(\d+)/)?.[1];
+                    if (!allianceNumber) {
+                        throw 'invalid alliance number: ' + row.Alliance;
+                    }
+                    const teams = Array.from(row.Teams.matchAll(/\d+/g)).map(match => match[0]);
+                    newAlliances[allianceNumber - 1] = teams;
+                }
+                this._setAlliances(newAlliances);
             }
             catch (e) {
                 this.allianceError = utils.parseErrorJSON(e);
@@ -2455,6 +2479,26 @@ export default {
             finally {
                 this.inAllianceRequest = false;
             }
+        },
+        fetchAlliances: async function() {
+            this.inAllianceRequest = true;
+            this.allianceError = '';
+            try {
+                const response = await this.tbaApiCurrentEventRequest('alliances');
+                const newAlliances = response.map(a => a.picks.map(t => Number(t.replace('frc', ''))));
+                this._setAlliances(newAlliances);
+            }
+            catch (e) {
+                this.allianceError = utils.parseErrorJSON(e);
+            }
+            finally {
+                this.inAllianceRequest = false;
+            }
+        },
+        _setAlliances: function(newAlliances) {
+            this.eventExtras[this.selectedEvent].alliance_count = newAlliances.length;
+            this.eventExtras[this.selectedEvent].alliance_size = Math.max(...newAlliances.map(a => a.length));
+            this.$set(this.alliances, this.selectedEvent, newAlliances);
         },
         clearAlliances: function() {
             this.alliances[this.selectedEvent] = [];
