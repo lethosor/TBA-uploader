@@ -1974,7 +1974,7 @@ export default {
             if (!this.selectedEvent) {
                 return;
             }
-            if (!app.$refs.matchPlayTab.tabClasses[0].active) {
+            if (!this.$refs.matchPlayTab.tabClasses[0].active) {
                 return;
             }
 
