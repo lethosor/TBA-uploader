@@ -13,15 +13,16 @@ type FMSParseConfig struct {
 	EnabledExtraRps []bool
 }
 
+var parsers = map[int]func(string, FMSParseConfig) (map[string]interface{}, error){
+	2018: parseHTMLtoJSON2018,
+	2019: parseHTMLtoJSON2019,
+	2022: parseHTMLtoJSON2022,
+	2023: parseHTMLtoJSON2023,
+}
+
 func ParseHTMLtoJSON(year int, filename string, config FMSParseConfig) (map[string]interface{}, error) {
-	if year == 2018 {
-		return parseHTMLtoJSON2018(filename, config)
-	} else if year == 2019 {
-		return parseHTMLtoJSON2019(filename, config)
-	} else if year == 2022 {
-		return parseHTMLtoJSON2022(filename, config)
-	} else if year == 2023 {
-		return parseHTMLtoJSON2023(filename, config)
+	if parser, ok := parsers[year]; ok {
+		return parser(filename, config)
 	} else {
 		return nil, fmt.Errorf("ParseHTMLtoJSON: unsupported year: %d", year)
 	}
