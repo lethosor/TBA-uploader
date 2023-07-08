@@ -30,6 +30,20 @@ type ExtraMatchInfo struct {
 
 type ExtraMatchAllianceInfo interface{}
 
+type extraMatchAllianceInfoCommon struct {
+	Dqs        []string `json:"dqs"`
+	Surrogates []string `json:"surrogates"`
+	ExtraRps   []bool   `json:"extra_rps"`
+}
+
+func makeExtraMatchAllianceInfoCommon() extraMatchAllianceInfoCommon {
+	return extraMatchAllianceInfoCommon{
+		Dqs:        make([]string, 0),
+		Surrogates: make([]string, 0),
+		ExtraRps:   make([]bool, 0),
+	}
+}
+
 var extraAllianceInfoCtors = map[int]func() ExtraMatchAllianceInfo{
 	2018: func() ExtraMatchAllianceInfo {
 		return makeExtraMatchAllianceInfo2018()

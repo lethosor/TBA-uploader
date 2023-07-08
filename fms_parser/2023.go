@@ -29,14 +29,12 @@ func makeFmsScoreInfo2023() fmsScoreInfo2023 {
 }
 
 type extraMatchAllianceInfo2023 struct {
-	Dqs        []string `json:"dqs"`
-	Surrogates []string `json:"surrogates"`
+	extraMatchAllianceInfoCommon
 }
 
 func makeExtraMatchAllianceInfo2023() extraMatchAllianceInfo2023 {
 	return extraMatchAllianceInfo2023{
-		Dqs:        make([]string, 0),
-		Surrogates: make([]string, 0),
+		extraMatchAllianceInfoCommon: makeExtraMatchAllianceInfoCommon(),
 	}
 }
 
