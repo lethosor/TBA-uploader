@@ -222,6 +222,14 @@
                         >
                             This playoff type is not supported. Schedule and match uploads will fail.
                         </b-alert>
+
+                        <h3 class="mt-2">Extra Ranking Points</h3>
+                        <form
+                            v-for="(_, i) in eventExtras[selectedEvent].enabled_extra_rps"
+                            class="form-inline"
+                        >
+                            <b-form-checkbox v-model="eventExtras[selectedEvent].enabled_extra_rps[i]">Enable extra RP {{ i + 1 }}</b-form-checkbox>
+                        </form>
                     </div>
                 </div>
             </b-tab>
@@ -1116,6 +1124,25 @@
                         </tr>
                     </tbody>
 
+                    <tbody v-if="anyEnabledExtraRps">
+                        <tr>
+                            <td
+                                v-for="color in ['red', 'blue']"
+                                :key="color"
+                                :class="color"
+                            >
+                                <b-form-checkbox
+                                    v-for="(is_enabled, i) in enabledExtraRps"
+                                    v-if="is_enabled"
+                                    :key="i"
+                                    v-model="matchEditData.extra_rps[color][i]"
+                                >
+                                    Extra RP {{ i + 1 }}
+                                </b-form-checkbox>
+                            </td>
+                        </tr>
+                    </tbody>
+
                     <tbody v-if="isPlayoff">
                         <tr>
                             <td class="red">
@@ -1207,6 +1234,8 @@ import 'src/app.css';
 const STORED_EVENTS = utils.safeParseLocalStorageObject('storedEvents');
 const STORED_ALLIANCES = utils.safeParseLocalStorageObject('alliances');
 const STORED_AWARDS = utils.safeParseLocalStorageObject('awards');
+
+const DEFAULT_ENABLED_EXTRA_RPS = Object.freeze([false, false]);
 
 function sendApiRequest(url, event, body) {
     return $.ajax({
@@ -1432,6 +1461,12 @@ export default {
             const playoff_type = this.eventExtras[this.selectedEvent].playoff_type;
             return Number.isFinite(playoff_type) ? playoff_type : BRACKET_TYPE.BRACKET_8_TEAM;
         },
+        enabledExtraRps: function() {
+            return this.eventExtras[this.selectedEvent].enabled_extra_rps || DEFAULT_ENABLED_EXTRA_RPS;
+        },
+        anyEnabledExtraRps: function() {
+            return this.enabledExtraRps.find(Boolean);
+        },
         schedulePendingMatchCells: function() {
             var addTeamCell = function(cells, match, color, i) {
                 var cls = {};
@@ -1623,6 +1658,7 @@ export default {
                 playoff_type: null,
                 alliance_count: 8,
                 alliance_size: 3,
+                enabled_extra_rps: DEFAULT_ENABLED_EXTRA_RPS,
             }, this.eventExtras[event]));
 
             if (!this.alliances[event]) {
@@ -1931,6 +1967,7 @@ export default {
                     event: this.selectedEvent,
                     level: this.matchLevel,
                     playoff_type: this.eventPlayoffType,
+                    enabled_extra_rps: this.enabledExtraRps.join(','),
                     all: all ? '1' : '',
                 });
                 this.pendingMatches = JSON.parse(data);
@@ -2203,6 +2240,7 @@ export default {
                     teams: {},
                     flags: {},
                     text: {},
+                    extra_rps: {},
                 };
                 this.matchEditOverrideCode = Boolean(data.match_code_override);
                 ['blue', 'red'].forEach(function(color) {
@@ -2232,6 +2270,7 @@ export default {
                             };
                         }
                     }
+                    this.matchEditData.extra_rps[color] = data[color].extra_rps || DEFAULT_ENABLED_EXTRA_RPS.slice();
                 }.bind(this));
                 this.$refs.matchEditModal.show();
             }.bind(this))
@@ -2271,7 +2310,8 @@ export default {
                 return Object.assign({
                     dqs: findTeamKeysByFlag(color, 'dq'),
                     surrogates: findTeamKeysByFlag(color, 'surrogate'),
-                }, this.matchEditData.flags[color]);
+                }, this.matchEditData.flags[color],
+                this.anyEnabledExtraRps ? {extra_rps: this.matchEditData.extra_rps[color]} : null);
             }.bind(this);
             var data = {
                 blue: genExtraData('blue'),

@@ -100,6 +100,22 @@ func checkRequestQueryParamInt(r *http.Request, param string) int {
 	return res
 }
 
+func checkRequestQueryParamBoolArray(r *http.Request, param string) []bool {
+	str_val := checkRequestQueryParam(r, param)
+	str_parts := strings.Split(str_val, ",")
+	out := make([]bool, len(str_parts))
+	for i, s := range str_parts {
+		if s == "true" {
+			out[i] = true
+		} else if s == "false" {
+			out[i] = false
+		} else {
+			apiPanicBadRequest("invalid bool for parameter %s at index %d: %v", param, i, s)
+		}
+	}
+	return out
+}
+
 func parseEventYear(event string) int {
 	var year int
 	fmt.Sscanf(event, "%d", &year)
@@ -237,6 +253,7 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 	download_all := (r.URL.Query().Get("all") != "")
 	level := checkRequestLevel(r)
 	playoff_type := checkRequestQueryParamInt(r, "playoff_type")
+	enabled_extra_rps := checkRequestQueryParamBoolArray(r, "enabled_extra_rps")
 	var event_year = parseEventYear(r.URL.Query().Get("event"))
 	var match_folder = getMatchDownloadPath(level, r.URL.Query().Get("event"))
 	var files []string
@@ -275,7 +292,10 @@ func apiFetchMatches(w http.ResponseWriter, r *http.Request) {
 				is_playoff = (extra_info.MatchCodeOverride.Level != "qm")
 			}
 
-			match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], is_playoff)
+			match_info, err := fms_parser.ParseHTMLtoJSON(event_year, files[i], fms_parser.FMSParseConfig{
+				Playoff:         is_playoff,
+				EnabledExtraRps: enabled_extra_rps,
+			})
 			if err != nil {
 				apiPanicInternal("failed to parse %s: %s", fname, err)
 			}

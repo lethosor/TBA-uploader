@@ -69,7 +69,7 @@ func addManualFields2018(breakdown map[string]interface{}, info fmsScoreInfo2018
 	}
 }
 
-func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{}, error) {
+func parseHTMLtoJSON2018(filename string, config FMSParseConfig) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -375,8 +375,8 @@ func parseHTMLtoJSON2018(filename string, playoff bool) (map[string]interface{},
 	breakdown["blue"]["tba_gameData"] = gamedata
 	breakdown["red"]["tba_gameData"] = gamedata
 
-	addManualFields2018(breakdown["blue"], scoreInfo.blue, playoff, extra_info["blue"].InvertAuto)
-	addManualFields2018(breakdown["red"], scoreInfo.red, playoff, extra_info["red"].InvertAuto)
+	addManualFields2018(breakdown["blue"], scoreInfo.blue, config.Playoff, extra_info["blue"].InvertAuto)
+	addManualFields2018(breakdown["red"], scoreInfo.red, config.Playoff, extra_info["red"].InvertAuto)
 
 	if parse_error != "" {
 		return nil, fmt.Errorf("Parse error: %s", parse_error)

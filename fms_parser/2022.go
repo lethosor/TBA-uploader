@@ -100,7 +100,7 @@ var DEFAULT_BREAKDOWN_VALUES_2022 = map[string]any{
 	"totalPoints":             0,
 }
 
-func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{}, error) {
+func parseHTMLtoJSON2022(filename string, config FMSParseConfig) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -317,7 +317,7 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 		}
 	})
 
-	if playoff {
+	if config.Playoff {
 		// set bonus RPs to false since the row is absent
 		assignBreakdownAllianceFieldsConst(breakdown, "rp", 0)
 		for _, field := range RP_BADGE_NAMES_2022 {
@@ -325,8 +325,8 @@ func parseHTMLtoJSON2022(filename string, playoff bool) (map[string]interface{},
 		}
 	}
 
-	addManualFields2022(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
-	addManualFields2022(breakdown["red"], scoreInfo.red, extra_info["red"], playoff)
+	addManualFields2022(breakdown["blue"], scoreInfo.blue, extra_info["blue"], config.Playoff)
+	addManualFields2022(breakdown["red"], scoreInfo.red, extra_info["red"], config.Playoff)
 
 	if len(parse_errors) > 0 {
 		return nil, fmt.Errorf("Parse error (%d):\n%s", len(parse_errors), strings.Join(parse_errors, "\n"))

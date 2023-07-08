@@ -31,7 +31,7 @@ type testTbaMatchResult struct {
 
 func testParseSingleMatch(
 	t *testing.T,
-	parser func(filename string, playoff bool) (map[string]interface{}, error),
+	parser func(filename string, config FMSParseConfig) (map[string]interface{}, error),
 	fms_html_path string,
 	tba_json_path string,
 ) {
@@ -45,7 +45,7 @@ func testParseSingleMatch(
 	json.Unmarshal(json_contents, &tba_result)
 
 	is_playoff := (tba_result.CompLevel != "qm")
-	parsed_json, err := parser(fms_html_path, is_playoff)
+	parsed_json, err := parser(fms_html_path, FMSParseConfig{Playoff: is_playoff})
 	if err != nil {
 		t.Errorf("%s: %s", fms_html_path, err)
 		return
@@ -67,7 +67,7 @@ func testParseSingleMatch(
 
 func testParseMatchDir(
 	t *testing.T,
-	parser func(filename string, playoff bool) (map[string]interface{}, error),
+	parser func(filename string, config FMSParseConfig) (map[string]interface{}, error),
 	dirname string,
 ) {
 	all_files, err := ioutil.ReadDir(dirname)

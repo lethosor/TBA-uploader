@@ -182,7 +182,7 @@ func (self Community2023) assignLinksToBreakdown(breakdown map[string]interface{
 	breakdown[field] = links
 }
 
-func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{}, error) {
+func parseHTMLtoJSON2023(filename string, config FMSParseConfig) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -468,13 +468,20 @@ func parseHTMLtoJSON2023(filename string, playoff bool) (map[string]interface{},
 		}
 	})
 
-	if playoff {
+	if config.EnabledExtraRps != nil {
+		assignBreakdownExtraRps(breakdown, config.EnabledExtraRps, map[string][]bool{
+			"red":  extra_info["red"].ExtraRps,
+			"blue": extra_info["blue"].ExtraRps,
+		}, "extraRp")
+	}
+
+	if config.Playoff {
 		// set "rp" to 0 since the row is absent
 		assignBreakdownAllianceFieldsConst(breakdown, "rp", 0)
 	}
 
-	addManualFields2023(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
-	addManualFields2023(breakdown["red"], scoreInfo.red, extra_info["red"], playoff)
+	addManualFields2023(breakdown["blue"], scoreInfo.blue, extra_info["blue"], config.Playoff)
+	addManualFields2023(breakdown["red"], scoreInfo.red, extra_info["red"], config.Playoff)
 
 	if len(parse_errors) > 0 {
 		return nil, fmt.Errorf("Parse error (%d):\n%s", len(parse_errors), strings.Join(parse_errors, "\n"))

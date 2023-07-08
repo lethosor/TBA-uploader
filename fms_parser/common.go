@@ -8,15 +8,20 @@ import (
 	"github.com/lethosor/TBA-uploader/tba"
 )
 
-func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interface{}, error) {
+type FMSParseConfig struct {
+	Playoff         bool
+	EnabledExtraRps []bool
+}
+
+func ParseHTMLtoJSON(year int, filename string, config FMSParseConfig) (map[string]interface{}, error) {
 	if year == 2018 {
-		return parseHTMLtoJSON2018(filename, playoff)
+		return parseHTMLtoJSON2018(filename, config)
 	} else if year == 2019 {
-		return parseHTMLtoJSON2019(filename, playoff)
+		return parseHTMLtoJSON2019(filename, config)
 	} else if year == 2022 {
-		return parseHTMLtoJSON2022(filename, playoff)
+		return parseHTMLtoJSON2022(filename, config)
 	} else if year == 2023 {
-		return parseHTMLtoJSON2023(filename, playoff)
+		return parseHTMLtoJSON2023(filename, config)
 	} else {
 		return nil, fmt.Errorf("ParseHTMLtoJSON: unsupported year: %d", year)
 	}
@@ -211,6 +216,26 @@ func assignPenaltyFields(breakdowns map[string]map[string]interface{}, penalty_f
 	for alliance, cell := range groups {
 		for penalty_name, field := range penalty_fields {
 			breakdowns[alliance][field] = strings.Contains(cell.Text(), penalty_name)
+		}
+	}
+}
+
+func assignBreakdownExtraRps(breakdowns map[string]map[string]interface{}, enabled_extra_rps []bool, extra_rps map[string][]bool, field_prefix string) {
+	for _, color := range []string{"red", "blue"} {
+		alliance_extra_rp := 0
+		for i, enabled := range enabled_extra_rps {
+			if enabled {
+				alliance_has_rp := extra_rps[color][i]
+				breakdowns[color][fmt.Sprintf("extraRp%d", i+1)] = alliance_has_rp
+				if alliance_has_rp {
+					alliance_extra_rp++
+				}
+			}
+		}
+
+		existing_rp, ok := breakdowns[color]["rp"].(int)
+		if ok {
+			breakdowns[color]["rp"] = existing_rp + alliance_extra_rp
 		}
 	}
 }
