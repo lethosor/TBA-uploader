@@ -553,6 +553,13 @@
                         >
                             Purge and re-fetch all matches
                         </b-button>
+                        <b-button
+                            variant="danger"
+                            :disabled="inMatchRequest || isMatchRunning || !matchSummaries.length"
+                            @click="markAdvPendingMatchesUploaded"
+                        >
+                            Mark all pending matches uploaded
+                        </b-button>
                     </div>
 
                     <h4>Rankings Upload</h4>
@@ -2143,6 +2150,26 @@ export default {
             .fail(function(res) {
                 this.advMatchError = 'Receipt generation failed: ' + res.responseText;
             }.bind(this));
+        },
+        markAdvPendingMatchesUploaded: async function() {
+            if (!this.pendingMatches || !this.pendingMatches.length) {
+                return;
+            }
+            const match_ids = this.pendingMatches.map(match => match._fms_id);
+            this.inMatchRequest = true;
+            this.advMatchError = '';
+            try {
+                await sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
+                    this.selectedEvent, match_ids);
+            }
+            catch (e) {
+                this.advMatchError = 'Receipt generation failed: ' + utils.parseErrorText(e);
+                return;
+            }
+            finally {
+                this.inMatchRequest = false;
+            }
+            await this.fetchMatches();
         },
         createManualMatch: async function() {
             this.inMatchRequest = true;
