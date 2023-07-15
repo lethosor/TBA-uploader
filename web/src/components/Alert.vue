@@ -5,7 +5,14 @@
         dismissible
         @dismissed="$emit('input', '')"
     >
-        <span class="raw-message">{{ text }}</span>
+        <span
+            v-if="allowHtml"
+            v-html="text"
+        />
+        <span
+            v-else
+            class="raw-message"
+        >{{ text }}</span>
     </b-alert>
 </template>
 
@@ -29,6 +36,10 @@ export default {
         prefix: {
             type: String,
             default: '',
+        },
+        allowHtml: {
+            type: Boolean,
+            default: false,
         },
     },
     computed: {
