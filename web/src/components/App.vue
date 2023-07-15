@@ -1658,7 +1658,7 @@ export default {
                 playoff_type: null,
                 alliance_count: 8,
                 alliance_size: 3,
-                enabled_extra_rps: DEFAULT_ENABLED_EXTRA_RPS,
+                enabled_extra_rps: DEFAULT_ENABLED_EXTRA_RPS.slice(),
             }, this.eventExtras[event]));
 
             if (!this.alliances[event]) {
