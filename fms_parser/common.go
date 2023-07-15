@@ -226,7 +226,11 @@ func assignBreakdownExtraRps(breakdowns map[string]map[string]interface{}, enabl
 		alliance_extra_rp := 0
 		for i, enabled := range enabled_extra_rps {
 			if enabled {
-				alliance_has_rp := extra_rps[color][i]
+				alliance_has_rp := false
+				// extra_rps[color] is empty on first fetch
+				if i < len(extra_rps[color]) {
+					alliance_has_rp = extra_rps[color][i]
+				}
 				breakdowns[color][fmt.Sprintf("extraRp%d", i+1)] = alliance_has_rp
 				if alliance_has_rp {
 					alliance_extra_rp++
