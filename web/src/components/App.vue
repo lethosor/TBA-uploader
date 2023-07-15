@@ -495,7 +495,7 @@
                         :disabled="inUploadRankings || isMatchRunning"
                         @click="uploadRankings"
                     >
-                        Upload rankings
+                        <fragment v-if="anyEnabledExtraRps">Generate and </fragment>Upload rankings
                     </b-button>
                 </div>
                 <p>
@@ -516,6 +516,11 @@
                     v-model="rankingsError"
                     variant="danger"
                     prefix="Rankings:"
+                />
+                <alert
+                    v-model="rankingsGeneratedMessageHtml"
+                    allow-html
+                    variant="success"
                 />
                 <div v-if="inMatchAdvanced">
                     <hr>
@@ -553,7 +558,7 @@
                         </b-button>
                         <span class="warning">{{ advMatchError }}</span>
                     </div>
-                    <div>
+                    <div class="mb-2">
                         <b-button
                             variant="danger"
                             :disabled="inMatchRequest || isMatchRunning"
@@ -572,27 +577,56 @@
 
                     <h4>Rankings Upload</h4>
 
-                    <p>
-                        <b-button
-                            class="mr-2"
-                            variant="info"
-                            :disabled="inUploadRankings || isMatchRunning"
-                            @click="uploadRankings"
-                        >
-                            Upload rankings (pit display)
-                        </b-button>
-                        This is the normal ranking upload flow - unlikely to work unless the active tournament level in FMS is "Qualification".
-                    </p>
+                    <b-row class="mb-2">
+                        <b-col md="auto">
+                            <b-button
+                                class="mr-2"
+                                :variant="anyEnabledExtraRps ? 'danger' : 'info'"
+                                :disabled="inUploadRankings || isMatchRunning"
+                                @click="uploadRankingsFromFMS"
+                            >
+                                Upload rankings (pit display)
+                            </b-button>
+                        </b-col>
+                        <b-col>
+                            This is the normal ranking upload flow - unlikely to work unless the active tournament level in FMS is "Qualification".
+                            <strong
+                                v-if="anyEnabledExtraRps"
+                                class="warning"
+                            >This is inaccurate with extra ranking points enabled.</strong>
+                        </b-col>
+                    </b-row>
 
-                    <p>
-                        <b-button
-                            variant="success"
-                            :disabled="inUploadRankings"
-                            @click="generateRankingsReportFromTBA"
-                        >
-                            Generate rankings report from TBA
-                        </b-button>
-                    </p>
+                    <b-row class="mb-2">
+                        <b-col md="auto">
+                            <b-button
+                                class="mr-2"
+                                :variant="anyEnabledExtraRps ? 'info' : 'warning'"
+                                :disabled="inUploadRankings || isMatchRunning"
+                                @click="uploadRankingsFromTBA"
+                            >
+                                Upload rankings (generate from TBA match results)
+                            </b-button>
+                        </b-col>
+                        <b-col>
+                            This generates rankings from match results on TBA, which may be delayed by up to a minute for active events.
+                        </b-col>
+                    </b-row>
+
+                    <b-row class="mb-2">
+                        <b-col md="auto">
+                            <b-button
+                                variant="success"
+                                :disabled="inUploadRankings"
+                                @click="generateRankingsReportFromTBA"
+                            >
+                                Generate rankings report from TBA
+                            </b-button>
+                        </b-col>
+                        <b-col>
+                            This allows you to inspect rankings before uploading them.
+                        </b-col>
+                    </b-row>
 
                     <dropzone
                         ref="rankingsUploadDropzone"
@@ -610,7 +644,7 @@
                         <b-button
                             variant="success"
                             :disabled="inUploadRankings"
-                            @click="uploadRankingsReport"
+                            @click="uploadRankingsReport(); rankingsGeneratedMessageHtml=''"
                         >
                             Upload rankings report
                         </b-button>
@@ -1393,6 +1427,7 @@ export default {
         rankingsError: '',
         rankingsReportData: [],
         rankingsReportTable: [],
+        rankingsGeneratedMessageHtml: '',
 
         videos: {},
         inVideoRequest: false,
@@ -2338,7 +2373,7 @@ export default {
             this.hideEditMatch();
         },
 
-        uploadRankings: function() {
+        uploadRankingsFromFMS: function() {
             this.rankingsError = '';
             this.inUploadRankings = true;
             const params = {
@@ -2366,6 +2401,26 @@ export default {
                 this.inUploadRankings = false;
             }.bind(this));
         },
+        uploadRankingsFromTBA: async function() {
+            this.rankingsError = '';
+            await this.generateRankingsReportFromTBA();
+            if (this.rankingsError) {
+                return;
+            }
+            if (!this.rankingsReportData.length) {
+                this.rankingsError = 'No rankings were generated from TBA match results';
+                return;
+            }
+            await this.uploadRankingsReport();
+        },
+        uploadRankings: async function() {
+            if (this.anyEnabledExtraRps) {
+                return this.uploadRankingsFromTBA();
+            }
+            else {
+                return this.uploadRankingsFromFMS();
+            }
+        },
 
         onRankingsReportUpload: function(event) {
             this.resetRankingsReport();
@@ -2389,11 +2444,13 @@ export default {
         },
         generateRankingsReportFromTBA: async function() {
             this.resetRankingsReport();
-            this.inUploadRankings = false;
+            this.inUploadRankings = true;
+            this.rankingsGeneratedMessageHtml = '';
             try {
                 const matchResults = await this.tbaApiCurrentEventRequest('matches');
                 this.convertMatchTeamKeysTBAtoFMS(matchResults);
                 this.rankingsReportData = this.rankingsReportTable = tba.generateRankingsFromMatchResults(matchResults, this.eventYear);
+                this.rankingsGeneratedMessageHtml = 'Rankings generated from <strong>' + matchResults.length + '</strong> matches';
             }
             catch (e) {
                 console.error(e);   // eslint-disable-line no-console
