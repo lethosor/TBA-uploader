@@ -472,7 +472,7 @@ func parseHTMLtoJSON2023(filename string, config FMSParseConfig) (map[string]int
 		assignBreakdownExtraRps(breakdown, config.EnabledExtraRps, map[string][]bool{
 			"red":  extra_info["red"].ExtraRps,
 			"blue": extra_info["blue"].ExtraRps,
-		}, "extraRp")
+		}, "tba_extraRp")
 	}
 
 	if config.Playoff {
