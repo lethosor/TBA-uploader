@@ -128,7 +128,7 @@ func countHatchPanels2019(parsed []string) (n int64) {
 	return n
 }
 
-func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{}, error) {
+func parseHTMLtoJSON2019(filename string, config FMSParseConfig) (map[string]interface{}, error) {
 	//////////////////////////////////////////////////
 	// Parse html from FMS into TBA-compatible JSON //
 	//////////////////////////////////////////////////
@@ -424,8 +424,8 @@ func parseHTMLtoJSON2019(filename string, playoff bool) (map[string]interface{},
 		}
 	})
 
-	addManualFields2019(breakdown["blue"], scoreInfo.blue, extra_info["blue"], playoff)
-	addManualFields2019(breakdown["red"], scoreInfo.red, extra_info["red"], playoff)
+	addManualFields2019(breakdown["blue"], scoreInfo.blue, extra_info["blue"], config.Playoff)
+	addManualFields2019(breakdown["red"], scoreInfo.red, extra_info["red"], config.Playoff)
 
 	if len(parse_errors) > 0 {
 		return nil, fmt.Errorf("Parse error (%d):\n%s", len(parse_errors), strings.Join(parse_errors, "\n"))

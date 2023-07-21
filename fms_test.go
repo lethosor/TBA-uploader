@@ -47,7 +47,7 @@ func TestDownloadMatches(t *testing.T) {
 		t.Fatal("no matches downloaded")
 	}
 
-	match_json, err := fms_parser.ParseHTMLtoJSON(2019, files[0], false)
+	match_json, err := fms_parser.ParseHTMLtoJSON(2019, files[0], fms_parser.FMSParseConfig{Playoff: false})
 	if err != nil {
 		t.Error("ParseHTMLtoJSON: ", err)
 	}

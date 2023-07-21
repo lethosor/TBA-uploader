@@ -8,15 +8,21 @@ import (
 	"github.com/lethosor/TBA-uploader/tba"
 )
 
-func ParseHTMLtoJSON(year int, filename string, playoff bool) (map[string]interface{}, error) {
-	if year == 2018 {
-		return parseHTMLtoJSON2018(filename, playoff)
-	} else if year == 2019 {
-		return parseHTMLtoJSON2019(filename, playoff)
-	} else if year == 2022 {
-		return parseHTMLtoJSON2022(filename, playoff)
-	} else if year == 2023 {
-		return parseHTMLtoJSON2023(filename, playoff)
+type FMSParseConfig struct {
+	Playoff         bool
+	EnabledExtraRps []bool
+}
+
+var parsers = map[int]func(string, FMSParseConfig) (map[string]interface{}, error){
+	2018: parseHTMLtoJSON2018,
+	2019: parseHTMLtoJSON2019,
+	2022: parseHTMLtoJSON2022,
+	2023: parseHTMLtoJSON2023,
+}
+
+func ParseHTMLtoJSON(year int, filename string, config FMSParseConfig) (map[string]interface{}, error) {
+	if parser, ok := parsers[year]; ok {
+		return parser(filename, config)
 	} else {
 		return nil, fmt.Errorf("ParseHTMLtoJSON: unsupported year: %d", year)
 	}
@@ -29,6 +35,20 @@ type ExtraMatchInfo struct {
 }
 
 type ExtraMatchAllianceInfo interface{}
+
+type extraMatchAllianceInfoCommon struct {
+	Dqs        []string `json:"dqs"`
+	Surrogates []string `json:"surrogates"`
+	ExtraRps   []bool   `json:"extra_rps"`
+}
+
+func makeExtraMatchAllianceInfoCommon() extraMatchAllianceInfoCommon {
+	return extraMatchAllianceInfoCommon{
+		Dqs:        make([]string, 0),
+		Surrogates: make([]string, 0),
+		ExtraRps:   make([]bool, 0),
+	}
+}
 
 var extraAllianceInfoCtors = map[int]func() ExtraMatchAllianceInfo{
 	2018: func() ExtraMatchAllianceInfo {
@@ -197,6 +217,30 @@ func assignPenaltyFields(breakdowns map[string]map[string]interface{}, penalty_f
 	for alliance, cell := range groups {
 		for penalty_name, field := range penalty_fields {
 			breakdowns[alliance][field] = strings.Contains(cell.Text(), penalty_name)
+		}
+	}
+}
+
+func assignBreakdownExtraRps(breakdowns map[string]map[string]interface{}, enabled_extra_rps []bool, extra_rps map[string][]bool, field_prefix string) {
+	for _, color := range []string{"red", "blue"} {
+		alliance_extra_rp := 0
+		for i, enabled := range enabled_extra_rps {
+			if enabled {
+				alliance_has_rp := false
+				// extra_rps[color] is empty on first fetch
+				if i < len(extra_rps[color]) {
+					alliance_has_rp = extra_rps[color][i]
+				}
+				breakdowns[color][fmt.Sprintf("%s%d", field_prefix, i+1)] = alliance_has_rp
+				if alliance_has_rp {
+					alliance_extra_rp++
+				}
+			}
+		}
+
+		existing_rp, ok := breakdowns[color]["rp"].(int)
+		if ok {
+			breakdowns[color]["rp"] = existing_rp + alliance_extra_rp
 		}
 	}
 }
