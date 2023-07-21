@@ -226,6 +226,7 @@
                         <h3 class="mt-2">Extra Ranking Points</h3>
                         <form
                             v-for="(_, i) in eventExtras[selectedEvent].enabled_extra_rps"
+                            :key="i"
                             class="form-inline"
                         >
                             <b-form-checkbox v-model="eventExtras[selectedEvent].enabled_extra_rps[i]">Enable extra RP {{ i + 1 }}</b-form-checkbox>
@@ -495,7 +496,7 @@
                         :disabled="inUploadRankings || isMatchRunning"
                         @click="uploadRankings"
                     >
-                        <fragment v-if="anyEnabledExtraRps">Generate and </fragment>Upload rankings
+                        <span v-if="anyEnabledExtraRps">Generate and </span>Upload rankings
                     </b-button>
                 </div>
                 <p>
@@ -1166,8 +1167,7 @@
                                 :class="color"
                             >
                                 <b-form-checkbox
-                                    v-for="(is_enabled, i) in enabledExtraRps"
-                                    v-if="is_enabled"
+                                    v-for="i in enabledExtraRpIndexes"
                                     :key="i"
                                     v-model="matchEditData.extra_rps[color][i]"
                                 >
@@ -1498,6 +1498,9 @@ export default {
         },
         enabledExtraRps: function() {
             return this.eventExtras[this.selectedEvent].enabled_extra_rps || DEFAULT_ENABLED_EXTRA_RPS;
+        },
+        enabledExtraRpIndexes: function() {
+            return this.enabledExtraRps.map((_, i) => i).filter(i => this.enabledExtraRps[i]);
         },
         anyEnabledExtraRps: function() {
             return this.enabledExtraRps.find(Boolean);

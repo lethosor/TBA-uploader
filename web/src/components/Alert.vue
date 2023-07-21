@@ -5,6 +5,7 @@
         dismissible
         @dismissed="$emit('input', '')"
     >
+        <!-- eslint-disable vue/no-v-html -->
         <span
             v-if="allowHtml"
             v-html="text"
