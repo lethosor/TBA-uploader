@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+  <script src="./vue.js"></script>
+  <style>
+    #app > div {
+      margin-top: 0.5rem;
+    }
+
+    #app .form-control {
+      font-family: monospace;
+    }
+
+    #app table {
+      border: 1px solid #ddd;
+    }
+
+    #app th, #app td {
+      padding: 5px;
+      text-align: center;
+    }
+
+    #app th {
+      background-color: #f0f0f0;
+    }
+
+    #app th, #app td {
+      border: 1px solid #ddd;
+    }
+
+    #app td.padding {
+      border: none;
+    }
+
+    #app td.red {
+      background-color: #fee;
+    }
+
+    #app td.blue {
+      background-color: #eef;
+    }
+
+    #app td:nth-child(1) {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app" class="container mt-4">
+    <div v-if="!settingsOpen">
+      <button @click="settingsOpen = true" class="btn btn-primary">Settings</button>
+    </div>
+    <div v-else>
+      <h2>Settings</h2>
+      <div class="row g-3 mb-2 align-items-center">
+        <div class="col-auto">
+          <label for="apiKey" class="col-form-label">TBA API Key</label>
+        </div>
+        <div class="col-auto">
+          <input :type="passwordInputType" v-model="apiKey" id="apiKey" class="form-control" size="64">
+        </div>
+        <div class="col-auto">
+          <label>
+            <input type="checkbox" v-model="showPasswords">
+            Show
+          </label>
+        </div>
+      </div>
+      <div class="row g-3 mb-2 align-items-center">
+        <div class="col-auto">
+          <label for="eventId" class="col-form-label">Event code</label>
+        </div>
+        <div class="col-auto">
+          <input type="text" v-model="eventId" id="eventId" class="form-control" size="10" placeholder="2023xxyyy">
+        </div>
+      </div>
+      <div class="row g-3 mb-2 align-items-center">
+        <div class="col-auto">
+          <label for="tbaUrl" class="col-form-label">TBA URL</label>
+        </div>
+        <div class="col-auto">
+          <input type="text" v-model="tbaUrl" id="tbaUrl" class="form-control" size="32">
+        </div>
+      </div>
+      <div>
+        <button @click="saveSettings" :disabled="inRequest" class="btn btn-primary">Save</button>
+      </div>
+    </div> <!-- settings -->
+
+    <div>
+      <h2>Ranking Point Viewer</h2>
+      <div class="row g-3 mb-2 align-items-center">
+        <div class="col-auto">
+          <select v-model="rpName" class="form-select">
+            <option v-for="r in RP_OPTIONS" :value="r">{{r}}</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <button @click="refresh" :disabled="inRequest" class="btn btn-primary">Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="errorMessage" class="alert alert-danger">{{errorMessage}}</div>
+    <div v-if="warningMessage" class="alert alert-warning">{{warningMessage}}</div>
+    <div v-if="successMessage" class="alert alert-success">{{successMessage}}</div>
+
+    <div>
+      <table v-if="matches.length">
+        <thead>
+          <tr>
+            <th></th>
+            <th colspan="5">Red Alliance</th>
+            <th style="min-width: 2rem"></th>
+            <th colspan="5">Blue Alliance</th>
+          </tr>
+          <tr>
+            <th>Match</th>
+            <th colspan="3">Teams</th>
+            <th>Score</th>
+            <th>RP?</th>
+            <th></th>
+            <th colspan="3">Teams</th>
+            <th>Score</th>
+            <th>RP?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="match in matches">
+            <td>
+              <a :href="tbaUrl + '/match/' + match.key" target="_blank">
+                Quals {{match.match_number}}
+              </a>
+            </td>
+            <td class="red">{{match.red.teams[0]}}</td>
+            <td class="red">{{match.red.teams[1]}}</td>
+            <td class="red">{{match.red.teams[2]}}</td>
+            <td :class="match.red.score_breakdown[rpName] ? 'red' : ''">{{match.red.score}}</td>
+            <td :class="match.red.score_breakdown[rpName] ? 'red' : ''">{{describeRpValue(match.red.score_breakdown[rpName])}}</td>
+            <td></td>
+            <td class="blue">{{match.blue.teams[0]}}</td>
+            <td class="blue">{{match.blue.teams[1]}}</td>
+            <td class="blue">{{match.blue.teams[2]}}</td>
+            <td :class="match.blue.score_breakdown[rpName] ? 'blue' : ''">{{match.blue.score}}</td>
+            <td :class="match.blue.score_breakdown[rpName] ? 'blue' : ''">{{describeRpValue(match.blue.score_breakdown[rpName])}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+  function getLocalStorage(key, defaultValue) {
+    return localStorage.getItem(key) || defaultValue || '';
+  }
+
+  RP_OPTIONS = Object.freeze(['tba_extraRp1', 'tba_extraRp2', 'activationBonusAchieved', 'sustainabilityBonusAchieved']);
+
+  app = new Vue({
+    el: '#app',
+    data: {
+      settingsOpen: false,
+      inRequest: false,
+      showPasswords: false,
+      apiKey: getLocalStorage('apiKey'),
+      eventId: getLocalStorage('eventId'),
+      tbaUrl: getLocalStorage('tbaUrl', 'https://www.thebluealliance.com'),
+      rpName: getLocalStorage('rpName', RP_OPTIONS[0]),
+      matches: [],
+      errorMessage: '',
+      warningMessage: '',
+      successMessage: '',
+
+      RP_OPTIONS: RP_OPTIONS,
+    },
+    computed: {
+      passwordInputType() {
+        return this.showPasswords ? 'text' : 'password';
+      },
+    },
+    mounted() {
+      if (this.eventId && this.apiKey) {
+        this.refresh();
+      }
+    },
+    methods: {
+      async saveSettings() {
+        localStorage.apiKey = this.apiKey;
+        localStorage.eventId = this.eventId;
+        localStorage.tbaUrl = this.tbaUrl;
+        await this.refresh();
+        this.settingsOpen = false;
+      },
+      async refresh() {
+        this.errorMessage = '';
+        this.warningMessage = '';
+        this.successMessage = '';
+        try {
+          this.inRequest = true;
+          const results = await (await fetch(`${this.tbaUrl}/api/v3/event/${this.eventId}/matches`, {
+            headers: {
+              'X-TBA-Auth-Key': this.apiKey,
+            },
+          })).json();
+          if (results.Error) {
+            throw 'TBA Error: ' + results.Error;
+          }
+          if (!results) {
+            throw 'API returned no results';
+          }
+          this.matches = results.filter(match => match.comp_level == 'qm')
+            .sort((a, b) => a.match_number - b.match_number)
+            .map(match => Object.assign(
+              {},
+              match,
+              Object.fromEntries(['red', 'blue'].map(color => [
+                color,
+                {
+                  score_breakdown: match.score_breakdown[color] || {},
+                  teams: match.alliances[color].team_keys.map(t => t.replace(/frc/, '')),
+                  score: match.score_breakdown[color] ? match.score_breakdown[color].totalPoints : '',
+                },
+              ])),
+            ));
+          this.updateMessages();
+        }
+        catch (e) {
+          console.error(e);
+          this.errorMessage = String(e);
+        }
+        finally {
+          this.inRequest = false;
+        }
+      },
+      updateMessages() {
+        this.warningMessage = '';
+        if (!this.matches.length) {
+          this.warningMessage = 'No matches found at this event: ' + this.eventId;
+        }
+        else if (!this.matches.find(match => match.score_breakdown.red[this.rpName] !== undefined || match.score_breakdown.blue[this.rpName] !== undefined)) {
+          this.warningMessage = 'No matches contain the specified field: ' + this.rpName;
+        }
+      },
+      describeRpValue(value) {
+        return (value === true) ? 'Yes' : (value === false) ? 'No' : '';
+      },
+    },
+    watch: {
+      rpName(value) {
+        console.log('set',value)
+        localStorage.rpName = value;
+        this.updateMessages();
+      },
+      matches() {
+        this.updateMessages();
+      },
+    },
+  });
+  </script>
+</body>
+</html>
