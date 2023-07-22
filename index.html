@@ -219,9 +219,9 @@
               Object.fromEntries(['red', 'blue'].map(color => [
                 color,
                 {
-                  score_breakdown: match.score_breakdown[color] || {},
+                  score_breakdown: (match.score_breakdown && match.score_breakdown[color]) || {},
                   teams: match.alliances[color].team_keys.map(t => t.replace(/frc/, '')),
-                  score: match.score_breakdown[color] ? match.score_breakdown[color].totalPoints : '',
+                  score: (match.score_breakdown && match.score_breakdown[color]) ? match.score_breakdown[color].totalPoints : '',
                 },
               ])),
             ));
@@ -240,7 +240,7 @@
         if (!this.matches.length) {
           this.warningMessage = 'No matches found at this event: ' + this.eventId;
         }
-        else if (!this.matches.find(match => match.score_breakdown.red[this.rpName] !== undefined || match.score_breakdown.blue[this.rpName] !== undefined)) {
+        else if (!this.matches.find(match => match.score_breakdown && (match.score_breakdown.red[this.rpName] !== undefined || match.score_breakdown.blue[this.rpName] !== undefined))) {
           this.warningMessage = 'No matches contain the specified field: ' + this.rpName;
         }
       },
@@ -250,7 +250,6 @@
     },
     watch: {
       rpName(value) {
-        console.log('set',value)
         localStorage.rpName = value;
         this.updateMessages();
       },
