@@ -358,11 +358,9 @@ func parseHTMLtoJSON2023(filename string, config FMSParseConfig) (map[string]int
 					red:  checkParseInt(red_text, "red "+api_field),
 				})
 			} else if row_name == "teams" {
-				blue_teams := split_and_strip(blue_text, "\n")
-				red_teams := split_and_strip(red_text, "\n")
-				assignTbaTeams(alliances, breakdownRobotFields[string]{
-					blue: blue_teams,
-					red:  red_teams,
+				assignTbaTeams(alliances, breakdownAllianceFields[*goquery.Selection]{
+					blue: blue_cell,
+					red:  red_cell,
 				})
 			} else if row_name == "final score" {
 				blue_score := checkParseInt(blue_text, "blue final score")

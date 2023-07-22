@@ -177,7 +177,7 @@ func assignBreakdownAllianceMultipleFields[T, T2 any](breakdowns map[string]map[
 	}
 }
 
-func assignTbaTeams(alliances map[string]map[string]interface{}, teams breakdownRobotFields[string]) {
+func assignTbaTeamsRaw(alliances map[string]map[string]interface{}, teams breakdownRobotFields[string]) {
 	groups := map[string][]string{
 		"blue": teams.blue,
 		"red":  teams.red,
@@ -189,6 +189,22 @@ func assignTbaTeams(alliances map[string]map[string]interface{}, teams breakdown
 		}
 		alliances[alliance]["teams"] = tba_teams
 	}
+}
+
+func assignTbaTeams(alliances map[string]map[string]interface{}, cells breakdownAllianceFields[*goquery.Selection]) {
+	convert := func(cell *goquery.Selection) []string {
+		teams := cell.Find("div > div").Map(func(i int, div *goquery.Selection) string {
+			return div.Text()
+		})
+		if len(teams) != 3 {
+			panic(fmt.Sprintf("invalid teams length: %d", len(teams)))
+		}
+		return teams
+	}
+	assignTbaTeamsRaw(alliances, breakdownRobotFields[string]{
+		blue: convert(cells.blue),
+		red:  convert(cells.red),
+	})
 }
 
 func assignBreakdownRpFromBadges(breakdowns map[string]map[string]interface{}, rp_badge_names map[string]string, cells breakdownAllianceFields[*goquery.Selection]) {
