@@ -2146,6 +2146,13 @@ export default {
                 this.matchSummaries = [];
                 if (this.isQual) {
                     this.uploadRankings();
+                    if (this.anyEnabledExtraRps) {
+                        setTimeout(() => {
+                            if (!this.isMatchRunning) {
+                                this.uploadRankings();
+                            }
+                        }, 1.5 * 60 * 1000);
+                    }
                 }
                 sendApiRequest('/api/matches/mark_uploaded?level=' + this.matchLevel,
                     this.selectedEvent, match_ids,
