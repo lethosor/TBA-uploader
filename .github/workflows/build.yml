@@ -14,11 +14,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - go-version: '1.18'
+          - go-version: '1.20'
             allow-upload: true
             allow-release: true
         go-version:
-          - '1.19'
+          - '1.18'
         allow-upload:
           - true
         allow-release:
