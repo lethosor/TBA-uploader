@@ -40,7 +40,7 @@ Schedule.parse = function(cells, playoffType) {
     var normalizedCells = cells.map(row =>
         row.map(cell => cell.toLowerCase().replace(/\s*/g, '')),
     );
-    if (normalizedCells[0][0].indexOf('matchschedule') < 0) {
+    if (normalizedCells[0].filter(Boolean)[0].indexOf('matchschedule') < 0) {
         throw 'Wrong report type. You uploaded: ' + cells[0][0];
     }
     // find header
