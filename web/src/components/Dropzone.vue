@@ -133,6 +133,7 @@ export default {
                 this.message = '';
                 this.$emit('upload', {
                     name: this.filename,
+                    type: file.type,
                     body: e.target.result,
                 });
             }.bind(this);

@@ -262,7 +262,7 @@
                         <dropzone
                             ref="teamListUploadDropzone"
                             title="Upload a team list"
-                            accept="text/csv"
+                            accept="text/csv,text/plain"
                             @upload="onTeamListUpload"
                         />
                     </b-col>
@@ -1849,7 +1849,13 @@ export default {
 
         onTeamListUpload: function(event) {
             try {
-                this.processTeamList(utils.parseCSVRaw(event.body));
+                if (event.type == 'text/plain') {
+                    const rows = [['#']].concat(event.body.split('\n').map(row => [row]));
+                    this.processTeamList(rows);
+                }
+                else {
+                    this.processTeamList(utils.parseCSVRaw(event.body));
+                }
             }
             catch (e) {
                 this.teamListError = utils.parseErrorText(e);
