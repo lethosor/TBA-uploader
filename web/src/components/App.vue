@@ -1848,6 +1848,7 @@ export default {
         },
 
         onTeamListUpload: function(event) {
+            this.resetTeamList();
             try {
                 if (event.type == 'text/plain') {
                     const rows = [['#']].concat(event.body.split('\n').map(row => [row]));
@@ -1873,6 +1874,9 @@ export default {
                 Location: team['Location'],
             })).filter(team => Boolean(team.Team) && !isNaN(Number(team.Team)));
             this.teamList = this.teamListTable.map(team => Number(team.Team));
+            if (!this.teamList.length) {
+                throw 'could not find any valid team numbers in this file';
+            }
         },
 
         uploadTeamList: async function() {
