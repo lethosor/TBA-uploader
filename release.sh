@@ -48,7 +48,8 @@ build_release() {
     echo "[$1/$2] Done"
 }
 
-build_release windows 386 win32
-build_release windows amd64 win64
-build_release darwin amd64 mac64
-build_release linux amd64 linux64
+build_release windows amd64 windows-x86_64
+build_release darwin amd64 mac-x86_64
+build_release darwin arm64 mac-arm64
+build_release linux amd64 linux-x86_64
+build_release linux arm64 linux-arm64
