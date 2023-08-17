@@ -12,7 +12,12 @@ export default function SocketConnection(url) {
 
     function triggerEvent(type, data) {
         for (const handler of state.eventHandlers[type]) {
-            handler(data);
+            try {
+                handler(data);
+            }
+            catch (e) {
+                console.error('Error in socket event handler', type, e); // eslint-disable-line no-console
+            }
         }
     }
 
