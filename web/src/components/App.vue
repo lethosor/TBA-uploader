@@ -732,20 +732,96 @@
                 v-if="eventSelected"
                 title="Match videos"
             >
+                <div class="mb-2">
+                    <b-form-checkbox
+                        v-model="autoAVEnabled"
+                        name="check-button"
+                        switch
+                    >
+                        Enable AutoAV
+                    </b-form-checkbox>
+                </div>
+
+                <div
+                    v-if="autoAVEnabled"
+                    class="mb-2"
+                >
+                    <b-card bg-variant="light">
+                        <div class="mb-2">
+                            <span
+                                v-if="autoAVInRecording"
+                                style="color: red"
+                            >&#x2B24;</span>
+                            <span>{{ autoAVStatusMessage }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <b-button
+                                v-if="autoAVInRecording !== true"
+                                size="sm"
+                                variant="success"
+                                @click="autoAVStartRecording"
+                            >
+                                Start
+                            </b-button>
+                            <b-button
+                                v-if="autoAVInRecording !== false"
+                                size="sm"
+                                variant="danger"
+                                @click="autoAVStopRecording"
+                            >
+                                Stop
+                            </b-button>
+                            <b-button
+                                v-if="autoAVStopTimer !== null"
+                                size="sm"
+                                variant="secondary"
+                                @click="autoAVCancelStopRecording"
+                            >
+                                Don't stop
+                            </b-button>
+                        </div>
+                        <h4>AutoAV Settings</h4>
+                        <div class="form-inline">
+                            <label>
+                                Seconds before stopping recording:
+                                <b-form-input
+                                    v-model="autoAVStopDelaySeconds"
+                                    type="number"
+                                    min="0"
+                                    max="60"
+                                    step="1"
+                                />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                Video prefix:
+                                <b-form-input v-model="eventExtras[selectedEvent].video_prefix" />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                vMix API URL:
+                                <b-form-input v-model="autoAVVmixApiUrl" />
+                            </label>
+                        </div>
+                    </b-card>
+                </div>
+
                 <div>
                     <b-button
                         variant="success"
                         :disabled="inVideoRequest"
                         @click="fetchVideos"
                     >
-                        Fetch data from TBA
+                        Fetch video data from TBA
                     </b-button>
                     <b-button
                         variant="success"
                         :disabled="inVideoRequest"
                         @click="uploadVideos"
                     >
-                        Upload data to TBA
+                        Upload video data to TBA
                     </b-button>
                 </div>
                 <ul>
@@ -1434,6 +1510,14 @@ export default {
         videoError: '',
         showExistingVideos: false,
 
+        autoAVEnabled: false,
+        autoAVInRecording: null,  // normally bool, null=unknown
+        autoAVStatusMessage: 'Recording status unknown',
+        autoAVVmixApiUrl: localStorage.getItem('autoAVVmixApiUrl') || 'http://localhost:8088/api',
+        autoAVStopDelaySeconds: utils.safeParseLocalStorageInteger('autoAVStopDelaySeconds', 10),
+        autoAVStopDelaySecondsRemaining: null,
+        autoAVStopTimer: null,
+
         alliances: STORED_ALLIANCES,
         alliancesFmsTabOrder: true,
         inAllianceRequest: false,
@@ -1573,6 +1657,12 @@ export default {
             },
             deep: true,
         },
+        autoAVVmixApiUrl: function(key) {
+            localStorage.setItem('autoAVVmixApiUrl', key);
+        },
+        autoAVStopDelaySeconds: function(key) {
+            localStorage.setItem('autoAVStopDelaySeconds', key);
+        },
     },
     mounted: function() {
         if (this.selectedEvent) {
@@ -1627,6 +1717,7 @@ export default {
         onFieldStateUpdate: async function(fieldState) {
             if (fieldState != this.lastFieldState) {
                 this.handleMatchesFromFieldStateChange(fieldState);
+                this.autoAVHandleFieldStateChange(fieldState);
             }
             this.lastFieldState = fieldState;
         },
@@ -1681,6 +1772,9 @@ export default {
             this.tbaApiCurrentEventRequest().then(function(data) {
                 this.$set(this, 'tbaEventData', data);
                 this.eventExtras[this.selectedEvent].playoff_type = data.playoff_type;
+                if (!this.eventExtras[this.selectedEvent].video_prefix && data.name) {
+                    this.eventExtras[this.selectedEvent].video_prefix = data.year + ' ' + data.name;
+                }
             }.bind(this))
             .fail(function(error) {
                 this.tbaReadError = utils.parseErrorJSON(error);
@@ -1697,6 +1791,7 @@ export default {
                 alliance_count: 8,
                 alliance_size: 3,
                 enabled_extra_rps: DEFAULT_ENABLED_EXTRA_RPS.slice(),
+                video_prefix: '',
             }, this.eventExtras[event]));
 
             if (!this.alliances[event]) {
@@ -2586,6 +2681,78 @@ export default {
             Object.values(this.videos).forEach(function(v) {
                 v.current = utils.cleanYoutubeUrl(v.current);
             });
+        },
+
+        autoAVVmixRequest: async function(functionName) {
+            await $.get(this.autoAVVmixApiUrl, {Function: functionName});
+        },
+        autoAVStartRecording: async function() {
+            if (!this.autoAVEnabled) {
+                return;
+            }
+
+            this.autoAVStatusMessage = 'Starting recording...';
+            this.autoAVInRecording = true;
+            await this.autoAVVmixRequest('StartRecording');
+            this.autoAVStatusMessage = 'Recording started';
+        },
+        autoAVStopRecording: async function() {
+            if (this.autoAVStopTimer !== null) {
+                clearInterval(this.autoAVStopTimer);
+                this.autoAVStopTimer = null;
+            }
+            if (!this.autoAVEnabled || this.autoAVInRecording === false) {
+                return;
+            }
+
+            this.autoAVStatusMessage = 'Stopping recording...';
+            this.autoAVInRecording = false;
+            await this.autoAVVmixRequest('StopRecording');
+            this.autoAVStatusMessage = 'Recording stopped';
+        },
+        autoAVScheduleStopRecording: function() {
+            if (this.autoAVStopTimer !== null) {
+                clearInterval(this.autoAVStopTimer);
+            }
+            if (!this.autoAVInRecording) {
+                return;
+            }
+
+            this.autoAVStopDelaySecondsRemaining = this.autoAVStopDelaySeconds;
+            const tick = () => {
+                if (this.autoAVStopDelaySecondsRemaining <= 0) {
+                    this.autoAVStopRecording();
+                    return;
+                }
+                this.autoAVStatusMessage = 'Match ended. Recording stops in ' + this.autoAVStopDelaySecondsRemaining + ' sec...';
+                this.autoAVStopDelaySecondsRemaining--;
+            };
+            tick();
+            this.autoAVStopTimer = setInterval(tick, 1000);
+        },
+        autoAVCancelStopRecording: function() {
+            if (this.autoAVStopTimer !== null) {
+                clearInterval(this.autoAVStopTimer);
+                this.autoAVStopTimer = null;
+            }
+            this.autoAVStatusMessage = 'Continuing to record';
+        },
+        autoAVHandleFieldStateChange: function(fieldState) {
+            if (!this.autoAVEnabled) {
+                return;
+            }
+
+            if (utils.isFieldStateInMatch(fieldState)) {
+                this.autoAVStartRecording();
+            }
+
+            if (fieldState == FIELD_STATE.MatchCancelled ||
+                fieldState == FIELD_STATE.TournamentLevelComplete ||
+                fieldState == FIELD_STATE.WaitingForPrestart ||
+                fieldState == FIELD_STATE.WaitingForPrestartTO
+            ) {
+                this.autoAVScheduleStopRecording();
+            }
         },
 
         onAllianceChange: function(newAlliances) {
