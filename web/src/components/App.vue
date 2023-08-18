@@ -747,6 +747,10 @@
                     class="mb-2"
                 >
                     <b-card bg-variant="light">
+                        <alert
+                            v-model="autoAVError"
+                            variant="danger"
+                        />
                         <div class="mb-2">
                             <span
                                 v-if="autoAVInRecording"
@@ -801,8 +805,20 @@
                         </div>
                         <div class="form-inline">
                             <label>
+                                vMix video prefix (to replace):
+                                <b-form-input v-model="autoAVVmixVideoPrefix" />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
                                 vMix API URL:
                                 <b-form-input v-model="autoAVVmixApiUrl" />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                AutoAV Helper API URL:
+                                <b-form-input v-model="autoAVHelperApiUrl" />
                             </label>
                         </div>
                     </b-card>
@@ -1513,7 +1529,10 @@ export default {
         autoAVEnabled: false,
         autoAVInRecording: null,  // normally bool, null=unknown
         autoAVStatusMessage: 'Recording status unknown',
+        autoAVError: '',
+        autoAVVmixVideoPrefix: 'FiM Comp',
         autoAVVmixApiUrl: localStorage.getItem('autoAVVmixApiUrl') || 'http://localhost:8088/api',
+        autoAVHelperApiUrl: localStorage.getItem('autoAVHelperApiUrl') || 'http://localhost:8807',
         autoAVStopDelaySeconds: utils.safeParseLocalStorageInteger('autoAVStopDelaySeconds', 10),
         autoAVStopDelaySecondsRemaining: null,
         autoAVStopTimer: null,
@@ -1665,6 +1684,9 @@ export default {
         },
         autoAVVmixApiUrl: function(key) {
             localStorage.setItem('autoAVVmixApiUrl', key);
+        },
+        autoAVHelperApiUrl: function(key) {
+            localStorage.setItem('autoAVHelperApiUrl', key);
         },
         autoAVStopDelaySeconds: function(key) {
             localStorage.setItem('autoAVStopDelaySeconds', key);
@@ -2697,6 +2719,17 @@ export default {
         autoAVVmixRequest: async function(functionName) {
             await $.get(this.autoAVVmixApiUrl, {Function: functionName});
         },
+        autoAVHelperRequest: async function(route, params) {
+            this.autoAVError = '';
+            try {
+                const response = await $.getJSON(this.autoAVHelperApiUrl + route, params || {});
+                return response;
+            }
+            catch (e) {
+                this.autoAVError = utils.parseErrorText(e);
+                throw e;
+            }
+        },
         autoAVStartRecording: async function() {
             if (!this.autoAVEnabled) {
                 return;
@@ -2720,6 +2753,8 @@ export default {
             this.autoAVInRecording = false;
             await this.autoAVVmixRequest('StopRecording');
             this.autoAVStatusMessage = 'Recording stopped';
+
+            setTimeout((matchPlay) => this.autoAVRenameLastVideo(matchPlay), 1000, this.lastMatchPlayed);
         },
         autoAVScheduleStopRecording: function() {
             if (this.autoAVStopTimer !== null) {
@@ -2764,6 +2799,43 @@ export default {
             ) {
                 this.autoAVScheduleStopRecording();
             }
+        },
+        autoAVRenameLastVideo: async function(matchPlay) {
+            const extension = '.mp4';
+            const videos = await this.autoAVHelperRequest('/api/list');
+            const videoNames = videos.map(v => v.name);
+            const newVideos = videos.filter(v => (v.name.startsWith(this.autoAVVmixVideoPrefix))).sort((a, b) => a.mtime - b.mtime);
+            const lastVideo = newVideos[newVideos.length - 1];
+            if (!lastVideo) {
+                this.autoAVError = 'No videos found to rename';
+                return;
+            }
+
+            let prefix = utils.describeMatchLevel(matchPlay[2]);
+            if (matchPlay[2] == MATCH_LEVEL.PLAYOFF) {
+                const bracketInfo = BRACKETS[eventPlayoffType][matchPlay[0]];
+                if (bracketInfo && [BRACKET_TYPE.DOUBLE_ELIM_8_TEAM, BRACKET_TYPE.DOUBLE_ELIM_4_TEAM].includes(this.eventPlayoffType)) {
+                    if (bracketInfo.comp_level == 'f') {
+                        prefix = 'Final';
+                    }
+                }
+            }
+            let newNameBase = this.eventExtras[this.selectedEvent].video_prefix + ' ' + prefix + ' Match ' + matchPlay[0];
+            let newName = newNameBase;
+            if (videoNames.includes(newNameBase + extension) && matchPlay[1] > 1) {
+                newNameBase += ' Play ' + matchPlay[1];
+                newName = newNameBase;
+            }
+            for (let i = 2; videoNames.includes(newName + extension); i++) {
+                newName = newNameBase + ' - ' + i;
+            }
+
+            this.autoAVStatusMessage = 'Renaming "' + lastVideo.name + '" to "' + newName + extension + '"';
+            await this.autoAVHelperRequest('/api/rename', {
+                old_name: lastVideo.name,
+                new_name: newName + extension,
+            });
+            this.autoAVStatusMessage = this.autoAVStatusMessage.replace(/^Renaming/, 'Renamed');
         },
 
         onAllianceChange: function(newAlliances) {
