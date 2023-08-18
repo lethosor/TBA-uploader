@@ -2812,15 +2812,17 @@ export default {
             }
 
             let prefix = utils.describeMatchLevel(matchPlay[2]);
+            let matchNumber = matchPlay[0];
             if (matchPlay[2] == MATCH_LEVEL.PLAYOFF) {
-                const bracketInfo = BRACKETS[eventPlayoffType][matchPlay[0]];
+                const bracketInfo = BRACKETS[this.eventPlayoffType][matchPlay[0]];
                 if (bracketInfo && [BRACKET_TYPE.DOUBLE_ELIM_8_TEAM, BRACKET_TYPE.DOUBLE_ELIM_4_TEAM].includes(this.eventPlayoffType)) {
                     if (bracketInfo.comp_level == 'f') {
                         prefix = 'Final';
+                        matchNumber = bracketInfo.match_number;
                     }
                 }
             }
-            let newNameBase = this.eventExtras[this.selectedEvent].video_prefix + ' ' + prefix + ' Match ' + matchPlay[0];
+            let newNameBase = this.eventExtras[this.selectedEvent].video_prefix + ' ' + prefix + ' Match ' + matchNumber;
             let newName = newNameBase;
             if (videoNames.includes(newNameBase + extension) && matchPlay[1] > 1) {
                 newNameBase += ' Play ' + matchPlay[1];
