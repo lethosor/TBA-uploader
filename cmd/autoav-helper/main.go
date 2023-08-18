@@ -12,9 +12,7 @@ import (
 )
 
 var settings struct {
-	VideoDir   string
-	FilePrefix string
-	FileSuffix string
+	VideoDir string
 }
 
 type FileInfo struct {
@@ -24,8 +22,6 @@ type FileInfo struct {
 
 func main() {
 	settings.VideoDir = "/tmp/videos"
-	settings.FilePrefix = "FiM Comp"
-	settings.FileSuffix = ".mp4"
 
 	mux := http.NewServeMux()
 	handle := func(method string, path string, handler func(w http.ResponseWriter, r *http.Request)) {
@@ -64,36 +60,23 @@ func handleRoot(w http.ResponseWriter, r *http.Request) {
 				Video folder:
 				<input name="VideoDir" value="%s">
 			</label>
-			<br>
-			<label>
-				Video file prefix:
-				<input name="FilePrefix" value="%s">
-			</label>
-			<br>
-			<label>
-				Video file suffix (extension with "."):
-				<input name="FileSuffix" value="%s">
-			</label>
 			<br><br>
 			<input type="submit" value="Save">
 		</form>
-	`, html.EscapeString(settings.VideoDir), html.EscapeString(settings.FilePrefix), html.EscapeString(settings.FileSuffix))))
+	`, html.EscapeString(settings.VideoDir))))
 }
 
 func handleSaveSettings(w http.ResponseWriter, r *http.Request) {
 	if val := r.FormValue("VideoDir"); val != "" {
 		settings.VideoDir = val
 	}
-	if val := r.FormValue("FilePrefix"); val != "" {
-		settings.FilePrefix = val
-	}
-	if val := r.FormValue("FileSuffix"); val != "" {
-		settings.FileSuffix = val
-	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func apiList(w http.ResponseWriter, r *http.Request) {
+	prefix := r.URL.Query().Get("prefix")
+	suffix := r.URL.Query().Get("suffix")
+
 	all_files, err := ioutil.ReadDir(settings.VideoDir)
 	if err != nil {
 		panic(err)
@@ -101,7 +84,7 @@ func apiList(w http.ResponseWriter, r *http.Request) {
 
 	files := make([]FileInfo, 0)
 	for _, file := range all_files {
-		if file.Mode().IsRegular() && strings.HasPrefix(file.Name(), settings.FilePrefix) && strings.HasSuffix(file.Name(), settings.FileSuffix) {
+		if file.Mode().IsRegular() && strings.HasPrefix(file.Name(), prefix) && strings.HasSuffix(file.Name(), suffix) {
 			files = append(files, FileInfo{
 				Name:  file.Name(),
 				Mtime: file.ModTime().Unix(),
