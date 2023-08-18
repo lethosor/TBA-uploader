@@ -1518,6 +1518,8 @@ export default {
         autoAVStopDelaySecondsRemaining: null,
         autoAVStopTimer: null,
 
+        lastMatchPlayed: [0, 0, 0], // match, play, level
+
         alliances: STORED_ALLIANCES,
         alliancesFmsTabOrder: true,
         inAllianceRequest: false,
@@ -1623,7 +1625,11 @@ export default {
             return 'bg-secondary';
         },
         fieldStateMessage() {
-            return this.lastFieldState ? utils.describeFieldState(this.lastFieldState) : 'No Field Status Available';
+            let message = this.lastFieldState ? utils.describeFieldState(this.lastFieldState) : 'No Field Status Available';
+            if (this.lastMatchPlayed[0] > 0) {
+                message += ' | ' + utils.describeMatchLevel(this.lastMatchPlayed[2]) + ' ' + this.lastMatchPlayed[0] + ' Play ' + this.lastMatchPlayed[1];
+            }
+            return message;
         },
         isMatchRunning() {
             return this.lastFieldState && utils.isFieldStateInMatch(this.lastFieldState);
@@ -1675,6 +1681,11 @@ export default {
             const data = JSON.parse(event.data);
             if (data.field_state !== undefined) {
                 this.onFieldStateUpdate(data.field_state);
+
+                if (data.match_play && Array.isArray(data.match_play) && data.match_play.length == 3 &&
+                    utils.isFieldStateInMatchLoaded(data.field_state)) {
+                    this.lastMatchPlayed = data.match_play;
+                }
             }
         });
 
