@@ -19,8 +19,8 @@ var settings struct {
 }
 
 type FileInfo struct {
-	Name  string
-	Mtime int64
+	Name  string `json:"name"`
+	Mtime int64  `json:"mtime"`
 }
 
 func main() {
@@ -41,6 +41,7 @@ func main() {
 			}()
 
 			log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL.Path)
+			w.Header().Set("access-control-allow-origin", "*")
 			if method != r.Method {
 				w.WriteHeader(http.StatusMethodNotAllowed)
 				w.Write([]byte("method not allowed: " + r.Method))
@@ -137,5 +138,5 @@ func apiRename(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	w.Write([]byte("ok"))
+	w.Write([]byte("{\"ok\": true}"))
 }
