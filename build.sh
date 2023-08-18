@@ -9,3 +9,4 @@ test -n "$build_js" && run_cmd yarn run --silent build --stats errors-only
 run_cmd cp README.md web/dist/
 rm -vf bindata_assetfs.go  # silent migration
 run_cmd go build -o bin/TBA-uploader
+run_cmd go build -o bin/ ./cmd/autoav-helper/
