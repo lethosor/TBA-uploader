@@ -47,7 +47,7 @@ build_release() {  # os arch tag
     zip_name="TBA-uploader-$version-$3.zip"
     echo "[$1/$2] Generating $zip_name"
     pushd "$rel_dir/$1-$2" >/dev/null
-    zip -r "$zip_name" TBA-uploader*
+    zip -r "$zip_name" *
     mv "$zip_name" ../
     popd >/dev/null
     if [ "$1" != "windows" ]; then
