@@ -7,8 +7,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path"
 	"runtime/debug"
 	"strings"
+	"sync"
 )
 
 var settings struct {
@@ -23,9 +26,12 @@ type FileInfo struct {
 func main() {
 	settings.VideoDir = "/tmp/videos"
 
+	lock := sync.Mutex{}
 	mux := http.NewServeMux()
 	handle := func(method string, path string, handler func(w http.ResponseWriter, r *http.Request)) {
 		mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+			lock.Lock()
+			defer lock.Unlock()
 			defer func() {
 				if err := recover(); err != nil {
 					log.Printf("Internal error: %v\n%s", err, debug.Stack())
@@ -46,6 +52,7 @@ func main() {
 	handle(http.MethodGet, "/", handleRoot)
 	handle(http.MethodPost, "/save", handleSaveSettings)
 	handle(http.MethodGet, "/api/list", apiList)
+	handle(http.MethodGet, "/api/rename", apiRename)
 
 	addr := ":8807"
 	log.Printf("listening on %s", addr)
@@ -98,4 +105,37 @@ func apiList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write(out)
+}
+
+func apiRename(w http.ResponseWriter, r *http.Request) {
+	old_name := r.URL.Query().Get("old_name")
+	new_name := r.URL.Query().Get("new_name")
+
+	if old_name == "" || new_name == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("old_name and new_name are required"))
+		return
+	}
+
+	old_path := path.Join(settings.VideoDir, old_name)
+	new_path := path.Join(settings.VideoDir, new_name)
+
+	if _, err := os.Stat(old_path); os.IsNotExist(err) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("old_path not found: " + old_path))
+		return
+	}
+
+	if _, err := os.Stat(new_path); !os.IsNotExist(err) {
+		w.WriteHeader(http.StatusConflict)
+		w.Write([]byte("new_path already exists: " + new_path))
+		return
+	}
+
+	err := os.Rename(old_path, new_path)
+	if err != nil {
+		panic(err)
+	}
+
+	w.Write([]byte("ok"))
 }
