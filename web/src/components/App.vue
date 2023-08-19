@@ -2866,7 +2866,7 @@ export default {
             await this.autoAVVmixRequest('StartRecording');
             this.autoAVStatusMessage = 'Recording started';
         },
-        autoAVStopRecording: async function() {
+        autoAVStopRecording: async function(fieldState) {
             if (this.autoAVStopTimer !== null) {
                 clearInterval(this.autoAVStopTimer);
                 this.autoAVStopTimer = null;
@@ -2880,9 +2880,9 @@ export default {
             await this.autoAVVmixRequest('StopRecording');
             this.autoAVStatusMessage = 'Recording stopped';
 
-            setTimeout((matchPlay) => this.autoAVRenameLastVideo(matchPlay), 1000, this.lastMatchPlayed);
+            setTimeout((matchPlay) => this.autoAVRenameLastVideo(matchPlay, fieldState), 1000, this.lastMatchPlayed);
         },
-        autoAVScheduleStopRecording: function() {
+        autoAVScheduleStopRecording: function(fieldState) {
             if (this.autoAVStopTimer !== null) {
                 clearInterval(this.autoAVStopTimer);
             }
@@ -2893,7 +2893,7 @@ export default {
             this.autoAVStopDelaySecondsRemaining = this.autoAVStopDelaySeconds;
             const tick = () => {
                 if (this.autoAVStopDelaySecondsRemaining <= 0) {
-                    this.autoAVStopRecording();
+                    this.autoAVStopRecording(fieldState);
                     return;
                 }
                 this.autoAVStatusMessage = 'Match ended. Recording stops in ' + this.autoAVStopDelaySecondsRemaining + ' sec...';
@@ -2923,10 +2923,10 @@ export default {
                 fieldState == FIELD_STATE.WaitingForPrestart ||
                 fieldState == FIELD_STATE.WaitingForPrestartTO
             ) {
-                this.autoAVScheduleStopRecording();
+                this.autoAVScheduleStopRecording(fieldState);
             }
         },
-        autoAVRenameLastVideo: async function(matchPlay) {
+        autoAVRenameLastVideo: async function(matchPlay, matchState) {
             const extension = '.mp4';
             const videos = await this.autoAVHelperRequest('/api/list');
             const videoNames = videos.map(v => v.name);
@@ -2938,6 +2938,8 @@ export default {
             }
 
             let prefix = utils.describeMatchLevel(matchPlay[2]);
+
+            // Calculate Match Number
             let matchNumber = matchPlay[0];
             if (matchPlay[2] == MATCH_LEVEL.PLAYOFF) {
                 const bracketInfo = BRACKETS[this.eventPlayoffType][matchPlay[0]];
@@ -2948,14 +2950,25 @@ export default {
                     }
                 }
             }
+
+            // Format Name Strnig
             let newNameBase = this.eventExtras[this.selectedEvent].video_prefix + ' ' + prefix + ' Match ' + matchNumber;
             let newName = newNameBase;
+
+            // If this isn't the first play
             if (videoNames.includes(newNameBase + extension) && matchPlay[1] > 1) {
                 newNameBase += ' Play ' + matchPlay[1];
                 newName = newNameBase;
             }
+
+            // If we already have a video with this name, add " - n" to it
             for (let i = 2; videoNames.includes(newName + extension); i++) {
                 newName = newNameBase + ' - ' + i;
+            }
+
+            // If we have a match state, and it is e-stopped
+            if(typeof matchState !== "undefined" && matchState ===  FIELD_STATE.MatchCancelled) {
+                newName += ' - Field Fault'
             }
 
             this.autoAVStatusMessage = 'Renaming "' + lastVideo.name + '" to "' + newName + extension + '"';
