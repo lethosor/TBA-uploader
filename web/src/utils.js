@@ -158,7 +158,7 @@ const utils = Object.freeze({
         return ({
             [MATCH_LEVEL.TEST]: "Test",
             [MATCH_LEVEL.PRACTICE]: "Practice",
-            [MATCH_LEVEL.QUALIFICATION]: "Qualification",
+            [MATCH_LEVEL.QUAL]: "Qualification",
             [MATCH_LEVEL.PLAYOFF]: "Playoff",
             [MATCH_LEVEL.MANUAL]: "Manual",
         })[matchLevel] || defaultValue || "Invalid";
