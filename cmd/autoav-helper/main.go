@@ -12,6 +12,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
+	"time"
 )
 
 var settings struct {
@@ -108,6 +109,11 @@ func apiList(w http.ResponseWriter, r *http.Request) {
 	w.Write(out)
 }
 
+func fileExists(file_path string) bool {
+	_, err := os.Stat(file_path)
+	return !os.IsNotExist(err)
+}
+
 func apiRename(w http.ResponseWriter, r *http.Request) {
 	old_name := r.URL.Query().Get("old_name")
 	new_name := r.URL.Query().Get("new_name")
@@ -121,21 +127,33 @@ func apiRename(w http.ResponseWriter, r *http.Request) {
 	old_path := path.Join(settings.VideoDir, old_name)
 	new_path := path.Join(settings.VideoDir, new_name)
 
-	if _, err := os.Stat(old_path); os.IsNotExist(err) {
+	if !fileExists(old_path) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("old_path not found: " + old_path))
 		return
 	}
 
-	if _, err := os.Stat(new_path); !os.IsNotExist(err) {
+	if fileExists(new_path) {
 		w.WriteHeader(http.StatusConflict)
 		w.Write([]byte("new_path already exists: " + new_path))
 		return
 	}
 
-	err := os.Rename(old_path, new_path)
-	if err != nil {
-		panic(err)
+	for i := 1; i <= 5; i++ {
+		if i > 1 {
+			log.Printf("retrying %d/5...", i)
+		}
+
+		err := os.Rename(old_path, new_path)
+		if err != nil {
+			panic(err)
+		}
+
+		if fileExists(new_path) && !fileExists(old_path) {
+			break
+		}
+
+		time.Sleep(1 * time.Second)
 	}
 
 	w.Write([]byte("{\"ok\": true}"))
