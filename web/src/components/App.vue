@@ -183,7 +183,7 @@
                         </b-button>
                         <b-button
                             v-if="eventExtras[selectedEvent].remap_teams.length"
-                            variant="success"
+                            variant="info"
                             @click="uploadTeamRemap"
                         >
                             Upload
@@ -222,6 +222,84 @@
                         >
                             This playoff type is not supported. Schedule and match uploads will fail.
                         </b-alert>
+
+                        <h3 class="mt-2">Webcasts</h3>
+                        <alert
+                            v-model="webcastError"
+                            variant="danger"
+                        />
+                        <div
+                            v-for="(webcast, i) in eventExtras[selectedEvent].webcasts"
+                            class="input-group"
+                        >
+                            <b-button-close
+                                class="mr-3"
+                                title="Remove"
+                                @click="webcastsRemoveIndex(i)"
+                            />
+                            <form
+                                v-if="'channel' in webcast"
+                                class="form-inline mb-2"
+                            >
+                                <label>
+                                    Channel:
+                                    <b-form-input
+                                        v-model="webcast.channel"
+                                        size="50"
+                                    />
+                                </label>
+                                <label>
+                                    <b-form-select
+                                        v-model="webcast.type"
+                                        :options="WEBCAST_TYPES"
+                                    />
+                                </label>
+                            </form>
+                            <form
+                                v-else
+                                class="form-inline mb-2"
+                            >
+                                <label>
+                                    URL:
+                                    <b-form-input
+                                        v-model="webcast.url"
+                                        style="width: 25em"
+                                    />
+                                </label>
+                            </form>
+                        </div>
+                        <div class="input-group">
+                            <b-button
+                                variant="success"
+                                class="mr-2"
+                                @click="webcastsNewUrl"
+                            >
+                                Add by URL
+                            </b-button>
+                            <b-button
+                                variant="success"
+                                class="mr-2"
+                                @click="webcastsNewChannel"
+                            >
+                                Add by channel
+                            </b-button>
+                            <b-button
+                                variant="info"
+                                class="mr-2"
+                                :disabled="inEventRequest"
+                                @click="webcastsUpload"
+                            >
+                                Upload to TBA
+                            </b-button>
+                            <b-button
+                                variant="warning"
+                                class="mr-2"
+                                :disabled="inEventRequest"
+                                @click="webcastsFetchTBA"
+                            >
+                                Fetch from TBA
+                            </b-button>
+                        </div>
 
                         <h3 class="mt-2">Extra Ranking Points</h3>
                         <form
@@ -1477,7 +1555,10 @@ export default {
             useProxy: true,
         }, utils.safeParseLocalStorageObject('uiOptions')),
         eventExtras: utils.safeParseLocalStorageObject('eventExtras'),
+        inEventRequest: false,
         remapError: '',
+        webcastError: '',
+        WEBCAST_TYPES: ["twitch", "youtube", "iframe", "mms", "rtmp", "ustream", "livestream", "html5", "dacast", "stemtv"],
 
         inTeamsRequest: false,
         teamListTable: [],
@@ -1821,6 +1902,7 @@ export default {
             this.$set(this.eventExtras, event, $.extend({}, {
                 remap_teams: [],
                 playoff_type: null,
+                webcasts: [],
                 alliance_count: 8,
                 alliance_size: 3,
                 enabled_extra_rps: DEFAULT_ENABLED_EXTRA_RPS.slice(),
@@ -1958,6 +2040,50 @@ export default {
             }.bind(this)).fail(function(error) {
                 this.remapError = utils.parseErrorText(error);
             }.bind(this));
+        },
+
+        _webcastPush(obj) {
+            this.eventExtras[this.selectedEvent].webcasts = (this.eventExtras[this.selectedEvent].webcasts || []).concat([obj]);
+        },
+        webcastsNewChannel() {
+            this._webcastPush({type: '', channel: ''});
+        },
+        webcastsNewUrl() {
+            this._webcastPush({url: ''});
+        },
+        webcastsRemoveIndex(i) {
+            this.eventExtras[this.selectedEvent].webcasts.splice(i, 1);
+        },
+        async webcastsUpload() {
+            this.webcastError = '';
+            this.inEventRequest = true;
+            try {
+                await sendApiRequest('/api/info/upload', this.selectedEvent, {
+                    webcasts: this.eventExtras[this.selectedEvent].webcasts,
+                });
+            }
+            catch (e) {
+                this.webcastError = utils.parseErrorText(e);
+            }
+            finally {
+                this.inEventRequest = false;
+            }
+        },
+        async webcastsFetchTBA() {
+            this.inEventRequest = true;
+            this.webcastError = '';
+            try {
+                const data = await this.tbaApiCurrentEventRequest();
+                const webcasts = data.webcasts;
+                if (!webcasts.length) {
+                    this.webcastError = 'No webcasts on TBA (1min caching may apply)';
+                    return;
+                }
+                this.eventExtras[this.selectedEvent].webcasts = webcasts;
+            }
+            finally {
+                this.inEventRequest = false;
+            }
         },
 
         fetchTeamsReport: async function() {
