@@ -149,11 +149,14 @@ func apiRename(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 
+		// For GDrive: rename can sometimes report success but actually fail.
+		// Wait for a bit before checking whether the expected change actually
+		// took place.
+		time.Sleep(1 * time.Second)
+
 		if fileExists(new_path) && !fileExists(old_path) {
 			break
 		}
-
-		time.Sleep(1 * time.Second)
 	}
 
 	w.Write([]byte("{\"ok\": true}"))
