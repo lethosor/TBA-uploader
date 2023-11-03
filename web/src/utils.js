@@ -1,4 +1,4 @@
-import { FIELD_STATE } from './consts';
+import { FIELD_STATE, MATCH_LEVEL } from './consts';
 
 function parseGenericResponseError(res) {
     if (parseInt(res.status) >= 400) {
@@ -136,6 +136,32 @@ const utils = Object.freeze({
             [FIELD_STATE.MatchTransition]: true,
             [FIELD_STATE.MatchTeleop]: true,
         }[fieldState]);
+    },
+
+    isFieldStateInMatchLoaded(fieldState) {
+        return Boolean({
+            [FIELD_STATE.WaitingForSetAudience]: true,
+            [FIELD_STATE.WaitingForMatchPreview]: true,
+            [FIELD_STATE.WaitingForMatchReady]: true,
+            [FIELD_STATE.WaitingForMatchStart]: true,
+            [FIELD_STATE.GameSpecific]: true,
+            [FIELD_STATE.MatchAuto]: true,
+            [FIELD_STATE.MatchTransition]: true,
+            [FIELD_STATE.MatchTeleop]: true,
+            [FIELD_STATE.WaitingForCommit]: true,
+            [FIELD_STATE.WaitingForPostResults]: true,
+            [FIELD_STATE.MatchCancelled]: true,
+        }[fieldState]);
+    },
+
+    describeMatchLevel(matchLevel, defaultValue) {
+        return ({
+            [MATCH_LEVEL.TEST]: "Test",
+            [MATCH_LEVEL.PRACTICE]: "Practice",
+            [MATCH_LEVEL.QUAL]: "Qualification",
+            [MATCH_LEVEL.PLAYOFF]: "Playoff",
+            [MATCH_LEVEL.MANUAL]: "Manual",
+        })[matchLevel] || defaultValue || "Invalid";
     },
 });
 

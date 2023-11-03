@@ -183,7 +183,7 @@
                         </b-button>
                         <b-button
                             v-if="eventExtras[selectedEvent].remap_teams.length"
-                            variant="success"
+                            variant="info"
                             @click="uploadTeamRemap"
                         >
                             Upload
@@ -222,6 +222,84 @@
                         >
                             This playoff type is not supported. Schedule and match uploads will fail.
                         </b-alert>
+
+                        <h3 class="mt-2">Webcasts</h3>
+                        <alert
+                            v-model="webcastError"
+                            variant="danger"
+                        />
+                        <div
+                            v-for="(webcast, i) in eventExtras[selectedEvent].webcasts"
+                            class="input-group"
+                        >
+                            <b-button-close
+                                class="mr-3"
+                                title="Remove"
+                                @click="webcastsRemoveIndex(i)"
+                            />
+                            <form
+                                v-if="'channel' in webcast"
+                                class="form-inline mb-2"
+                            >
+                                <label>
+                                    Channel:
+                                    <b-form-input
+                                        v-model="webcast.channel"
+                                        size="50"
+                                    />
+                                </label>
+                                <label>
+                                    <b-form-select
+                                        v-model="webcast.type"
+                                        :options="WEBCAST_TYPES"
+                                    />
+                                </label>
+                            </form>
+                            <form
+                                v-else
+                                class="form-inline mb-2"
+                            >
+                                <label>
+                                    URL:
+                                    <b-form-input
+                                        v-model="webcast.url"
+                                        style="width: 25em"
+                                    />
+                                </label>
+                            </form>
+                        </div>
+                        <div class="input-group">
+                            <b-button
+                                variant="success"
+                                class="mr-2"
+                                @click="webcastsNewUrl"
+                            >
+                                Add by URL
+                            </b-button>
+                            <b-button
+                                variant="success"
+                                class="mr-2"
+                                @click="webcastsNewChannel"
+                            >
+                                Add by channel
+                            </b-button>
+                            <b-button
+                                variant="info"
+                                class="mr-2"
+                                :disabled="inEventRequest"
+                                @click="webcastsUpload"
+                            >
+                                Upload to TBA
+                            </b-button>
+                            <b-button
+                                variant="warning"
+                                class="mr-2"
+                                :disabled="inEventRequest"
+                                @click="webcastsFetchTBA"
+                            >
+                                Fetch from TBA
+                            </b-button>
+                        </div>
 
                         <h3 class="mt-2">Extra Ranking Points</h3>
                         <form
@@ -732,20 +810,112 @@
                 v-if="eventSelected"
                 title="Match videos"
             >
+                <div class="mb-2">
+                    <b-form-checkbox
+                        v-model="autoAVEnabled"
+                        name="check-button"
+                        switch
+                    >
+                        Enable AutoAV
+                    </b-form-checkbox>
+                </div>
+
+                <div
+                    v-if="autoAVEnabled"
+                    class="mb-2"
+                >
+                    <b-card bg-variant="light">
+                        <alert
+                            v-model="autoAVError"
+                            variant="danger"
+                        />
+                        <div class="mb-2">
+                            <span
+                                v-if="autoAVInRecording"
+                                style="color: red"
+                            >&#x2B24;</span>
+                            <span>{{ autoAVStatusMessage }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <b-button
+                                v-if="autoAVInRecording !== true"
+                                size="sm"
+                                variant="success"
+                                @click="autoAVStartRecording"
+                            >
+                                Start
+                            </b-button>
+                            <b-button
+                                v-if="autoAVInRecording !== false"
+                                size="sm"
+                                variant="danger"
+                                @click="autoAVStopRecording"
+                            >
+                                Stop
+                            </b-button>
+                            <b-button
+                                v-if="autoAVStopTimer !== null"
+                                size="sm"
+                                variant="secondary"
+                                @click="autoAVCancelStopRecording"
+                            >
+                                Don't stop
+                            </b-button>
+                        </div>
+                        <h4>AutoAV Settings</h4>
+                        <div class="form-inline">
+                            <label>
+                                Seconds before stopping recording:
+                                <b-form-input
+                                    v-model="autoAVStopDelaySeconds"
+                                    type="number"
+                                    min="0"
+                                    max="60"
+                                    step="1"
+                                />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                Video prefix:
+                                <b-form-input v-model="eventExtras[selectedEvent].video_prefix" />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                vMix video prefix (to replace):
+                                <b-form-input v-model="autoAVVmixVideoPrefix" />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                vMix API URL:
+                                <b-form-input v-model="autoAVVmixApiUrl" />
+                            </label>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                AutoAV Helper API URL:
+                                <b-form-input v-model="autoAVHelperApiUrl" />
+                            </label>
+                        </div>
+                    </b-card>
+                </div>
+
                 <div>
                     <b-button
                         variant="success"
                         :disabled="inVideoRequest"
                         @click="fetchVideos"
                     >
-                        Fetch data from TBA
+                        Fetch video data from TBA
                     </b-button>
                     <b-button
                         variant="success"
                         :disabled="inVideoRequest"
                         @click="uploadVideos"
                     >
-                        Upload data to TBA
+                        Upload video data to TBA
                     </b-button>
                 </div>
                 <ul>
@@ -1385,7 +1555,10 @@ export default {
             useProxy: true,
         }, utils.safeParseLocalStorageObject('uiOptions')),
         eventExtras: utils.safeParseLocalStorageObject('eventExtras'),
+        inEventRequest: false,
         remapError: '',
+        webcastError: '',
+        WEBCAST_TYPES: ["twitch", "youtube", "iframe", "mms", "rtmp", "ustream", "livestream", "html5", "dacast", "stemtv"],
 
         inTeamsRequest: false,
         teamListTable: [],
@@ -1433,6 +1606,19 @@ export default {
         inVideoRequest: false,
         videoError: '',
         showExistingVideos: false,
+
+        autoAVEnabled: false,
+        autoAVInRecording: null,  // normally bool, null=unknown
+        autoAVStatusMessage: 'Recording status unknown',
+        autoAVError: '',
+        autoAVVmixVideoPrefix: 'FiM Comp',
+        autoAVVmixApiUrl: localStorage.getItem('autoAVVmixApiUrl') || 'http://localhost:8088/api',
+        autoAVHelperApiUrl: localStorage.getItem('autoAVHelperApiUrl') || 'http://localhost:8807',
+        autoAVStopDelaySeconds: utils.safeParseLocalStorageInteger('autoAVStopDelaySeconds', 10),
+        autoAVStopDelaySecondsRemaining: null,
+        autoAVStopTimer: null,
+
+        lastMatchPlayed: [0, 0, 0], // match, play, level
 
         alliances: STORED_ALLIANCES,
         alliancesFmsTabOrder: true,
@@ -1539,7 +1725,11 @@ export default {
             return 'bg-secondary';
         },
         fieldStateMessage() {
-            return this.lastFieldState ? utils.describeFieldState(this.lastFieldState) : 'No Field Status Available';
+            let message = this.lastFieldState ? utils.describeFieldState(this.lastFieldState) : 'No Field Status Available';
+            if (this.lastMatchPlayed[0] > 0) {
+                message += ' | ' + utils.describeMatchLevel(this.lastMatchPlayed[2]) + ' ' + this.lastMatchPlayed[0] + ' Play ' + this.lastMatchPlayed[1];
+            }
+            return message;
         },
         isMatchRunning() {
             return this.lastFieldState && utils.isFieldStateInMatch(this.lastFieldState);
@@ -1573,6 +1763,15 @@ export default {
             },
             deep: true,
         },
+        autoAVVmixApiUrl: function(key) {
+            localStorage.setItem('autoAVVmixApiUrl', key);
+        },
+        autoAVHelperApiUrl: function(key) {
+            localStorage.setItem('autoAVHelperApiUrl', key);
+        },
+        autoAVStopDelaySeconds: function(key) {
+            localStorage.setItem('autoAVStopDelaySeconds', key);
+        },
     },
     mounted: function() {
         if (this.selectedEvent) {
@@ -1585,6 +1784,11 @@ export default {
             const data = JSON.parse(event.data);
             if (data.field_state !== undefined) {
                 this.onFieldStateUpdate(data.field_state);
+
+                if (data.match_play && Array.isArray(data.match_play) && data.match_play.length == 3 &&
+                    utils.isFieldStateInMatchLoaded(data.field_state)) {
+                    this.lastMatchPlayed = data.match_play;
+                }
             }
         });
 
@@ -1627,6 +1831,7 @@ export default {
         onFieldStateUpdate: async function(fieldState) {
             if (fieldState != this.lastFieldState) {
                 this.handleMatchesFromFieldStateChange(fieldState);
+                this.autoAVHandleFieldStateChange(fieldState);
             }
             this.lastFieldState = fieldState;
         },
@@ -1681,6 +1886,9 @@ export default {
             this.tbaApiCurrentEventRequest().then(function(data) {
                 this.$set(this, 'tbaEventData', data);
                 this.eventExtras[this.selectedEvent].playoff_type = data.playoff_type;
+                if (!this.eventExtras[this.selectedEvent].video_prefix && data.name) {
+                    this.eventExtras[this.selectedEvent].video_prefix = data.year + ' ' + data.name;
+                }
             }.bind(this))
             .fail(function(error) {
                 this.tbaReadError = utils.parseErrorJSON(error);
@@ -1694,9 +1902,11 @@ export default {
             this.$set(this.eventExtras, event, $.extend({}, {
                 remap_teams: [],
                 playoff_type: null,
+                webcasts: [],
                 alliance_count: 8,
                 alliance_size: 3,
                 enabled_extra_rps: DEFAULT_ENABLED_EXTRA_RPS.slice(),
+                video_prefix: '',
             }, this.eventExtras[event]));
 
             if (!this.alliances[event]) {
@@ -1830,6 +2040,50 @@ export default {
             }.bind(this)).fail(function(error) {
                 this.remapError = utils.parseErrorText(error);
             }.bind(this));
+        },
+
+        _webcastPush(obj) {
+            this.eventExtras[this.selectedEvent].webcasts = (this.eventExtras[this.selectedEvent].webcasts || []).concat([obj]);
+        },
+        webcastsNewChannel() {
+            this._webcastPush({type: '', channel: ''});
+        },
+        webcastsNewUrl() {
+            this._webcastPush({url: ''});
+        },
+        webcastsRemoveIndex(i) {
+            this.eventExtras[this.selectedEvent].webcasts.splice(i, 1);
+        },
+        async webcastsUpload() {
+            this.webcastError = '';
+            this.inEventRequest = true;
+            try {
+                await sendApiRequest('/api/info/upload', this.selectedEvent, {
+                    webcasts: this.eventExtras[this.selectedEvent].webcasts,
+                });
+            }
+            catch (e) {
+                this.webcastError = utils.parseErrorText(e);
+            }
+            finally {
+                this.inEventRequest = false;
+            }
+        },
+        async webcastsFetchTBA() {
+            this.inEventRequest = true;
+            this.webcastError = '';
+            try {
+                const data = await this.tbaApiCurrentEventRequest();
+                const webcasts = data.webcasts;
+                if (!webcasts.length) {
+                    this.webcastError = 'No webcasts on TBA (1min caching may apply)';
+                    return;
+                }
+                this.eventExtras[this.selectedEvent].webcasts = webcasts;
+            }
+            finally {
+                this.inEventRequest = false;
+            }
         },
 
         fetchTeamsReport: async function() {
@@ -2586,6 +2840,130 @@ export default {
             Object.values(this.videos).forEach(function(v) {
                 v.current = utils.cleanYoutubeUrl(v.current);
             });
+        },
+
+        autoAVVmixRequest: async function(functionName) {
+            await $.get(this.autoAVVmixApiUrl, {Function: functionName});
+        },
+        autoAVHelperRequest: async function(route, params) {
+            this.autoAVError = '';
+            try {
+                const response = await $.getJSON(this.autoAVHelperApiUrl + route, params || {});
+                return response;
+            }
+            catch (e) {
+                this.autoAVError = utils.parseErrorText(e);
+                throw e;
+            }
+        },
+        autoAVStartRecording: async function() {
+            if (!this.autoAVEnabled) {
+                return;
+            }
+
+            this.autoAVStatusMessage = 'Starting recording...';
+            this.autoAVInRecording = true;
+            await this.autoAVVmixRequest('StartRecording');
+            this.autoAVStatusMessage = 'Recording started';
+        },
+        autoAVStopRecording: async function() {
+            if (this.autoAVStopTimer !== null) {
+                clearInterval(this.autoAVStopTimer);
+                this.autoAVStopTimer = null;
+            }
+            if (!this.autoAVEnabled || this.autoAVInRecording === false) {
+                return;
+            }
+
+            this.autoAVStatusMessage = 'Stopping recording...';
+            this.autoAVInRecording = false;
+            await this.autoAVVmixRequest('StopRecording');
+            this.autoAVStatusMessage = 'Recording stopped';
+
+            setTimeout((matchPlay) => this.autoAVRenameLastVideo(matchPlay), 1000, this.lastMatchPlayed);
+        },
+        autoAVScheduleStopRecording: function() {
+            if (this.autoAVStopTimer !== null) {
+                clearInterval(this.autoAVStopTimer);
+            }
+            if (!this.autoAVInRecording) {
+                return;
+            }
+
+            this.autoAVStopDelaySecondsRemaining = this.autoAVStopDelaySeconds;
+            const tick = () => {
+                if (this.autoAVStopDelaySecondsRemaining <= 0) {
+                    this.autoAVStopRecording();
+                    return;
+                }
+                this.autoAVStatusMessage = 'Match ended. Recording stops in ' + this.autoAVStopDelaySecondsRemaining + ' sec...';
+                this.autoAVStopDelaySecondsRemaining--;
+            };
+            tick();
+            this.autoAVStopTimer = setInterval(tick, 1000);
+        },
+        autoAVCancelStopRecording: function() {
+            if (this.autoAVStopTimer !== null) {
+                clearInterval(this.autoAVStopTimer);
+                this.autoAVStopTimer = null;
+            }
+            this.autoAVStatusMessage = 'Continuing to record';
+        },
+        autoAVHandleFieldStateChange: function(fieldState) {
+            if (!this.autoAVEnabled) {
+                return;
+            }
+
+            if (utils.isFieldStateInMatch(fieldState)) {
+                this.autoAVStartRecording();
+            }
+
+            if (fieldState == FIELD_STATE.MatchCancelled ||
+                fieldState == FIELD_STATE.TournamentLevelComplete ||
+                fieldState == FIELD_STATE.WaitingForPrestart ||
+                fieldState == FIELD_STATE.WaitingForPrestartTO
+            ) {
+                this.autoAVScheduleStopRecording();
+            }
+        },
+        autoAVRenameLastVideo: async function(matchPlay) {
+            const extension = '.mp4';
+            const videos = await this.autoAVHelperRequest('/api/list');
+            const videoNames = videos.map(v => v.name);
+            const newVideos = videos.filter(v => (v.name.startsWith(this.autoAVVmixVideoPrefix))).sort((a, b) => a.mtime - b.mtime);
+            const lastVideo = newVideos[newVideos.length - 1];
+            if (!lastVideo) {
+                this.autoAVError = 'No videos found to rename';
+                return;
+            }
+
+            let prefix = utils.describeMatchLevel(matchPlay[2]);
+            let matchNumber = matchPlay[0];
+            if (matchPlay[2] == MATCH_LEVEL.PLAYOFF) {
+                const bracketInfo = BRACKETS[this.eventPlayoffType][matchPlay[0]];
+                if (bracketInfo && [BRACKET_TYPE.DOUBLE_ELIM_8_TEAM, BRACKET_TYPE.DOUBLE_ELIM_4_TEAM].includes(this.eventPlayoffType)) {
+                    if (bracketInfo.comp_level == 'f') {
+                        prefix = 'Final';
+                        matchNumber = bracketInfo.match_number;
+                    }
+                }
+            }
+            let newNameBase = this.eventExtras[this.selectedEvent].video_prefix + ' ' + prefix + ' Match ' + matchNumber;
+            let newName = newNameBase;
+            if (videoNames.includes(newNameBase + extension) && matchPlay[1] > 1) {
+                newNameBase += ' Play ' + matchPlay[1];
+                newName = newNameBase;
+            }
+            for (let i = 2; videoNames.includes(newName + extension); i++) {
+                newName = newNameBase + ' - ' + i;
+            }
+
+            this.autoAVStatusMessage = 'Renaming "' + lastVideo.name + '" to "' + newName + extension + '"';
+            await this.autoAVHelperRequest('/api/rename', {
+                old_name: lastVideo.name,
+                new_name: newName + extension,
+            });
+            this.autoAVStatusMessage = this.autoAVStatusMessage.replace(/^Renaming/, 'Renamed');
         },
 
         onAllianceChange: function(newAlliances) {

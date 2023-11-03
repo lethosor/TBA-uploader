@@ -23,26 +23,36 @@ node consts-gen.js consts.json --output-go consts.go --output-js web/src/consts.
 yarn run --silent build --stats errors-only
 cp README.md web/dist/
 
-build_release() {
+build_exe() {  # os arch exe src_dir build_dir
+    src_dir="$4"
+    build_dir="$5"
     if [ "$1" = "windows" ]; then
-        build_dir="$rel_dir/$1-$2"
-        exe_name="TBA-uploader.exe"
+        exe_name="$3.exe"
     else
-        build_dir="$rel_dir/$1-$2/TBA-uploader-$version-$3"
-        exe_name="TBA-uploader"
+        exe_name="$3"
     fi
     echo "[$1/$2] Building $exe_name"
+    GOOS="$1" GOARCH="$2" go build -o "$build_dir/$exe_name" -ldflags "-X main.Version=$version" "$src_dir"
+}
+
+build_release() {  # os arch tag
+    if [ "$1" = "windows" ]; then
+        build_dir="$rel_dir/$1-$2"
+    else
+        build_dir="$rel_dir/$1-$2/TBA-uploader-$version-$3"
+    fi
     mkdir -p "$build_dir"
-    GOOS="$1" GOARCH="$2" go build -o "$build_dir/$exe_name" -ldflags "-X main.Version=$version"
+    build_exe "$1" "$2" "TBA-uploader" "." "$build_dir"
+    build_exe "$1" "$2" "autoav-helper" "./cmd/autoav-helper/" "$build_dir"
     zip_name="TBA-uploader-$version-$3.zip"
     echo "[$1/$2] Generating $zip_name"
     pushd "$rel_dir/$1-$2" >/dev/null
-    zip -r "$zip_name" TBA-uploader*
+    zip -r "$zip_name" *
     mv "$zip_name" ../
     popd >/dev/null
     if [ "$1" != "windows" ]; then
         echo "[$1/$2] Removing intermediate folder"
-        mv "$build_dir/$exe_name" "$build_dir/../"
+        mv "$build_dir"/* "$build_dir/../"
         rmdir "$build_dir"
     fi
     echo "[$1/$2] Done"
