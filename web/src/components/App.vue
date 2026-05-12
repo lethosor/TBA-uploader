@@ -968,6 +968,146 @@
                     </b-card>
                 </div>
 
+                <div
+                    v-if="autoAVEnabled"
+                    class="mb-2"
+                >
+                    <b-card
+                        bg-variant="light"
+                        title="YouTube auto-upload"
+                    >
+                        <alert
+                            v-if="ytUploadState && ytUploadState.needs_reauth"
+                            v-model="ytReauthBanner"
+                            variant="warning"
+                        />
+                        <div class="form-inline mb-2">
+                            <label>
+                                Profile:
+                                <b-form-select
+                                    v-model="ytUploadConfig.profile_name"
+                                    :options="ytProfileOptions"
+                                    @change="ytSaveConfig"
+                                />
+                            </label>
+                            <b-button
+                                size="sm"
+                                variant="secondary"
+                                @click="ytNewProfile"
+                            >
+                                New profile
+                            </b-button>
+                            <b-button
+                                size="sm"
+                                variant="primary"
+                                :disabled="!ytUploadConfig.profile_name"
+                                @click="ytProfileLogin"
+                            >
+                                Sign in / re-authenticate
+                            </b-button>
+                            <b-button
+                                size="sm"
+                                variant="info"
+                                :disabled="!ytUploadConfig.profile_name || ytChannelChecking"
+                                @click="ytCheckChannel"
+                            >
+                                Verify channel
+                            </b-button>
+                            <span v-if="ytChannelStatus" class="ml-2">{{ ytChannelStatus }}</span>
+                        </div>
+                        <div class="form-inline">
+                            <label>
+                                Playlist name:
+                                <b-form-input
+                                    v-model="ytUploadConfig.playlist_name"
+                                    placeholder="exact playlist name as shown in YT Studio"
+                                    @change="ytSaveConfig"
+                                />
+                            </label>
+                        </div>
+                        <div>
+                            <label style="display: block;">
+                                Title template:
+                                <b-form-input
+                                    v-model="ytUploadConfig.title_template"
+                                    @change="ytSaveConfig"
+                                />
+                            </label>
+                        </div>
+                        <div>
+                            <label style="display: block;">
+                                Description template:
+                                <b-form-textarea
+                                    v-model="ytUploadConfig.description_template"
+                                    rows="6"
+                                    @change="ytSaveConfig"
+                                />
+                            </label>
+                        </div>
+                        <div class="form-inline mt-2">
+                            <label>
+                                Thumbnail:
+                                <b-form-file
+                                    v-model="ytThumbnailFile"
+                                    accept="image/*"
+                                    @input="ytUploadThumbnail"
+                                />
+                            </label>
+                            <span v-if="ytUploadConfig.thumbnail_path" class="ml-2">
+                                <small>(currently: {{ ytUploadConfig.thumbnail_path }})</small>
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <b-form-checkbox
+                                v-model="ytUploadConfig.include_practice"
+                                @change="ytSaveConfig"
+                            >
+                                Include Practice matches
+                            </b-form-checkbox>
+                            <b-form-checkbox
+                                v-model="ytUploadConfig.include_test"
+                                @change="ytSaveConfig"
+                            >
+                                Include Test matches
+                            </b-form-checkbox>
+                            <b-form-checkbox v-model="ytAutoSubmitToTba">
+                                Auto-submit to TBA after each upload
+                            </b-form-checkbox>
+                        </div>
+                        <div class="mt-3" v-if="ytVideoRows.length">
+                            <h5>Status</h5>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Match</th>
+                                        <th>Status</th>
+                                        <th>YouTube</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="row in ytVideoRows" :key="row.filename">
+                                        <td><small>{{ row.filename }}</small></td>
+                                        <td>{{ row.matchLabel }}</td>
+                                        <td>
+                                            {{ row.status }}
+                                            <small v-if="row.lastError" style="color: red;">{{ row.lastError }}</small>
+                                        </td>
+                                        <td>
+                                            <a v-if="row.ytVideoId" :href="'https://youtu.be/' + row.ytVideoId" target="_blank">{{ row.ytVideoId }}</a>
+                                        </td>
+                                        <td>
+                                            <b-button size="sm" variant="warning" @click="ytRetry(row.filename)">Retry</b-button>
+                                            <b-button size="sm" variant="secondary" @click="ytSkip(row.filename)">Skip</b-button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </b-card>
+                </div>
+
                 <div>
                     <b-button
                         variant="success"
@@ -985,7 +1125,6 @@
                     </b-button>
                 </div>
                 <ul>
-                    <li><span class="warning">Warning:</span> Anything entered in this tab will not be saved locally. You will have to upload all data here to TBA before closing this window.</li>
                     <li>Videos cannot be removed from TBA once they are uploaded.</li>
                 </ul>
                 <alert
@@ -1009,6 +1148,7 @@
                                     v-model="video.current"
                                     autocomplete="off"
                                     @blur="cleanVideoUrls"
+                                    @input="ytPersistManualEntry(key, video.current)"
                                 />
                             </label>
                         </div>
@@ -1726,6 +1866,27 @@ export default {
             ...Object.entries(AWARD_TYPE).map(([text, value]) => ({text, value})).sort((a, b) => a.value - b.value),
         ],
         inAwardRequest: false,
+
+        // YouTube auto-upload state (per-event, loaded from the helper).
+        ytUploadConfig: {
+            profile_name: '',
+            playlist_name: '',
+            title_template: '',
+            description_template: '',
+            thumbnail_path: '',
+            include_practice: false,
+            include_test: false,
+        },
+        ytUploadState: null,
+        ytProfiles: [],
+        ytChannelStatus: '',
+        ytChannelChecking: false,
+        ytReauthBanner: 'YouTube session expired. Click "Sign in / re-authenticate" to refresh it.',
+        ytThumbnailFile: null,
+        ytAutoSubmitToTba: localStorage.getItem('ytAutoSubmitToTba') !== 'false',
+        ytPollHandle: null,
+        ytPushedVideoIds: {},  // memo so we don't re-push the same auto-upload to TBA
+        ytManualDebounce: {},
     }),
     computed: {
         BRACKET_TYPES: function() {
@@ -1880,6 +2041,27 @@ export default {
                 this.eventExtras[this.selectedEvent].rp_settings.disable_coop ||
                 (this.matchLevel == MATCH_LEVEL.PRACTICE && this.practiceMatchPlayEnabled);
         },
+        ytProfileOptions() {
+            const out = this.ytProfiles.map(p => ({value: p, text: p}));
+            if (!this.ytUploadConfig.profile_name && out.length) {
+                out.unshift({value: '', text: '(choose a profile)'});
+            } else if (!this.ytUploadConfig.profile_name) {
+                out.unshift({value: '', text: '(no profiles yet)'});
+            }
+            return out;
+        },
+        ytVideoRows() {
+            if (!this.ytUploadState || !this.ytUploadState.videos) return [];
+            return Object.entries(this.ytUploadState.videos)
+                .map(([filename, v]) => ({
+                    filename,
+                    matchLabel: (v.meta && v.meta.match_label) || '',
+                    status: v.status,
+                    ytVideoId: v.yt_video_id || '',
+                    lastError: v.last_error || '',
+                }))
+                .sort((a, b) => a.filename.localeCompare(b.filename));
+        },
     },
     watch: {
         selectedTab: function(tab) {
@@ -1893,6 +2075,10 @@ export default {
             this.initEvent(event);
             this.fetchEventData();
             this.scheduleReset(false);
+            this.ytLoadAll();
+        },
+        ytAutoSubmitToTba: function(val) {
+            localStorage.setItem('ytAutoSubmitToTba', val ? 'true' : 'false');
         },
         matchLevel: function() {
             localStorage.setItem('matchLevel', this.matchLevel);
@@ -1959,6 +2145,15 @@ export default {
         $(function() {
             $(this.$el).removeClass('hidden');
         }.bind(this));
+
+        this.ytLoadAll();
+        this.ytStartPolling();
+    },
+    beforeDestroy: function() {
+        if (this.ytPollHandle) {
+            clearInterval(this.ytPollHandle);
+            this.ytPollHandle = null;
+        }
     },
     methods: {
         saveFMSConfig: function() {
@@ -3038,6 +3233,33 @@ export default {
                 throw e;
             }
         },
+        autoAVHelperPost: async function(route, body) {
+            this.autoAVError = '';
+            try {
+                return await $.ajax({
+                    method: 'POST',
+                    url: this.autoAVHelperApiUrl + route,
+                    contentType: 'application/json',
+                    data: JSON.stringify(body || {}),
+                });
+            }
+            catch (e) {
+                this.autoAVError = utils.parseErrorText(e);
+                throw e;
+            }
+        },
+        autoAVHelperDelete: async function(route) {
+            try {
+                return await $.ajax({
+                    method: 'DELETE',
+                    url: this.autoAVHelperApiUrl + route,
+                });
+            }
+            catch (e) {
+                this.autoAVError = utils.parseErrorText(e);
+                throw e;
+            }
+        },
         autoAVStartRecording: async function() {
             if (!this.autoAVEnabled) {
                 return;
@@ -3141,11 +3363,74 @@ export default {
             }
 
             this.autoAVStatusMessage = 'Renaming "' + lastVideo.name + '" to "' + newName + extension + '"';
-            await this.autoAVHelperRequest('/api/rename', {
+
+            // Build meta for the upload pipeline. tba_match_key is computed
+            // from matchPlay; alliance team numbers come from whatever match
+            // data the app already has cached for this match.
+            const meta = this.buildRenameMeta(matchPlay, prefix, matchNumber);
+            await this.autoAVHelperPost('/api/rename', {
                 old_name: lastVideo.name,
                 new_name: newName + extension,
+                event_key: this.selectedEvent,
+                meta: meta,
             });
             this.autoAVStatusMessage = this.autoAVStatusMessage.replace(/^Renaming/, 'Renamed');
+        },
+
+        buildRenameMeta: function(matchPlay, levelLabel, matchNumber) {
+            const [rawMatchNumber, play, level] = matchPlay;
+            let tbaMatchKey;
+            try {
+                if (level == MATCH_LEVEL.QUAL) {
+                    tbaMatchKey = 'qm' + rawMatchNumber;
+                } else if (level == MATCH_LEVEL.PLAYOFF) {
+                    const code = Schedule.getTBAPlayoffCode(this.eventPlayoffType, rawMatchNumber);
+                    if (code) {
+                        tbaMatchKey = Schedule.getTBAMatchKey(code);
+                    }
+                }
+            } catch (e) {
+                tbaMatchKey = '';
+            }
+
+            // Pull alliance data from pendingMatches when present; the
+            // operator may not have fetched matches yet, so this is best
+            // effort and the description template tolerates absence.
+            const alliances = {red: [], blue: []};
+            try {
+                const pending = (this.pendingMatches || []).find(m => {
+                    if (level == MATCH_LEVEL.QUAL) {
+                        return m.comp_level == 'qm' && m.match_number == rawMatchNumber;
+                    }
+                    if (level == MATCH_LEVEL.PLAYOFF) {
+                        const code = Schedule.getTBAPlayoffCode(this.eventPlayoffType, rawMatchNumber);
+                        return code && m.comp_level == code.comp_level &&
+                            m.set_number == code.set_number &&
+                            m.match_number == code.match_number;
+                    }
+                    return false;
+                });
+                if (pending && pending.alliances) {
+                    for (const color of ['red', 'blue']) {
+                        const teams = (pending.alliances[color] && pending.alliances[color].teams) || [];
+                        alliances[color] = teams.map(t => ({
+                            number: parseInt(String(t).replace(/^frc/, ''), 10) || 0,
+                            name: '',
+                        }));
+                    }
+                }
+            } catch (e) {
+                // Ignore — meta with empty alliances is still valid.
+            }
+
+            return {
+                tba_match_key: tbaMatchKey || '',
+                match_level: levelLabel,
+                match_number: matchNumber,
+                match_label: levelLabel + ' ' + matchNumber,
+                play: play,
+                alliances: alliances,
+            };
         },
 
         onAllianceChange: function(newAlliances) {
@@ -3345,6 +3630,217 @@ export default {
             request.fail(function(res) {
                 this.awardStatus = 'Error: ' + res.responseText;
             }.bind(this));
+        },
+
+        // ── YouTube auto-upload methods ────────────────────────────────
+        ytLoadAll: async function() {
+            if (!this.selectedEvent) return;
+            try {
+                await this.ytLoadProfiles();
+                await this.ytLoadConfig();
+                await this.ytLoadState();
+            } catch (e) {
+                // Helper offline — UI shows the alert via autoAVError.
+            }
+        },
+        ytLoadProfiles: async function() {
+            try {
+                const r = await $.getJSON(this.autoAVHelperApiUrl + '/api/upload/profiles');
+                this.ytProfiles = (r && r.profiles) || [];
+            } catch (e) {
+                this.ytProfiles = [];
+            }
+        },
+        ytLoadConfig: async function() {
+            if (!this.selectedEvent) return;
+            try {
+                const r = await $.getJSON(this.autoAVHelperApiUrl + '/api/upload/config?event_key=' + encodeURIComponent(this.selectedEvent));
+                this.ytUploadConfig = Object.assign({
+                    profile_name: '',
+                    playlist_name: '',
+                    title_template: '',
+                    description_template: '',
+                    thumbnail_path: '',
+                    include_practice: false,
+                    include_test: false,
+                }, r || {});
+            } catch (e) {
+                // ignore
+            }
+        },
+        ytLoadState: async function() {
+            if (!this.selectedEvent) return;
+            try {
+                const r = await $.getJSON(this.autoAVHelperApiUrl + '/api/upload/state?event_key=' + encodeURIComponent(this.selectedEvent));
+                this.ytUploadState = r;
+                this.ytSyncVideosFromState();
+            } catch (e) {
+                // ignore
+            }
+        },
+        ytSaveConfig: async function() {
+            if (!this.selectedEvent) return;
+            try {
+                await $.ajax({
+                    method: 'POST',
+                    url: this.autoAVHelperApiUrl + '/api/upload/config?event_key=' + encodeURIComponent(this.selectedEvent),
+                    contentType: 'application/json',
+                    data: JSON.stringify(this.ytUploadConfig),
+                });
+            } catch (e) {
+                this.autoAVError = utils.parseErrorText(e);
+            }
+        },
+        ytNewProfile: function() {
+            const name = prompt('Profile name (used as the YT channel identifier, e.g. "tornado-tumble"):');
+            if (!name) return;
+            const clean = String(name).trim().replace(/[^a-zA-Z0-9._-]/g, '-');
+            if (!clean) return;
+            this.ytUploadConfig.profile_name = clean;
+            this.ytSaveConfig();
+            // The directory only gets created lazily on first login; refresh
+            // the profile list after sign-in completes.
+        },
+        ytProfileLogin: async function() {
+            if (!this.ytUploadConfig.profile_name) return;
+            this.ytChannelStatus = 'Sign-in window opened in browser. Close it when done.';
+            try {
+                await this.autoAVHelperPost('/api/upload/profile/login', {
+                    profile_name: this.ytUploadConfig.profile_name,
+                });
+            } catch (e) {
+                // already reported on autoAVError
+            }
+            // Refresh profiles list (the directory now exists).
+            setTimeout(() => this.ytLoadProfiles(), 2000);
+        },
+        ytCheckChannel: async function() {
+            if (!this.ytUploadConfig.profile_name) return;
+            this.ytChannelChecking = true;
+            this.ytChannelStatus = 'Checking channel...';
+            try {
+                const r = await $.getJSON(
+                    this.autoAVHelperApiUrl +
+                    '/api/upload/profile/check?profile_name=' + encodeURIComponent(this.ytUploadConfig.profile_name)
+                );
+                if (r.error) {
+                    this.ytChannelStatus = 'Error: ' + r.error;
+                } else {
+                    this.ytChannelStatus = 'Logged in as: ' + (r.channel_name || '(unknown)');
+                }
+            } catch (e) {
+                this.ytChannelStatus = 'Check failed: ' + utils.parseErrorText(e);
+            } finally {
+                this.ytChannelChecking = false;
+            }
+        },
+        ytUploadThumbnail: async function(file) {
+            if (!file || !this.selectedEvent) return;
+            const fd = new FormData();
+            fd.append('file', file);
+            try {
+                await $.ajax({
+                    method: 'POST',
+                    url: this.autoAVHelperApiUrl + '/api/upload/thumbnail?event_key=' + encodeURIComponent(this.selectedEvent),
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                });
+                await this.ytLoadConfig();
+            } catch (e) {
+                this.autoAVError = utils.parseErrorText(e);
+            }
+        },
+        ytRetry: async function(filename) {
+            try {
+                await this.autoAVHelperPost('/api/upload/retry?event_key=' + encodeURIComponent(this.selectedEvent), {filename});
+                await this.ytLoadState();
+            } catch (e) {}
+        },
+        ytSkip: async function(filename) {
+            try {
+                await this.autoAVHelperPost('/api/upload/skip?event_key=' + encodeURIComponent(this.selectedEvent), {filename});
+                await this.ytLoadState();
+            } catch (e) {}
+        },
+        ytStartPolling: function() {
+            if (this.ytPollHandle) clearInterval(this.ytPollHandle);
+            this.ytPollHandle = setInterval(() => {
+                if (!document.hidden) {
+                    this.ytLoadState();
+                }
+            }, 5000);
+        },
+        ytSyncVideosFromState: function() {
+            // Map auto-upload results and manual entries into videos[].current
+            // so the existing TBA upload UI shows them.
+            if (!this.ytUploadState) return;
+
+            // Auto-upload entries: filename → meta.tba_match_key → yt_video_id.
+            const videoMap = this.ytUploadState.videos || {};
+            const newAutoUploads = {};
+            for (const [filename, entry] of Object.entries(videoMap)) {
+                if (entry.status !== 'uploaded' || !entry.yt_video_id) continue;
+                const key = entry.meta && entry.meta.tba_match_key;
+                if (!key) continue;
+                const v = this.videos[key] || {};
+                if (v.current !== entry.yt_video_id) {
+                    v.current = entry.yt_video_id;
+                    Vue.set(this.videos, key, v);
+                    // Flag for auto-push.
+                    if (!this.ytPushedVideoIds[key + ':' + entry.yt_video_id]) {
+                        newAutoUploads[key] = entry.yt_video_id;
+                    }
+                }
+            }
+
+            // Manual entries (server-side persistence).
+            const manualMap = this.ytUploadState.manual_video_ids || {};
+            for (const [key, vid] of Object.entries(manualMap)) {
+                const v = this.videos[key] || {};
+                if (!v.current && v.current !== vid) {
+                    v.current = vid;
+                    Vue.set(this.videos, key, v);
+                }
+            }
+
+            // Auto-push to TBA if enabled and any new uploads landed.
+            if (this.ytAutoSubmitToTba && Object.keys(newAutoUploads).length) {
+                for (const [key, vid] of Object.entries(newAutoUploads)) {
+                    this.ytPushedVideoIds[key + ':' + vid] = true;
+                }
+                this.ytScheduleAutoPush();
+            }
+        },
+        ytScheduleAutoPush: function() {
+            // 300ms debounce to coalesce bursts.
+            if (this._ytAutoPushTimer) clearTimeout(this._ytAutoPushTimer);
+            this._ytAutoPushTimer = setTimeout(() => {
+                this._ytAutoPushTimer = null;
+                this.uploadVideos();
+            }, 300);
+        },
+        ytPersistManualEntry: function(matchKey, value) {
+            // Debounce per-key.
+            if (this.ytManualDebounce[matchKey]) {
+                clearTimeout(this.ytManualDebounce[matchKey]);
+            }
+            this.ytManualDebounce[matchKey] = setTimeout(async () => {
+                this.ytManualDebounce[matchKey] = null;
+                const cleaned = utils.cleanYoutubeUrl(value || '');
+                try {
+                    if (!cleaned) {
+                        await this.autoAVHelperDelete('/api/videos/manual?event_key=' + encodeURIComponent(this.selectedEvent) + '&match_key=' + encodeURIComponent(matchKey));
+                    } else {
+                        await this.autoAVHelperPost('/api/videos/manual?event_key=' + encodeURIComponent(this.selectedEvent), {
+                            match_key: matchKey,
+                            yt_video_id: cleaned,
+                        });
+                    }
+                } catch (e) {
+                    // Helper might be down; the field still keeps the local value.
+                }
+            }, 500);
         },
     },
 };
